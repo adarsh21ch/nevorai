@@ -413,7 +413,7 @@ export const PricingSection = () => {
           viewport={{ once: true }}
         >
           <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
-            Start Free. <span className="gradient-text">Upgrade When You Get Results.</span>
+            Start Free. <span className="text-gradient-brand">Upgrade When You Get Results.</span>
           </h2>
           <p className="text-muted-foreground max-w-lg mx-auto">
             {isTrialEnabled

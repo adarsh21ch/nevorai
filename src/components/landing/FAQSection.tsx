@@ -52,7 +52,7 @@ export const FAQSection = () => {
           viewport={{ once: true }}
         >
           <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
-            Frequently Asked <span className="gradient-text">Questions</span>
+            Frequently Asked <span className="text-gradient-brand">Questions</span>
           </h2>
         </motion.div>
 
