@@ -43,17 +43,17 @@ const VideosRoute = VideosRouteImport.update({
   id: '/videos',
   path: '/videos',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/videos.lazy').then((d) => d.Route))
 const LiveRoute = LiveRouteImport.update({
   id: '/live',
   path: '/live',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/live.lazy').then((d) => d.Route))
 const LeadsRoute = LeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/leads.lazy').then((d) => d.Route))
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -68,22 +68,24 @@ const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/admin.lazy').then((d) => d.Route))
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/index.lazy').then((d) => d.Route))
 const LandingPagesIndexRoute = LandingPagesIndexRouteImport.update({
   id: '/landing-pages/',
   path: '/landing-pages/',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() =>
+  import('./routes/landing-pages.index.lazy').then((d) => d.Route),
+)
 const FunnelsIndexRoute = FunnelsIndexRouteImport.update({
   id: '/funnels/',
   path: '/funnels/',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/funnels.index.lazy').then((d) => d.Route))
 const VIdRoute = VIdRouteImport.update({
   id: '/v/$id',
   path: '/v/$id',
@@ -98,17 +100,21 @@ const LiveIdRoute = LiveIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => LiveRoute,
-} as any)
+} as any).lazy(() => import('./routes/live.$id.lazy').then((d) => d.Route))
 const LandingPagesCreateRoute = LandingPagesCreateRouteImport.update({
   id: '/landing-pages/create',
   path: '/landing-pages/create',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() =>
+  import('./routes/landing-pages.create.lazy').then((d) => d.Route),
+)
 const LandingPagesIdRoute = LandingPagesIdRouteImport.update({
   id: '/landing-pages/$id',
   path: '/landing-pages/$id',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() =>
+  import('./routes/landing-pages.$id.lazy').then((d) => d.Route),
+)
 const LSlugRoute = LSlugRouteImport.update({
   id: '/l/$slug',
   path: '/l/$slug',
@@ -118,12 +124,14 @@ const FunnelsCreateRoute = FunnelsCreateRouteImport.update({
   id: '/funnels/create',
   path: '/funnels/create',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() =>
+  import('./routes/funnels.create.lazy').then((d) => d.Route),
+)
 const FunnelsIdRoute = FunnelsIdRouteImport.update({
   id: '/funnels/$id',
   path: '/funnels/$id',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any).lazy(() => import('./routes/funnels.$id.lazy').then((d) => d.Route))
 const FSlugRoute = FSlugRouteImport.update({
   id: '/f/$slug',
   path: '/f/$slug',
@@ -143,47 +151,57 @@ const AdminWhatsappRoute = AdminWhatsappRouteImport.update({
   id: '/whatsapp',
   path: '/whatsapp',
   getParentRoute: () => AdminRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/admin.whatsapp.lazy').then((d) => d.Route),
+)
 const AdminVideosRoute = AdminVideosRouteImport.update({
   id: '/videos',
   path: '/videos',
   getParentRoute: () => AdminRoute,
-} as any)
+} as any).lazy(() => import('./routes/admin.videos.lazy').then((d) => d.Route))
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
   getParentRoute: () => AdminRoute,
-} as any)
+} as any).lazy(() => import('./routes/admin.users.lazy').then((d) => d.Route))
 const AdminSupportRoute = AdminSupportRouteImport.update({
   id: '/support',
   path: '/support',
   getParentRoute: () => AdminRoute,
-} as any)
+} as any).lazy(() => import('./routes/admin.support.lazy').then((d) => d.Route))
 const AdminSubscriptionsRoute = AdminSubscriptionsRouteImport.update({
   id: '/subscriptions',
   path: '/subscriptions',
   getParentRoute: () => AdminRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/admin.subscriptions.lazy').then((d) => d.Route),
+)
 const AdminSettingsRoute = AdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => AdminRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/admin.settings.lazy').then((d) => d.Route),
+)
 const AdminKycRoute = AdminKycRouteImport.update({
   id: '/kyc',
   path: '/kyc',
   getParentRoute: () => AdminRoute,
-} as any)
+} as any).lazy(() => import('./routes/admin.kyc.lazy').then((d) => d.Route))
 const LandingPagesIdEditRoute = LandingPagesIdEditRouteImport.update({
   id: '/edit',
   path: '/edit',
   getParentRoute: () => LandingPagesIdRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/landing-pages.$id.edit.lazy').then((d) => d.Route),
+)
 const FunnelsIdEditRoute = FunnelsIdEditRouteImport.update({
   id: '/edit',
   path: '/edit',
   getParentRoute: () => FunnelsIdRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/funnels.$id.edit.lazy').then((d) => d.Route),
+)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -693,3 +711,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
