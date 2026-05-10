@@ -24,6 +24,8 @@ export default function AuthPage() {
   const navigate = useNavigate();
   const router = useRouter();
   const { signIn, signUp, user, loading } = useAuth();
+  const redirectTarget = typeof search.redirect === "string" && search.redirect.startsWith("/") ? search.redirect : "/dashboard";
+  const redirectWithPlan = search.plan ? `${redirectTarget}${redirectTarget.includes("?") ? "&" : "?"}plan=${encodeURIComponent(String(search.plan))}` : redirectTarget;
 
   const [stage, setStage] = useState<Stage>("email");
   useDocumentTitle(stage === "signup" ? "Get Started" : "Sign In");
@@ -58,8 +60,8 @@ export default function AuthPage() {
   }, [stage]);
 
   useEffect(() => {
-    if (!loading && user) navigate({ to: "/dashboard" });
-  }, [loading, user, navigate]);
+    if (!loading && user) navigate({ to: redirectWithPlan, replace: true });
+  }, [loading, user, navigate, redirectWithPlan]);
 
   useEffect(() => {
     void router.preloadRoute({ to: "/dashboard" });
@@ -191,7 +193,7 @@ export default function AuthPage() {
 
       if (error) { toast.error("Invalid email or password."); return; }
       toast.success("Welcome back!");
-      navigate({ to: "/dashboard", replace: true });
+      navigate({ to: redirectWithPlan, replace: true });
     } finally { setSubmitting(false); }
   };
 
@@ -203,7 +205,7 @@ export default function AuthPage() {
       const { error } = await supabase.auth.updateUser({ password: form.password });
       if (error) { toast.error(error.message || "Could not set password."); return; }
       toast.success("Password set.");
-      navigate({ to: "/dashboard", replace: true });
+      navigate({ to: redirectWithPlan, replace: true });
     } finally { setSubmitting(false); }
   };
 
