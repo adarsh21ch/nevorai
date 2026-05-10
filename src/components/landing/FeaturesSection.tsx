@@ -152,16 +152,14 @@ export const FeaturesSection = () => {
   const active = features[activeFeature];
 
   return (
-    <section id="features" className="features-section relative" style={{ background: "#080F20" }}>
+    <section id="features" className="features-section relative bg-[#080F20]">
       <style>{showcaseStyles}</style>
-      <div className="container relative z-10 max-w-6xl px-4">
+      <div className="container-app relative z-10 max-w-6xl">
         <div className="text-center mb-10">
           <span className="features-badge">Everything in one platform</span>
           <h2 className="features-h2">
             Built to Convert.{" "}
-            <span style={{ background: "linear-gradient(90deg, #00C896, #0066FF)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              Not Just to Play Videos.
-            </span>
+            <span className="text-gradient-brand">Not Just to Play Videos.</span>
           </h2>
           <p className="features-p">
             Every feature works together — from share to lead to follow-up to conversion.

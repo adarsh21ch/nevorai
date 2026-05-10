@@ -47,7 +47,7 @@ export const WhyNevorai = () => {
             </span>
           </div>
           <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
-            Why Not Just Use <span className="gradient-text">YouTube?</span>
+            Why Not Just Use <span className="text-gradient-brand">YouTube?</span>
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto text-base md:text-lg leading-relaxed">
             Because YouTube gives you views — not control, follow-up, or a guided conversion path.
@@ -115,7 +115,7 @@ export const WhyNevorai = () => {
         >
           <p className="text-lg md:text-xl font-heading font-semibold text-foreground">
             YouTube gives views.{" "}
-            <span className="gradient-text">
+            <span className="text-gradient-brand">
               nFlow gives control + data + conversion.
             </span>
           </p>

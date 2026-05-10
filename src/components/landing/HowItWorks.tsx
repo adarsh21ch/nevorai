@@ -30,7 +30,7 @@ export const HowItWorks = () => {
           viewport={{ once: true }}
         >
           <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
-            How It <span className="gradient-text">Works</span>
+            How It <span className="text-gradient-brand">Works</span>
           </h2>
           <p className="text-muted-foreground max-w-lg mx-auto">
             Three simple steps to turn your videos into a controlled follow-up system.
