@@ -35,6 +35,36 @@
   --color-ring: hsl(var(--ring));
   --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
   --font-heading: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* =====================================================================
+     BRAND TOKENS — use these via Tailwind classes (bg-brand-emerald, etc.)
+     Source of truth for every brand color in the app. Do NOT hardcode hex
+     in components. If a new color is needed, add it here first.
+     ===================================================================== */
+
+  /* Brand palette (raw values) */
+  --color-brand-emerald: #00C896;
+  --color-brand-emerald-soft: #7EE83A;
+  --color-brand-teal: #00D4C8;
+  --color-brand-blue: #0066FF;
+  --color-brand-blue-bright: #00AAFF;
+  --color-brand-blue-deep: #1A4FD6;
+  --color-brand-red: #EF4444;
+  --color-brand-red-deep: #DC2626;
+
+  /* Marketing / hero surfaces (dark-only landing palette) */
+  --color-hero-bg: #060C1A;
+  --color-hero-surface: #0F1628;
+  --color-hero-text: #FFFFFF;
+  --color-hero-muted: #8896B3;
+  --color-hero-soft: #C8D0E0;
+
+  /* Semantic surface system (theme-aware overrides defined in :root below) */
+  --color-surface-1: hsl(var(--surface-1));
+  --color-surface-2: hsl(var(--surface-2));
+  --color-surface-glass: hsl(var(--surface-glass));
+  --color-border-subtle: hsl(var(--border-subtle));
+  --color-border-strong: hsl(var(--border-strong));
 }
 
 :root,
