@@ -11,7 +11,7 @@ import { VideoLinkModal } from "@/components/VideoLinkModal";
 import { VideoUploadModal } from "@/components/VideoUploadModal";
 import { VideoShareModal } from "@/components/VideoShareModal";
 import { VideoRenameModal } from "@/components/VideoRenameModal";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@/lib/router-compat";
 import { toast } from "sonner";
 
 const VideosPage = () => {
