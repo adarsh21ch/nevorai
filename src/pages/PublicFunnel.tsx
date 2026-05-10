@@ -118,11 +118,11 @@ const CustomVideoPlayer = ({
   const [seekRipple, setSeekRipple] = useState<{ side: "left" | "right"; key: number } | null>(null);
   const userPaused = useRef(false);
 
-  const seekToastTimer = useRef<ReturnType<typeof setTimeout>>();
-  const hideTimer = useRef<ReturnType<typeof setTimeout>>();
-  const flashTimer = useRef<ReturnType<typeof setTimeout>>();
-  const rippleTimer = useRef<ReturnType<typeof setTimeout>>();
-  const singleTapTimer = useRef<ReturnType<typeof setTimeout>>();
+  const seekToastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const rippleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const singleTapTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const lastTapInfo = useRef<{ time: number; side: "left" | "right" | null }>({ time: 0, side: null });
   const autoplayAttempted = useRef(false);
 
