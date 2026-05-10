@@ -10,8 +10,8 @@ const RAZORPAY_KEY_ID = (Deno.env.get("RAZORPAY_KEY_ID") ?? "").trim();
 const RAZORPAY_KEY_SECRET = (Deno.env.get("RAZORPAY_KEY_SECRET") ?? "").trim();
 const RAZORPAY_API = "https://api.razorpay.com/v1";
 
-// Build marker — bumping this string forces a fresh deploy. v=2026-05-10d
-console.log("razorpay-portal build v=2026-05-10d key_id_prefix=", RAZORPAY_KEY_ID.slice(0, 8));
+// Build marker — bumping this string forces a fresh deploy. v=2026-05-10e
+console.log("razorpay-portal build v=2026-05-10e key_id_prefix=", RAZORPAY_KEY_ID.slice(0, 8));
 
 function rzpHeaders() {
   return {
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   if (req.method === "GET" || url.searchParams.get("ping") === "1") {
     return jsonResponse({
-      build: "v=2026-05-10d",
+      build: "v=2026-05-10e",
       key_id_prefix: RAZORPAY_KEY_ID ? RAZORPAY_KEY_ID.slice(0, 8) : null,
       key_id_len: RAZORPAY_KEY_ID.length,
       key_secret_len: RAZORPAY_KEY_SECRET.length,
@@ -344,7 +344,9 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (!activeSub || !activeSub.expires_at) {
-        return jsonResponse({ error: "No active subscription to upgrade" }, 400);
+        return jsonResponse({
+          error: "No active paid subscription. Please subscribe to Basic or Pro before upgrading view capacity.",
+        }, 400);
       }
 
       const basePlan = (activeSub.tier || activeSub.plan_key || "").split("_")[0];
@@ -352,11 +354,21 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: "Only Basic and Pro subscriptions support tier upgrades" }, 400);
       }
 
+      // Self-heal stale profile state: if the user has an active paid sub,
+      // their profile must reflect "active" (not "trial"/"expired"). This
+      // unblocks tier upgrades for users whose status was never updated.
       const { data: profileRow } = await serviceClient
         .from("profiles")
         .select("subscription_status, selected_tier_id, selected_daily_views")
         .eq("id", user.id)
         .maybeSingle();
+
+      if (profileRow && profileRow.subscription_status !== "active") {
+        await serviceClient
+          .from("profiles")
+          .update({ subscription_status: "active" })
+          .eq("id", user.id);
+      }
 
       // New tier
       const { data: newTier } = await serviceClient
