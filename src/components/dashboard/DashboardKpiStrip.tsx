@@ -43,8 +43,7 @@ export const DashboardKpiStrip = () => {
   if (isUnlimited) {
     return (
       <div
-        className="flex items-center gap-4 rounded-2xl border border-purple-400/25 px-5 py-4"
-        style={{ background: "linear-gradient(135deg, rgba(168,85,247,0.08) 0%, rgba(124,58,237,0.04) 100%)" }}
+        className="flex items-center gap-4 rounded-2xl border border-purple-400/25 px-5 py-4 bg-gradient-to-br from-purple-500/10 to-violet-500/5"
       >
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/15 text-purple-300">
           <InfinityIcon size={28} />
@@ -66,8 +65,7 @@ export const DashboardKpiStrip = () => {
 
   return (
     <div
-      className="flex flex-wrap items-center gap-4 rounded-2xl border border-emerald-500/15 px-5 py-4"
-      style={{ background: "linear-gradient(135deg, hsl(var(--primary) / 0.06) 0%, hsl(var(--primary) / 0.02) 100%)" }}
+      className="flex flex-wrap items-center gap-4 rounded-2xl border border-emerald-500/15 px-5 py-4 bg-gradient-to-br from-primary/[0.06] to-primary/[0.02]"
     >
       <div className="flex min-w-[140px] items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">

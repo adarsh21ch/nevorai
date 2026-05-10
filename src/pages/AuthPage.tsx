@@ -430,13 +430,13 @@ const AuthPage = () => {
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: "radial-gradient(ellipse at 50% 0%, rgba(26, 79, 214, 0.12) 0%, transparent 70%)",
+          background: "radial-gradient(ellipse at 50% 0%, color-mix(in oklab, var(--color-brand-blue-deep) 12%, transparent) 0%, transparent 70%)",
         }}
       />
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
           <Link to="/" className="inline-block"><Logo size="lg" showByline /></Link>
-          <p className="text-sm mt-3" style={{ color: "#8899AA" }}>
+          <p className="text-sm mt-3" style={{ color: "var(--color-hero-muted)" }}>
             {stage === "email" && "Welcome — let's get you in."}
             {stage === "login" && "Welcome back! Enter your password."}
             {stage === "signup" && "Create your nFlow account."}
@@ -454,7 +454,7 @@ const AuthPage = () => {
               type="button"
               onClick={resetToEmail}
               className="flex items-center gap-1 text-xs mb-4 hover:text-foreground transition-colors"
-              style={{ color: "#8899AA" }}
+              style={{ color: "var(--color-hero-muted)" }}
             >
               <ArrowLeft size={14} /> Use a different email
             </button>
@@ -466,7 +466,7 @@ const AuthPage = () => {
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm">Email <span className="text-destructive">*</span></Label>
                 <div className="relative">
-                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#8899AA" }} />
+                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--color-hero-muted)" }} />
                   <Input
                     id="email" type="email" placeholder="you@example.com"
                     className="auth-input pl-9" required autoFocus
@@ -477,7 +477,7 @@ const AuthPage = () => {
 
                 {/* Auto-detect status */}
                 {autoCheckStatus === "checking" && (
-                  <div className="flex items-center gap-2 text-xs px-1" style={{ color: "#8899AA" }}>
+                  <div className="flex items-center gap-2 text-xs px-1" style={{ color: "var(--color-hero-muted)" }}>
                     <Loader2 size={12} className="animate-spin" /> Checking your email…
                   </div>
                 )}
@@ -495,7 +495,7 @@ const AuthPage = () => {
                             : "You're part of the Nevorai family."}
                         </span>
                       </p>
-                      <p className="text-xs mt-0.5" style={{ color: "#8899AA" }}>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--color-hero-muted)" }}>
                         {autoCheckInfo.hasNflowAccount
                           ? "Enter your password to log in."
                           : autoCheckInfo.isPro
@@ -547,7 +547,7 @@ const AuthPage = () => {
                   type="button"
                   onClick={() => setStage("login")}
                   className="text-xs hover:underline"
-                  style={{ color: "#8899AA" }}
+                  style={{ color: "var(--color-hero-muted)" }}
                 >
                   Already have an nFlow account? <span className="text-primary">Log in</span>
                 </button>
@@ -576,7 +576,7 @@ const AuthPage = () => {
                     <p className="text-sm font-semibold">
                       {nevoraiInfo?.fullName ? `Hi ${nevoraiInfo.fullName.split(" ")[0]} —` : "Welcome —"} we found your Nevorai account
                     </p>
-                    <p className="text-xs mt-1" style={{ color: "#8899AA" }}>
+                    <p className="text-xs mt-1" style={{ color: "var(--color-hero-muted)" }}>
                       {nevoraiInfo?.isPro
                         ? "You have a Nevorai Pro subscription. Verify your email to unlock the Individual plan on nFlow — free, no payment needed."
                         : "You're already part of the Nevorai family. We'll send you a 6-digit code to securely sign you in to nFlow."}
@@ -601,7 +601,7 @@ const AuthPage = () => {
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     disabled={submitting}
                   />
-                  <p className="text-xs" style={{ color: "#8899AA" }}>
+                  <p className="text-xs" style={{ color: "var(--color-hero-muted)" }}>
                     {otpSendStatus === "sending" ? (
                       <span className="flex items-center gap-1.5"><Loader2 size={11} className="animate-spin" /> Sending your code…</span>
                     ) : (
@@ -648,7 +648,7 @@ const AuthPage = () => {
             !form.email.trim() ? (
               // Safety net: never show signup without an email — bounce back
               <div className="space-y-4 text-center py-6">
-                <p className="text-sm" style={{ color: "#8899AA" }}>
+                <p className="text-sm" style={{ color: "var(--color-hero-muted)" }}>
                   Please enter your email first so we can set up your account.
                 </p>
                 <Button variant="hero" size="lg" className="w-full" onClick={resetToEmail} style={{ borderRadius: "12px" }}>
@@ -660,7 +660,7 @@ const AuthPage = () => {
                 <div className="space-y-2">
                   <Label htmlFor="name" className="text-sm">Full Name <span className="text-destructive">*</span></Label>
                   <div className="relative">
-                    <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#8899AA" }} />
+                    <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--color-hero-muted)" }} />
                     <Input id="name" placeholder="Your full name" className="auth-input pl-9" required
                       value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                   </div>
@@ -668,7 +668,7 @@ const AuthPage = () => {
                 <div className="space-y-2">
                   <Label className="text-sm">Email</Label>
                   <div className="relative">
-                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#8899AA" }} />
+                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--color-hero-muted)" }} />
                     <Input className="auth-input pl-9 pr-16 opacity-90" value={form.email} readOnly />
                     <button
                       type="button"
@@ -680,9 +680,9 @@ const AuthPage = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-sm">Phone <span style={{ color: "#8899AA" }} className="text-xs">(optional)</span></Label>
+                  <Label htmlFor="phone" className="text-sm">Phone <span style={{ color: "var(--color-hero-muted)" }} className="text-xs">(optional)</span></Label>
                   <div className="relative">
-                    <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#8899AA" }} />
+                    <Phone size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--color-hero-muted)" }} />
                     <Input id="phone" placeholder="+91 9876543210" className="auth-input pl-9"
                       value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
                   </div>
@@ -694,7 +694,7 @@ const AuthPage = () => {
                   ) : "Create Account"}
                 </Button>
                 <div className="text-center">
-                  <button type="button" onClick={() => setStage("login")} className="text-xs hover:underline" style={{ color: "#8899AA" }}>
+                  <button type="button" onClick={() => setStage("login")} className="text-xs hover:underline" style={{ color: "var(--color-hero-muted)" }}>
                     Already have an account? <span className="text-primary">Log in</span>
                   </button>
                 </div>
@@ -708,7 +708,7 @@ const AuthPage = () => {
               <div className="space-y-2">
                 <Label className="text-sm">Email</Label>
                 <div className="relative">
-                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#8899AA" }} />
+                  <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--color-hero-muted)" }} />
                   <Input className="auth-input pl-9" value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })} required />
                 </div>
@@ -724,7 +724,7 @@ const AuthPage = () => {
                 ) : "Sign In"}
               </Button>
               <div className="text-center">
-                <button type="button" onClick={resetToEmail} className="text-xs hover:underline" style={{ color: "#8899AA" }}>
+                <button type="button" onClick={resetToEmail} className="text-xs hover:underline" style={{ color: "var(--color-hero-muted)" }}>
                   No account yet? <span className="text-primary">Create one</span>
                 </button>
               </div>
@@ -739,7 +739,7 @@ const AuthPage = () => {
                   <ShieldCheck className="text-primary shrink-0" size={20} />
                   <div className="flex-1">
                     <p className="text-sm font-semibold">You're signed in 🎉</p>
-                    <p className="text-xs mt-1" style={{ color: "#8899AA" }}>
+                    <p className="text-xs mt-1" style={{ color: "var(--color-hero-muted)" }}>
                       Set a password so you can log in with your email next time — no code needed.
                       You can always skip this and request a code later.
                     </p>
@@ -751,17 +751,17 @@ const AuthPage = () => {
                 <div className="space-y-2">
                   <Label className="text-sm">Email</Label>
                   <div className="relative">
-                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#8899AA" }} />
+                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--color-hero-muted)" }} />
                     <Input className="auth-input pl-9 opacity-90" value={form.email} readOnly />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="new-password" className="text-sm">
-                    Create a password <span style={{ color: "#8899AA" }} className="text-xs">(optional)</span>
+                    Create a password <span style={{ color: "var(--color-hero-muted)" }} className="text-xs">(optional)</span>
                   </Label>
                   <div className="relative">
-                    <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#8899AA" }} />
+                    <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--color-hero-muted)" }} />
                     <Input
                       id="new-password"
                       type={showPassword ? "text" : "password"}
@@ -775,12 +775,12 @@ const AuthPage = () => {
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 hover:text-foreground"
-                      style={{ color: "#8899AA" }}
+                      style={{ color: "var(--color-hero-muted)" }}
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
-                  <p className="text-xs" style={{ color: "#8899AA" }}>
+                  <p className="text-xs" style={{ color: "var(--color-hero-muted)" }}>
                     Minimum 8 characters. You can change it anytime from Settings.
                   </p>
                 </div>
@@ -815,7 +815,7 @@ const AuthPage = () => {
           )}
         </div>
 
-        <p className="text-center text-xs mt-6" style={{ color: "#8899AA" }}>
+        <p className="text-center text-xs mt-6" style={{ color: "var(--color-hero-muted)" }}>
           By continuing, you agree to our <Link to="/terms" className="text-primary hover:underline">Terms</Link> and <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
         </p>
       </div>
@@ -830,7 +830,7 @@ const PasswordField = ({ form, setForm, showPassword, setShowPassword, showForgo
       {showForgot && <Link to="/auth/reset-password" className="text-xs text-primary hover:underline">Forgot password?</Link>}
     </div>
     <div className="relative">
-      <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "#8899AA" }} />
+      <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--color-hero-muted)" }} />
       <Input
         id="password" type={showPassword ? "text" : "password"} placeholder="••••••••"
         className="auth-input pl-9 pr-10" required
@@ -838,7 +838,7 @@ const PasswordField = ({ form, setForm, showPassword, setShowPassword, showForgo
         onChange={(e) => setForm({ ...form, password: e.target.value })}
       />
       <button type="button" onClick={() => setShowPassword(!showPassword)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 hover:text-foreground" style={{ color: "#8899AA" }}>
+        className="absolute right-3 top-1/2 -translate-y-1/2 hover:text-foreground" style={{ color: "var(--color-hero-muted)" }}>
         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
       </button>
     </div>
