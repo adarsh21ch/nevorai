@@ -79,7 +79,7 @@ export const LandingPageCodeGate = ({ pageId, pageTitle, message, onSuccess }: L
           </div>
           <h2 className="text-xl font-heading font-bold mb-1 text-white">{pageTitle}</h2>
           <p className="text-sm font-medium mb-1 text-white">This page is private</p>
-          <p className="text-xs mb-6" style={{ color: "#94a3b8" }}>
+          <p className="text-xs mb-6" style={{ color: "var(--color-hero-muted)" }}>
             {message || "Enter the access code to continue."}
           </p>
 
@@ -118,7 +118,7 @@ export const LandingPageCodeGate = ({ pageId, pageTitle, message, onSuccess }: L
             </form>
           )}
 
-          <p className="text-[10px] mt-4 flex items-center justify-center gap-1" style={{ color: "#94a3b8" }}>
+          <p className="text-[10px] mt-4 flex items-center justify-center gap-1" style={{ color: "var(--color-hero-muted)" }}>
             <Lock size={10} /> Secure & encrypted verification
           </p>
         </div>
