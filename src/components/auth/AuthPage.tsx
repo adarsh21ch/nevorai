@@ -301,7 +301,13 @@ export default function AuthPage() {
       } catch { /* lockout RPC missing — proceed */ }
 
       const { error } = await signIn(form.email, form.password);
-      void supabase.rpc("record_auth_attempt", { _email: form.email, _ip: null, _success: !error }).catch(() => undefined);
+      void (async () => {
+        try {
+          await supabase.rpc("record_auth_attempt", { _email: form.email, _ip: null, _success: !error });
+        } catch {
+          return undefined;
+        }
+      })();
 
       if (error) { toast.error("Invalid email or password."); return; }
       toast.success("Welcome back!");
