@@ -46,7 +46,6 @@ import { Route as LandingPagesIdRouteImport } from './routes/landing-pages.$id'
 import { Route as LSlugRouteImport } from './routes/l.$slug'
 import { Route as FunnelsCreateRouteImport } from './routes/funnels.create'
 import { Route as FunnelsIdRouteImport } from './routes/funnels.$id'
-import { Route as FSlugRouteImport } from './routes/f.$slug'
 import { Route as CheckoutReturnRouteImport } from './routes/checkout.return'
 import { Route as AuthUpdatePasswordRouteImport } from './routes/auth.update-password'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
@@ -57,6 +56,7 @@ import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminSubscriptionsRouteImport } from './routes/admin.subscriptions'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminKycRouteImport } from './routes/admin.kyc'
+import { Route as FSlugIndexRouteImport } from './routes/f.$slug.index'
 import { Route as LandingPagesIdEditRouteImport } from './routes/landing-pages.$id.edit'
 import { Route as FunnelsIdEditRouteImport } from './routes/funnels.$id.edit'
 import { Route as FSlugMemberRouteImport } from './routes/f.$slug.member'
@@ -254,11 +254,6 @@ const FunnelsIdRoute = FunnelsIdRouteImport.update({
   path: '/funnels/$id',
   getParentRoute: () => rootRouteImport,
 } as any).lazy(() => import('./routes/funnels.$id.lazy').then((d) => d.Route))
-const FSlugRoute = FSlugRouteImport.update({
-  id: '/f/$slug',
-  path: '/f/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any).lazy(() => import('./routes/f.$slug.lazy').then((d) => d.Route))
 const CheckoutReturnRoute = CheckoutReturnRouteImport.update({
   id: '/checkout/return',
   path: '/checkout/return',
@@ -317,6 +312,11 @@ const AdminKycRoute = AdminKycRouteImport.update({
   path: '/kyc',
   getParentRoute: () => AdminRoute,
 } as any).lazy(() => import('./routes/admin.kyc.lazy').then((d) => d.Route))
+const FSlugIndexRoute = FSlugIndexRouteImport.update({
+  id: '/f/$slug/',
+  path: '/f/$slug/',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() => import('./routes/f.$slug.index.lazy').then((d) => d.Route))
 const LandingPagesIdEditRoute = LandingPagesIdEditRouteImport.update({
   id: '/edit',
   path: '/edit',
@@ -376,7 +376,6 @@ export interface FileRoutesByFullPath {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
-  '/f/$slug': typeof FSlugRouteWithChildren
   '/funnels/$id': typeof FunnelsIdRouteWithChildren
   '/funnels/create': typeof FunnelsCreateRoute
   '/l/$slug': typeof LSlugRoute
@@ -391,6 +390,7 @@ export interface FileRoutesByFullPath {
   '/f/$slug/member': typeof FSlugMemberRoute
   '/funnels/$id/edit': typeof FunnelsIdEditRoute
   '/landing-pages/$id/edit': typeof LandingPagesIdEditRoute
+  '/f/$slug/': typeof FSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -429,7 +429,6 @@ export interface FileRoutesByTo {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
-  '/f/$slug': typeof FSlugRouteWithChildren
   '/funnels/$id': typeof FunnelsIdRouteWithChildren
   '/funnels/create': typeof FunnelsCreateRoute
   '/l/$slug': typeof LSlugRoute
@@ -444,6 +443,7 @@ export interface FileRoutesByTo {
   '/f/$slug/member': typeof FSlugMemberRoute
   '/funnels/$id/edit': typeof FunnelsIdEditRoute
   '/landing-pages/$id/edit': typeof LandingPagesIdEditRoute
+  '/f/$slug': typeof FSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -483,7 +483,6 @@ export interface FileRoutesById {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/auth/update-password': typeof AuthUpdatePasswordRoute
   '/checkout/return': typeof CheckoutReturnRoute
-  '/f/$slug': typeof FSlugRouteWithChildren
   '/funnels/$id': typeof FunnelsIdRouteWithChildren
   '/funnels/create': typeof FunnelsCreateRoute
   '/l/$slug': typeof LSlugRoute
@@ -498,6 +497,7 @@ export interface FileRoutesById {
   '/f/$slug/member': typeof FSlugMemberRoute
   '/funnels/$id/edit': typeof FunnelsIdEditRoute
   '/landing-pages/$id/edit': typeof LandingPagesIdEditRoute
+  '/f/$slug/': typeof FSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -538,7 +538,6 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/auth/update-password'
     | '/checkout/return'
-    | '/f/$slug'
     | '/funnels/$id'
     | '/funnels/create'
     | '/l/$slug'
@@ -553,6 +552,7 @@ export interface FileRouteTypes {
     | '/f/$slug/member'
     | '/funnels/$id/edit'
     | '/landing-pages/$id/edit'
+    | '/f/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -591,7 +591,6 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/auth/update-password'
     | '/checkout/return'
-    | '/f/$slug'
     | '/funnels/$id'
     | '/funnels/create'
     | '/l/$slug'
@@ -606,6 +605,7 @@ export interface FileRouteTypes {
     | '/f/$slug/member'
     | '/funnels/$id/edit'
     | '/landing-pages/$id/edit'
+    | '/f/$slug'
   id:
     | '__root__'
     | '/'
@@ -644,7 +644,6 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/auth/update-password'
     | '/checkout/return'
-    | '/f/$slug'
     | '/funnels/$id'
     | '/funnels/create'
     | '/l/$slug'
@@ -659,6 +658,7 @@ export interface FileRouteTypes {
     | '/f/$slug/member'
     | '/funnels/$id/edit'
     | '/landing-pages/$id/edit'
+    | '/f/$slug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -689,7 +689,6 @@ export interface RootRouteChildren {
   UpgradeRoute: typeof UpgradeRoute
   VideosRoute: typeof VideosRoute
   CheckoutReturnRoute: typeof CheckoutReturnRoute
-  FSlugRoute: typeof FSlugRouteWithChildren
   FunnelsIdRoute: typeof FunnelsIdRouteWithChildren
   FunnelsCreateRoute: typeof FunnelsCreateRoute
   LSlugRoute: typeof LSlugRoute
@@ -700,6 +699,7 @@ export interface RootRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   FunnelsIndexRoute: typeof FunnelsIndexRoute
   LandingPagesIndexRoute: typeof LandingPagesIndexRoute
+  FSlugIndexRoute: typeof FSlugIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -963,13 +963,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FunnelsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/f/$slug': {
-      id: '/f/$slug'
-      path: '/f/$slug'
-      fullPath: '/f/$slug'
-      preLoaderRoute: typeof FSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/checkout/return': {
       id: '/checkout/return'
       path: '/checkout/return'
@@ -1040,6 +1033,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminKycRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/f/$slug/': {
+      id: '/f/$slug/'
+      path: '/f/$slug'
+      fullPath: '/f/$slug/'
+      preLoaderRoute: typeof FSlugIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/landing-pages/$id/edit': {
       id: '/landing-pages/$id/edit'
       path: '/edit'
@@ -1085,16 +1085,6 @@ const LiveRouteChildren: LiveRouteChildren = {
 }
 
 const LiveRouteWithChildren = LiveRoute._addFileChildren(LiveRouteChildren)
-
-interface FSlugRouteChildren {
-  FSlugMemberRoute: typeof FSlugMemberRoute
-}
-
-const FSlugRouteChildren: FSlugRouteChildren = {
-  FSlugMemberRoute: FSlugMemberRoute,
-}
-
-const FSlugRouteWithChildren = FSlugRoute._addFileChildren(FSlugRouteChildren)
 
 interface FunnelsIdRouteChildren {
   FunnelsIdEditRoute: typeof FunnelsIdEditRoute
@@ -1148,7 +1138,6 @@ const rootRouteChildren: RootRouteChildren = {
   UpgradeRoute: UpgradeRoute,
   VideosRoute: VideosRoute,
   CheckoutReturnRoute: CheckoutReturnRoute,
-  FSlugRoute: FSlugRouteWithChildren,
   FunnelsIdRoute: FunnelsIdRouteWithChildren,
   FunnelsCreateRoute: FunnelsCreateRoute,
   LSlugRoute: LSlugRoute,
@@ -1159,6 +1148,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   FunnelsIndexRoute: FunnelsIndexRoute,
   LandingPagesIndexRoute: LandingPagesIndexRoute,
+  FSlugIndexRoute: FSlugIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
