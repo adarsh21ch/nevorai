@@ -103,7 +103,10 @@ export function ViewCapacityCard() {
       const { data, error } = await supabase.functions.invoke("razorpay-portal", {
         body: { action: "create_tier_upgrade_order", tier_id: confirmTier.id },
       });
-      if (error || !data?.order_id) throw new Error(error?.message || data?.error || "Failed to create order");
+      if (error || !data?.order_id) {
+        const msg = await getSupabaseFunctionErrorMessage(error, data?.error || "Failed to create order");
+        throw new Error(msg);
+      }
 
       const tier = confirmTier;
       const proratedCharge = data.prorated_charge as number;
