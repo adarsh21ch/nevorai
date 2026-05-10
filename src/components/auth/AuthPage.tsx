@@ -42,80 +42,6 @@ export default function AuthPage() {
   const [otpSendStatus, setOtpSendStatus] = useState<"idle" | "sending" | "sent" | "failed">("idle");
   const [otpShake, setOtpShake] = useState(false);
   const otpInputRef = useRef<HTMLInputElement>(null);
-  const lastAutoSubmittedRef = useRef<string>("");
-  const verifyOtpCodeRef = useRef<((code: string) => Promise<void>) | null>(null);
-
-  const [autoCheckStatus, setAutoCheckStatus] = useState<"idle" | "checking" | "match" | "none">("idle");
-  const [autoCheckInfo, setAutoCheckInfo] = useState<NevoraiInfo | null>(null);
-  const lookupCacheRef = useRef<Map<string, { exists: boolean; isPro: boolean; fullName: string | null; hasNflowAccount: boolean }>>(new Map());
-  const abortRef = useRef<AbortController | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const checkStartRef = useRef<number>(0);
-
-  const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
-
-  useEffect(() => {
-    if (stage !== "email") return;
-    const email = form.email.trim().toLowerCase();
-    if (!isValidEmail(email)) {
-      setAutoCheckStatus("idle");
-      setAutoCheckInfo(null);
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      if (abortRef.current) abortRef.current.abort();
-      return;
-    }
-    const cached = lookupCacheRef.current.get(email);
-    if (cached) {
-      if (cached.exists) {
-        setAutoCheckStatus("match");
-        setAutoCheckInfo({ fullName: cached.fullName, isPro: cached.isPro, hasNflowAccount: cached.hasNflowAccount });
-      } else {
-        setAutoCheckStatus("none");
-        setAutoCheckInfo(null);
-      }
-      return;
-    }
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
-      if (abortRef.current) abortRef.current.abort();
-      const controller = new AbortController();
-      abortRef.current = controller;
-      setAutoCheckStatus("checking");
-      checkStartRef.current = Date.now();
-      try {
-        const { data, error } = await supabase.functions.invoke("verify-nevorai-member", { body: { email, mode: "lookup" } });
-        if (controller.signal.aborted) return;
-        if (error) throw error;
-        const result = {
-          exists: !!data?.exists,
-          isPro: !!data?.isPro,
-          fullName: data?.fullName ?? null,
-          hasNflowAccount: !!data?.hasNflowAccount,
-        };
-        lookupCacheRef.current.set(email, result);
-        const elapsed = Date.now() - checkStartRef.current;
-        const wait = Math.max(0, 300 - elapsed);
-        setTimeout(() => {
-          if (controller.signal.aborted) return;
-          if (result.exists) {
-            setAutoCheckStatus("match");
-            setAutoCheckInfo({ fullName: result.fullName, isPro: result.isPro, hasNflowAccount: result.hasNflowAccount });
-          } else {
-            setAutoCheckStatus("none");
-            setAutoCheckInfo(null);
-          }
-        }, wait);
-      } catch {
-        if (!controller.signal.aborted) {
-          setAutoCheckStatus("idle");
-          setAutoCheckInfo(null);
-        }
-      }
-    }, 700);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [form.email, stage]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -128,28 +54,8 @@ export default function AuthPage() {
       setResendCount(0);
       setResendCooldown(0);
       setOtpSendStatus("idle");
-      lastAutoSubmittedRef.current = "";
     }
   }, [stage]);
-
-  const enterOtpFromAutoDetect = () => {
-    if (!autoCheckInfo) return;
-    setNevoraiInfo(autoCheckInfo);
-    if (autoCheckInfo.hasNflowAccount) {
-      setStage("login");
-      return;
-    }
-    setStage("nevorai-otp");
-    handleSendOtp();
-  };
-
-  useEffect(() => {
-    if (stage !== "nevorai-otp") return;
-    if (otp.length === 6 && !submitting && lastAutoSubmittedRef.current !== otp) {
-      lastAutoSubmittedRef.current = otp;
-      verifyOtpCodeRef.current?.(otp);
-    }
-  }, [otp, stage, submitting]);
 
   useEffect(() => {
     if (!loading && user) navigate({ to: "/dashboard" });
@@ -172,42 +78,13 @@ export default function AuthPage() {
     setNevoraiInfo(null);
     setOtp("");
     setForm((f) => ({ ...f, password: "", name: "", phone: "" }));
-    setAutoCheckStatus("idle");
-    setAutoCheckInfo(null);
   };
 
   const handleContinue = async (e: React.FormEvent) => {
     e.preventDefault();
     const email = form.email.trim().toLowerCase();
     if (!email) { toast.error("Please enter your email"); return; }
-    const cached = lookupCacheRef.current.get(email);
-    if (cached) {
-      if (cached.exists) {
-        setNevoraiInfo({ fullName: cached.fullName, isPro: cached.isPro, hasNflowAccount: cached.hasNflowAccount });
-        if (cached.hasNflowAccount) { setStage("login"); return; }
-        setStage("nevorai-otp");
-        handleSendOtp();
-        return;
-      }
-      setStage("signup");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("verify-nevorai-member", { body: { email, mode: "lookup" } });
-      if (error) throw error;
-      if (data?.exists) {
-        setNevoraiInfo({ fullName: data.fullName, isPro: !!data.isPro, hasNflowAccount: !!data.hasNflowAccount });
-        if (data.hasNflowAccount) { setStage("login"); return; }
-        setStage("nevorai-otp");
-        return;
-      }
-      setStage("signup");
-    } catch {
-      setStage("signup");
-    } finally {
-      setSubmitting(false);
-    }
+    setStage("signup");
   };
 
   const handleSendOtp = async () => {
@@ -224,7 +101,6 @@ export default function AuthPage() {
         setResendCooldown(30);
         setResendCount((c) => c + 1);
         setOtp("");
-        lastAutoSubmittedRef.current = "";
         toast.success(`Code sent to ${form.email}.`);
         setTimeout(() => otpInputRef.current?.focus(), 100);
       } else {
@@ -249,7 +125,7 @@ export default function AuthPage() {
       if (error) throw error;
       if (!data?.success) {
         setOtpShake(true); setTimeout(() => setOtpShake(false), 500);
-        setOtp(""); lastAutoSubmittedRef.current = "";
+        setOtp("");
         otpInputRef.current?.focus();
         toast.error(data?.error || "Incorrect code.");
         return;
@@ -276,7 +152,6 @@ export default function AuthPage() {
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => { e.preventDefault(); await verifyOtpCode(otp); };
-  verifyOtpCodeRef.current = verifyOtpCode;
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -363,39 +238,15 @@ export default function AuthPage() {
                   <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: "var(--color-hero-muted)" }} />
                   <Input id="email" type="email" placeholder="you@example.com" className="auth-input pl-9" required autoFocus value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                 </div>
-                {autoCheckStatus === "checking" && (
-                  <div className="flex items-center gap-2 text-xs px-1" style={{ color: "var(--color-hero-muted)" }}>
-                    <Loader2 size={12} className="animate-spin" /> Checking your email…
-                  </div>
-                )}
-                {autoCheckStatus === "match" && autoCheckInfo && (
-                  <div className="flex items-start gap-2 p-3 rounded-lg border border-primary/30 bg-primary/5">
-                    <CheckCircle2 size={16} className="text-primary mt-0.5 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-foreground">
-                        {autoCheckInfo.fullName ? `Welcome back, ${autoCheckInfo.fullName.split(" ")[0]}!` : "Welcome back!"}
-                      </p>
-                    </div>
-                  </div>
-                )}
               </div>
 
-              {autoCheckStatus === "match" ? (
-                <Button type="button" variant="hero" className="w-full" size="lg" disabled={submitting} onClick={enterOtpFromAutoDetect} style={{ borderRadius: "12px" }}>
-                  {submitting ? (<span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> Loading…</span>)
-                    : autoCheckInfo?.hasNflowAccount ? (<span className="flex items-center gap-2"><Lock size={16} /> Continue to log in</span>)
-                    : (<span className="flex items-center gap-2"><ShieldCheck size={16} /> Send verification code</span>)}
+              <div className="space-y-2">
+                <Button variant="hero" className="w-full" size="lg" disabled={submitting} style={{ borderRadius: "12px" }}>
+                  {submitting ? (<span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> Continuing…</span>) : "Continue"}
                 </Button>
-              ) : (
-                <Button variant="hero" className="w-full" size="lg" disabled={submitting || autoCheckStatus === "checking"} style={{ borderRadius: "12px" }}>
-                  {submitting ? (<span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> Checking…</span>) : "Continue"}
+                <Button type="button" variant="outline" className="w-full" size="lg" disabled={submitting} onClick={() => setStage("login")}>
+                  Already have an account? Log in
                 </Button>
-              )}
-
-              <div className="text-center">
-                <button type="button" onClick={() => setStage("login")} className="text-xs hover:underline" style={{ color: "var(--color-hero-muted)" }}>
-                  Already have an nFlow account? <span className="text-primary">Log in</span>
-                </button>
               </div>
             </form>
           )}
@@ -534,7 +385,7 @@ export default function AuthPage() {
         </div>
 
         <p className="text-center text-xs mt-6" style={{ color: "var(--color-hero-muted)" }}>
-          By continuing, you agree to our <Link to="/" className="text-primary hover:underline">Terms</Link> and <Link to="/" className="text-primary hover:underline">Privacy Policy</Link>.
+          By continuing, you agree to our <Link to="/terms" className="text-primary hover:underline">Terms</Link> and <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>.
         </p>
       </div>
     </div>
