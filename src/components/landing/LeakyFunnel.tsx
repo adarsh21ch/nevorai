@@ -173,8 +173,8 @@ export const LeakyFunnel = () => {
                         </motion.div>
                       </div>
                     </div>
-                    <div className="pl-20 md:pl-30 mt-2" style={{ paddingLeft: undefined }}>
-                      <div className="ml-20 md:ml-30 text-sm md:text-base font-semibold text-gray-800" style={{ marginLeft: 0 }}>
+                    <div className="mt-2 pl-20 md:pl-[120px]">
+                      <div className="text-sm md:text-base font-semibold text-gray-800">
                         {step.label}
                       </div>
                       {step.sublabel && (
