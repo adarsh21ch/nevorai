@@ -2,7 +2,7 @@ import { usePlan } from "@/hooks/usePlan";
 import { useResourceCount } from "@/hooks/useResourceCount";
 import { Lock, Crown, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 
 interface LimitGateProps {
   resource: "funnel" | "landing_page" | "live_session";

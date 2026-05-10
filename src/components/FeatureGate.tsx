@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { usePlan } from "@/hooks/usePlan";
 import { Lock, Crown, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 
 interface FeatureGateProps {
   feature: string;

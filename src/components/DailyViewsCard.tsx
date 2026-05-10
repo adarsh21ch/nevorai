@@ -1,5 +1,5 @@
 import { Eye, Info, ArrowUpRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { useDailyViews } from "@/hooks/useDailyViews";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { usePlan } from "@/hooks/usePlan";

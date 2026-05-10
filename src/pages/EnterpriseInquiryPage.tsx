@@ -16,7 +16,7 @@ import {
 import { Crown, CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { sanitizeText, normalizePhone } from "@/lib/sanitize";
 
 const TEAM_SIZES = ["100-500", "500-1000", "1000-5000", "5000+"];

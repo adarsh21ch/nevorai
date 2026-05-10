@@ -3,7 +3,7 @@ import { Logo } from "@/components/landing/Logo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Download, Smartphone, Share, Plus, Check, ArrowLeft } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 
 const InstallApp = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);

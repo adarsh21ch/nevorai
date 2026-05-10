@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { Progress } from "@/components/ui/progress";
-import { Link } from "react-router-dom";
+import { Link } from "@/lib/router-compat";
 import { usePlan } from "@/hooks/usePlan";
 import { format } from "date-fns";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";

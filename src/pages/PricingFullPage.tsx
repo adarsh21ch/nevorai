@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/carousel";
 import { useState, useCallback, useEffect, useRef, ReactNode } from "react";
 import { motion } from "framer-motion";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
