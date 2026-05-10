@@ -5,9 +5,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const RAZORPAY_KEY_ID = Deno.env.get("RAZORPAY_KEY_ID")!;
-const RAZORPAY_KEY_SECRET = Deno.env.get("RAZORPAY_KEY_SECRET")!;
+// Trim to defend against trailing spaces/newlines pasted into the Supabase secret UI
+const RAZORPAY_KEY_ID = (Deno.env.get("RAZORPAY_KEY_ID") ?? "").trim();
+const RAZORPAY_KEY_SECRET = (Deno.env.get("RAZORPAY_KEY_SECRET") ?? "").trim();
 const RAZORPAY_API = "https://api.razorpay.com/v1";
+
+// Build marker — bumping this string forces a fresh deploy. v=2026-05-10b
+console.log("razorpay-portal build v=2026-05-10b key_id_prefix=", RAZORPAY_KEY_ID.slice(0, 8));
 
 function rzpHeaders() {
   return {
