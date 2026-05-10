@@ -20,6 +20,8 @@ export const getRouter = () => {
     context: { queryClient },
     scrollRestoration: true,
     defaultPreload: "intent",         // preload route chunk on link hover
+    defaultPendingMs: 150,
+    defaultPendingMinMs: 250,
     defaultPreloadStaleTime: 0,
   });
 

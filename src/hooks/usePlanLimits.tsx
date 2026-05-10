@@ -59,8 +59,9 @@ export const usePlanLimits = () => {
       const { data } = await (supabase as any).from("plan_config").select("*");
       return (data || []) as PlanConfig[];
     },
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: teamCount = 0 } = useQuery({

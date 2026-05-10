@@ -66,7 +66,8 @@ export const usePlan = () => {
       return data;
     },
     enabled: !!user,
-    staleTime: 30000,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   const activePlanKey = trialActive ? "pro_monthly" : (subscription?.plan_key || "free");
@@ -81,7 +82,8 @@ export const usePlan = () => {
         .maybeSingle();
       return data;
     },
-    staleTime: 60000,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 
   const now = new Date();

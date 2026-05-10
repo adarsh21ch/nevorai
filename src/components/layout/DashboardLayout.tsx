@@ -56,7 +56,10 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
       return count || 0;
     },
     enabled: !!user,
-    refetchInterval: 30000,
+    staleTime: 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchInterval: 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const handleLogout = async () => {

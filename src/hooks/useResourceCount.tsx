@@ -25,7 +25,9 @@ export const useResourceCount = () => {
       };
     },
     enabled: !!user,
-    staleTime: 15000,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   return counts;
