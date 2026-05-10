@@ -9,6 +9,7 @@ import { Eye, Check, Loader2, ArrowRight, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { calculateProratedUpgrade, formatProratedSummary } from "@/utils/prorateUpgrade";
+import { getSupabaseFunctionErrorMessage } from "@/lib/supabase-function-error";
 
 declare global {
   interface Window { Razorpay: any; }
@@ -102,7 +103,10 @@ export function ViewCapacityCard() {
       const { data, error } = await supabase.functions.invoke("razorpay-portal", {
         body: { action: "create_tier_upgrade_order", tier_id: confirmTier.id },
       });
-      if (error || !data?.order_id) throw new Error(error?.message || data?.error || "Failed to create order");
+      if (error || !data?.order_id) {
+        const msg = await getSupabaseFunctionErrorMessage(error, data?.error || "Failed to create order");
+        throw new Error(msg);
+      }
 
       const tier = confirmTier;
       const proratedCharge = data.prorated_charge as number;
@@ -124,12 +128,15 @@ export function ViewCapacityCard() {
                 razorpay_signature: response.razorpay_signature,
               },
             });
-            if (vErr || !vData?.success) throw vErr || new Error("Verification failed");
+            if (vErr || !vData?.success) {
+              const msg = await getSupabaseFunctionErrorMessage(vErr, vData?.error || "Verification failed");
+              throw new Error(msg);
+            }
             toast.success(`You're all set — now ${tier.daily_views} views/day!`);
             setConfirmTier(null);
             setTimeout(() => window.location.reload(), 1200);
-          } catch {
-            toast.error("Payment received but not yet activated. Contact support.");
+          } catch (err: any) {
+            toast.error(err?.message || "Payment received but not yet activated. Contact support.");
           }
         },
         prefill: {
