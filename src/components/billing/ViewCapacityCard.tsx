@@ -9,6 +9,7 @@ import { Eye, Check, Loader2, ArrowRight, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { calculateProratedUpgrade, formatProratedSummary } from "@/utils/prorateUpgrade";
+import { getSupabaseFunctionErrorMessage } from "@/lib/supabase-function-error";
 
 declare global {
   interface Window { Razorpay: any; }
