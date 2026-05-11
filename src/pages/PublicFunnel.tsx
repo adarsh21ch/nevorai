@@ -1304,6 +1304,7 @@ const PublicFunnel = () => {
           50%      { box-shadow: 0 0 0 6px hsl(var(--primary) / 0); }
         }
       `}</style>
+      <BrandingWatermark ownerId={(funnel as any)?.owner_id} />
     </div>
   );
 };
