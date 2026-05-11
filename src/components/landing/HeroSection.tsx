@@ -5,29 +5,9 @@ import { Play } from "lucide-react";
 import { FlowParticles } from "./FlowParticles";
 import { AnimatedLogo3D } from "./AnimatedLogo3D";
 import { CountUp } from "./CountUp";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
 export const HeroSection = () => {
-  const { data: trial } = useQuery({
-    queryKey: ["app-settings-trial-public"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("app_settings" as any)
-        .select("key, value")
-        .in("key", ["trial_enabled", "trial_days"]);
-      const map: Record<string, string> = {};
-      (data || []).forEach((s: any) => { map[s.key] = s.value; });
-      return {
-        isTrialEnabled: map.trial_enabled === "true",
-        trialDays: parseInt(map.trial_days || "7", 10),
-      };
-    },
-    staleTime: 60_000,
-  });
-  const isTrialEnabled = trial?.isTrialEnabled ?? false;
-  const trialDays = trial?.trialDays ?? 7;
-  const ctaLabel = isTrialEnabled ? `Start Free ${trialDays}-Day Trial →` : "Get Started →";
+  const ctaLabel = "Start Free →";
 
   return (
     <section className="hero-section relative min-h-screen flex items-center pt-20 pb-16 overflow-hidden bg-hero-bg">
