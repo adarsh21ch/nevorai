@@ -22,14 +22,14 @@ import { useRouter } from "@tanstack/react-router";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+  { icon: Video, label: "Videos", path: "/videos" },
   { icon: Layers, label: "Funnels", path: "/funnels" },
   { icon: FileText, label: "Landing Pages", path: "/landing-pages" },
   { icon: Radio, label: "Live", path: "/live" },
-  { icon: Video, label: "Videos", path: "/videos" },
   { icon: Users, label: "Leads", path: "/leads" },
+  { icon: BarChart3, label: "Insights", path: "/insights" },
   { icon: Crown, label: "Upgrade to Pro", path: "/billing" },
   { icon: IndianRupee, label: "Payments", path: "/payments" },
-  { icon: BarChart3, label: "Insights", path: "/insights" },
 ];
 
 const bottomItems = [{ icon: User, label: "Profile", path: "/profile" }];
