@@ -61,13 +61,13 @@ const VideoDetailPage = () => {
     queryFn: async () => {
       const [funnelsRes, lpRes, liveRes] = await Promise.all([
         supabase.from("funnels").select("id, title, is_published").eq("video_asset_id", id!),
-        supabase.from("landing_pages").select("id, title, is_published").eq("video_asset_id", id!),
+        supabase.from("landing_pages").select("id, title, status").eq("post_submit_video_asset_id", id!),
         supabase.from("live_sessions").select("id, title, status").eq("video_asset_id", id!),
       ]);
       return {
-        funnels: funnelsRes.data || [],
-        landingPages: lpRes.data || [],
-        liveSessions: liveRes.data || [],
+        funnels: (funnelsRes.data || []) as Array<{ id: string; title: string; is_published: boolean | null }>,
+        landingPages: (lpRes.data || []) as Array<{ id: string; title: string; status: string | null }>,
+        liveSessions: (liveRes.data || []) as Array<{ id: string; title: string; status: string | null }>,
       };
     },
     enabled: !!id,
