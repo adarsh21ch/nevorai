@@ -18,6 +18,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PaymentsRouteImport } from './routes/payments'
+import { Route as OnboardingUploadRouteImport } from './routes/onboarding-upload'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LiveRouteImport } from './routes/live'
@@ -106,6 +107,13 @@ const PaymentsRoute = PaymentsRouteImport.update({
   path: '/payments',
   getParentRoute: () => rootRouteImport,
 } as any).lazy(() => import('./routes/payments.lazy').then((d) => d.Route))
+const OnboardingUploadRoute = OnboardingUploadRouteImport.update({
+  id: '/onboarding-upload',
+  path: '/onboarding-upload',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() =>
+  import('./routes/onboarding-upload.lazy').then((d) => d.Route),
+)
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -357,6 +365,7 @@ export interface FileRoutesByFullPath {
   '/live': typeof LiveRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
+  '/onboarding-upload': typeof OnboardingUploadRoute
   '/payments': typeof PaymentsRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -410,6 +419,7 @@ export interface FileRoutesByTo {
   '/live': typeof LiveRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
+  '/onboarding-upload': typeof OnboardingUploadRoute
   '/payments': typeof PaymentsRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -464,6 +474,7 @@ export interface FileRoutesById {
   '/live': typeof LiveRouteWithChildren
   '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
+  '/onboarding-upload': typeof OnboardingUploadRoute
   '/payments': typeof PaymentsRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -519,6 +530,7 @@ export interface FileRouteTypes {
     | '/live'
     | '/notifications'
     | '/onboarding'
+    | '/onboarding-upload'
     | '/payments'
     | '/pricing'
     | '/privacy'
@@ -572,6 +584,7 @@ export interface FileRouteTypes {
     | '/live'
     | '/notifications'
     | '/onboarding'
+    | '/onboarding-upload'
     | '/payments'
     | '/pricing'
     | '/privacy'
@@ -625,6 +638,7 @@ export interface FileRouteTypes {
     | '/live'
     | '/notifications'
     | '/onboarding'
+    | '/onboarding-upload'
     | '/payments'
     | '/pricing'
     | '/privacy'
@@ -679,6 +693,7 @@ export interface RootRouteChildren {
   LiveRoute: typeof LiveRouteWithChildren
   NotificationsRoute: typeof NotificationsRoute
   OnboardingRoute: typeof OnboardingRoute
+  OnboardingUploadRoute: typeof OnboardingUploadRoute
   PaymentsRoute: typeof PaymentsRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -773,6 +788,13 @@ declare module '@tanstack/react-router' {
       path: '/payments'
       fullPath: '/payments'
       preLoaderRoute: typeof PaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding-upload': {
+      id: '/onboarding-upload'
+      path: '/onboarding-upload'
+      fullPath: '/onboarding-upload'
+      preLoaderRoute: typeof OnboardingUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -1136,6 +1158,7 @@ const rootRouteChildren: RootRouteChildren = {
   LiveRoute: LiveRouteWithChildren,
   NotificationsRoute: NotificationsRoute,
   OnboardingRoute: OnboardingRoute,
+  OnboardingUploadRoute: OnboardingUploadRoute,
   PaymentsRoute: PaymentsRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,

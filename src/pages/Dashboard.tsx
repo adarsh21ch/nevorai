@@ -1,10 +1,12 @@
-import { Link, useNavigate } from "@/lib/router-compat";
+import { Navigate, Link, useNavigate } from "@/lib/router-compat";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { UpgradeBanner } from "@/components/UpgradeBanner";
 import { MonthlyViewsBanner } from "@/components/MonthlyViewsBanner";
 import { DashboardKpiStrip } from "@/components/dashboard/DashboardKpiStrip";
 import { DashboardContentRow } from "@/components/dashboard/DashboardContentRow";
+import { LatestVideoShareCard } from "@/components/dashboard/LatestVideoShareCard";
+import { useHasVideos } from "@/hooks/useHasVideos";
 import { Layers, Users, Eye, IndianRupee, TrendingUp, BarChart3, Calendar, Plus, ArrowRight, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
