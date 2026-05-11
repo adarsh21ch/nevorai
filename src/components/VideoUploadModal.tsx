@@ -438,6 +438,7 @@ export const VideoUploadModal = ({ open, onClose, onSuccess }: Props) => {
             )}
           </Button>
         </div>
+        )}
       </DialogContent>
     </Dialog>
   );
