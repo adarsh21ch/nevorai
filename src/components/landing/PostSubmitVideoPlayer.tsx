@@ -87,8 +87,12 @@ export const PostSubmitVideoPlayer = ({ videoUrl, thumbnailUrl, allowSeek = true
     if (!v || !bar || !v.duration) return;
     const rect = bar.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    v.currentTime = pct * v.duration;
-  }, []);
+    let target = pct * v.duration;
+    if (!allowSeek && target > maxWatchedRef.current + 0.5) {
+      target = maxWatchedRef.current;
+    }
+    v.currentTime = target;
+  }, [allowSeek]);
 
   const handleSeekDown = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     e.stopPropagation();
