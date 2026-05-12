@@ -18,7 +18,6 @@ import { TrialExpiredGate } from "@/components/TrialExpiredGate";
 import { TrialBanner } from "@/components/TrialBanner";
 import { usePlan } from "@/hooks/usePlan";
 // SupportFAB removed from global mount — moved to Profile page
-import { MobileCreateAction } from "@/components/layout/MobileCreateAction";
 import { useRouter } from "@tanstack/react-router";
 
 const navItems = [
