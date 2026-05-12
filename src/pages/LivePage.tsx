@@ -20,6 +20,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { computeSessionSlots, currentLiveSlot, nextSlot as nextSlotFn, sessionDurationSec } from "@/lib/liveSession";
+import { VideoPickerModal } from "@/components/VideoPickerModal";
 
 const generateSlug = (title: string) =>
   title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 60) || "my-session";
