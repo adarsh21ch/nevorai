@@ -246,7 +246,12 @@ const PublicLandingPage = () => {
                     )}
                   </div>
                 )}
-                <PostSubmitVideoPlayer videoUrl={video.public_url} thumbnailUrl={video.thumbnail_url} />
+                <PostSubmitVideoPlayer
+                  videoUrl={video.public_url}
+                  thumbnailUrl={video.thumbnail_url}
+                  allowSeek={video.allow_seek !== false}
+                  allowSpeed={video.allow_playback_speed !== false}
+                />
               </>
             ) : (
               <Card className="p-12 text-center space-y-3">
