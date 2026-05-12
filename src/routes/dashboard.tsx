@@ -155,7 +155,7 @@ function DashboardPage() {
         >
           <div className="flex items-center gap-2">
             <BarChart3 size={16} className="text-primary" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Views Today</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">People Watched Today</span>
           </div>
           <div className="mt-2 text-5xl font-heading font-extrabold tracking-tight text-foreground">{fmt(daily.used)}</div>
           <p className="mt-1 text-sm text-muted-foreground">{remainingToday} remaining today · {daily.isUnlimited ? "Unlimited plan" : `Daily limit ${fmt(daily.limit)}`}</p>
