@@ -15,6 +15,7 @@ import { Upload, X, FileVideo, Loader2, Info, AlertCircle, RotateCcw, ChevronDow
 import { Switch } from "@/components/ui/switch";
 import { sanitizeText, sanitizeFilename } from "@/lib/sanitize";
 import { Link } from "@/lib/router-compat";
+import { WhatsAppShareButton } from "@/components/WhatsAppShareButton";
 
 interface Props {
   open: boolean;
