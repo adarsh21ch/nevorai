@@ -99,11 +99,11 @@ function DashboardPage() {
   const remainingToday = daily.isUnlimited ? "∞" : Math.max(0, daily.limit - daily.used);
 
   const stats: Array<{ icon: any; label: string; value: string; sub: string; color: StatColor; href: string }> = [
-    { icon: BarChart3, label: "Views Today", value: fmt(daily.used), sub: `${remainingToday} remaining`, color: "purple", href: "/insights" },
-    { icon: Calendar, label: "Views This Month", value: fmt(monthly.used), sub: `of ${monthly.isUnlimited ? "∞" : fmt(monthly.limit)}`, color: "teal", href: "/insights" },
+    { icon: BarChart3, label: "People Watched Today", value: fmt(daily.used), sub: `${remainingToday} remaining`, color: "purple", href: "/insights" },
+    { icon: Calendar, label: "Watched This Month", value: fmt(monthly.used), sub: `of ${monthly.isUnlimited ? "∞" : fmt(monthly.limit)}`, color: "teal", href: "/insights" },
     { icon: IndianRupee, label: "Revenue", value: "₹0", sub: "This month", color: "green", href: "/payments" },
-    { icon: Users, label: "Total Leads", value: fmt(leadCount), sub: "All time", color: "blue", href: "/leads" },
-    { icon: TrendingUp, label: "Conversion Rate", value: `${convRate}%`, sub: "Leads / Views", color: "amber", href: "/insights" },
+    { icon: Users, label: "New Contacts", value: fmt(leadCount), sub: "All time", color: "blue", href: "/leads" },
+    { icon: TrendingUp, label: "Actions Taken", value: `${convRate}%`, sub: "Contacts / Views", color: "amber", href: "/insights" },
     { icon: Eye, label: "Video Plays", value: fmt(totalViews), sub: "All time", color: "gray", href: "/videos" },
   ];
 
@@ -155,7 +155,7 @@ function DashboardPage() {
         >
           <div className="flex items-center gap-2">
             <BarChart3 size={16} className="text-primary" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Views Today</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">People Watched Today</span>
           </div>
           <div className="mt-2 text-5xl font-heading font-extrabold tracking-tight text-foreground">{fmt(daily.used)}</div>
           <p className="mt-1 text-sm text-muted-foreground">{remainingToday} remaining today · {daily.isUnlimited ? "Unlimited plan" : `Daily limit ${fmt(daily.limit)}`}</p>

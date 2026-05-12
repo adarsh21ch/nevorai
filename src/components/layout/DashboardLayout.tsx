@@ -18,7 +18,6 @@ import { TrialExpiredGate } from "@/components/TrialExpiredGate";
 import { TrialBanner } from "@/components/TrialBanner";
 import { usePlan } from "@/hooks/usePlan";
 // SupportFAB removed from global mount — moved to Profile page
-import { MobileCreateAction } from "@/components/layout/MobileCreateAction";
 import { useRouter } from "@tanstack/react-router";
 
 const navItems = [
@@ -267,31 +266,8 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
           <div className="grid grid-cols-5 items-end">
             {[
               { icon: LayoutDashboard, label: "Home", path: "/dashboard" },
-              { icon: Video, label: "Videos", path: "/videos" },
-            ].map((item) => {
-              const active = location.pathname.startsWith(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onMouseEnter={() => preloadRoute(item.path)}
-                  className={cn(
-                    "flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 px-1 text-[11px] transition-colors",
-                    active ? "text-primary" : "text-muted-foreground"
-                  )}
-                >
-                  <item.icon size={21} />
-                  <span className="truncate">{item.label}</span>
-                </Link>
-              );
-            })}
-
-            {/* Center create action */}
-            <div className="flex min-h-[64px] items-center justify-center">
-              <MobileCreateAction />
-            </div>
-
-            {[
+              { icon: Video, label: "My Videos", path: "/videos" },
+              { icon: Users, label: "My Leads", path: "/leads" },
               { icon: Layers, label: "Funnels", path: "/funnels" },
               { icon: User, label: "Profile", path: "/profile" },
             ].map((item) => {
@@ -302,11 +278,11 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                   to={item.path}
                   onMouseEnter={() => preloadRoute(item.path)}
                   className={cn(
-                    "flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 px-1 text-[11px] transition-colors",
-                    active ? "text-primary" : "text-muted-foreground"
+                    "flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium transition-colors",
+                    active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <item.icon size={21} />
+                  <item.icon size={20} strokeWidth={active ? 2.5 : 1.8} />
                   <span className="truncate">{item.label}</span>
                 </Link>
               );

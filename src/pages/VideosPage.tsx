@@ -249,8 +249,8 @@ const VideosPage = () => {
                 )}
                 <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1 flex-wrap">
                   <span>{formatSize(v.file_size_bytes)}</span>
-                  <span className={`px-1.5 py-0.5 rounded text-[10px] ${v.status === "ready" ? "bg-success/10 text-success" : v.status === "failed" ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"}`}>
-                    {v.status}
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${v.status === "ready" ? "bg-success/10 text-success" : v.status === "failed" ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"}`}>
+                    {v.status === "ready" ? "✓ Ready" : v.status === "failed" ? "✗ Failed" : "⏳ Processing"}
                   </span>
                   {v._source === "linked" ? (
                     <span className="px-1.5 py-0.5 rounded text-[10px] bg-primary/10 text-primary">Added via Link</span>
