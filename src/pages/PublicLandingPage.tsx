@@ -48,7 +48,7 @@ const PublicLandingPage = () => {
         }
         if ((data as any).post_submit_video_asset_id) {
           const { data: v } = await supabase
-            .from("video_assets").select("id,title,public_url,thumbnail_url")
+            .from("video_assets").select("id,title,public_url,thumbnail_url,allow_seek,allow_playback_speed")
             .eq("id", (data as any).post_submit_video_asset_id).single();
           if (v) setVideo(v);
         }
@@ -246,7 +246,12 @@ const PublicLandingPage = () => {
                     )}
                   </div>
                 )}
-                <PostSubmitVideoPlayer videoUrl={video.public_url} thumbnailUrl={video.thumbnail_url} />
+                <PostSubmitVideoPlayer
+                  videoUrl={video.public_url}
+                  thumbnailUrl={video.thumbnail_url}
+                  allowSeek={video.allow_seek !== false}
+                  allowSpeed={video.allow_playback_speed !== false}
+                />
               </>
             ) : (
               <Card className="p-12 text-center space-y-3">

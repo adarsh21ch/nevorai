@@ -4,9 +4,12 @@ import { Volume2, VolumeX, Play, Pause, Maximize } from "lucide-react";
 interface PostSubmitVideoPlayerProps {
   videoUrl: string;
   thumbnailUrl?: string | null;
+  allowSeek?: boolean;
+  allowSpeed?: boolean;
 }
 
-export const PostSubmitVideoPlayer = ({ videoUrl, thumbnailUrl }: PostSubmitVideoPlayerProps) => {
+export const PostSubmitVideoPlayer = ({ videoUrl, thumbnailUrl, allowSeek = true, allowSpeed = true }: PostSubmitVideoPlayerProps) => {
+  const maxWatchedRef = useRef(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const seekBarRef = useRef<HTMLDivElement>(null);
@@ -49,16 +52,27 @@ export const PostSubmitVideoPlayer = ({ videoUrl, thumbnailUrl }: PostSubmitVide
     if (!v) return;
     const onTime = () => {
       setCurrentTime(v.currentTime);
+      if (v.currentTime > maxWatchedRef.current) maxWatchedRef.current = v.currentTime;
       if (v.duration) { setDuration(v.duration); setProgress((v.currentTime / v.duration) * 100); }
     };
     const onMeta = () => setDuration(v.duration);
+    const onSeeking = () => {
+      if (!allowSeek && v.currentTime > maxWatchedRef.current + 0.5) {
+        v.currentTime = maxWatchedRef.current;
+      }
+    };
+    const onRate = () => { if (!allowSpeed && v.playbackRate !== 1) v.playbackRate = 1; };
     v.addEventListener("timeupdate", onTime);
     v.addEventListener("loadedmetadata", onMeta);
+    v.addEventListener("seeking", onSeeking);
+    v.addEventListener("ratechange", onRate);
     return () => {
       v.removeEventListener("timeupdate", onTime);
       v.removeEventListener("loadedmetadata", onMeta);
+      v.removeEventListener("seeking", onSeeking);
+      v.removeEventListener("ratechange", onRate);
     };
-  }, []);
+  }, [allowSeek, allowSpeed]);
 
   const togglePlay = () => {
     const v = videoRef.current;
@@ -84,8 +98,12 @@ export const PostSubmitVideoPlayer = ({ videoUrl, thumbnailUrl }: PostSubmitVide
     if (!v || !bar || !v.duration) return;
     const rect = bar.getBoundingClientRect();
     const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    v.currentTime = pct * v.duration;
-  }, []);
+    let target = pct * v.duration;
+    if (!allowSeek && target > maxWatchedRef.current + 0.5) {
+      target = maxWatchedRef.current;
+    }
+    v.currentTime = target;
+  }, [allowSeek]);
 
   const handleSeekDown = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     e.stopPropagation();

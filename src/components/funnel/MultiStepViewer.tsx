@@ -29,6 +29,8 @@ interface FunnelStep {
   video_url?: string | null;
   video_thumbnail?: string | null;
   video_allow_copy_link?: boolean;
+  video_allow_seek?: boolean;
+  video_allow_playback_speed?: boolean;
   access_code_enabled?: boolean;
   access_code_plain?: string | null;
   access_code_message?: string | null;
@@ -552,8 +554,8 @@ export const MultiStepViewer = ({
                       <VideoPlayer
                         src={activeStep.video_url}
                         poster={activeStep.video_thumbnail || undefined}
-                        allowSeek={funnel.allow_seek !== false}
-                        allowSpeed={funnel.allow_speed_change !== false}
+                        allowSeek={activeStep.video_allow_seek !== undefined ? activeStep.video_allow_seek !== false : funnel.allow_seek !== false}
+                        allowSpeed={activeStep.video_allow_playback_speed !== undefined ? activeStep.video_allow_playback_speed !== false : funnel.allow_speed_change !== false}
                         autoplay={true}
                         initialTime={activeProgress?.last_position_seconds || 0}
                         onTimeUpdate={(ct: number, dur: number) => handleVideoTimeUpdate(activeStepIndex, ct, dur)}

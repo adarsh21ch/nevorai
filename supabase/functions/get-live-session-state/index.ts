@@ -183,16 +183,21 @@ Deno.serve(async (req) => {
         if (vId) {
           const { data: video } = await supabase
             .from("video_assets")
-            .select("id, public_url, thumbnail_url, duration_seconds")
+            .select("id, public_url, thumbnail_url, duration_seconds, allow_seek, allow_playback_speed")
             .eq("id", vId)
             .maybeSingle();
           if (video) {
             videoUrl = video.public_url;
             videoDuration = video.duration_seconds || videoDuration || null;
+            (funnelData as any).__video_allow_seek = video.allow_seek !== false;
+            (funnelData as any).__video_allow_playback_speed = video.allow_playback_speed !== false;
           }
         }
       }
     }
+
+    const videoAllowSeek = (funnelData as any)?.__video_allow_seek !== false;
+    const videoAllowSpeed = (funnelData as any)?.__video_allow_playback_speed !== false;
 
     const duration = videoDuration ?? (session.duration_minutes ? session.duration_minutes * 60 : 3600);
     const slots = computeSlots(session, duration);
@@ -292,6 +297,8 @@ Deno.serve(async (req) => {
       all_slots: slots.slice(0, 60).map((t) => new Date(t).toISOString()),
       concurrent_viewers: concurrentViewers,
       session: trimSession(session),
+      video_allow_seek: videoAllowSeek,
+      video_allow_playback_speed: videoAllowSpeed,
     });
   } catch (err) {
     console.error("get-live-session-state error", err);
