@@ -52,16 +52,27 @@ export const PostSubmitVideoPlayer = ({ videoUrl, thumbnailUrl, allowSeek = true
     if (!v) return;
     const onTime = () => {
       setCurrentTime(v.currentTime);
+      if (v.currentTime > maxWatchedRef.current) maxWatchedRef.current = v.currentTime;
       if (v.duration) { setDuration(v.duration); setProgress((v.currentTime / v.duration) * 100); }
     };
     const onMeta = () => setDuration(v.duration);
+    const onSeeking = () => {
+      if (!allowSeek && v.currentTime > maxWatchedRef.current + 0.5) {
+        v.currentTime = maxWatchedRef.current;
+      }
+    };
+    const onRate = () => { if (!allowSpeed && v.playbackRate !== 1) v.playbackRate = 1; };
     v.addEventListener("timeupdate", onTime);
     v.addEventListener("loadedmetadata", onMeta);
+    v.addEventListener("seeking", onSeeking);
+    v.addEventListener("ratechange", onRate);
     return () => {
       v.removeEventListener("timeupdate", onTime);
       v.removeEventListener("loadedmetadata", onMeta);
+      v.removeEventListener("seeking", onSeeking);
+      v.removeEventListener("ratechange", onRate);
     };
-  }, []);
+  }, [allowSeek, allowSpeed]);
 
   const togglePlay = () => {
     const v = videoRef.current;
