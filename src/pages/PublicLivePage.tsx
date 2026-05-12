@@ -31,6 +31,8 @@ interface StateResponse {
   meeting_url?: string | null;
   all_slots: string[];
   concurrent_viewers?: number;
+  video_allow_seek?: boolean;
+  video_allow_playback_speed?: boolean;
   session: {
     id: string;
     title: string;
