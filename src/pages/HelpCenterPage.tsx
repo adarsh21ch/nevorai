@@ -1,67 +1,37 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { PlayCircle, Search, BookOpen } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
-
-type Tutorial = {
-  id: string;
-  title: string;
-  description: string | null;
-  video_url: string;
-  thumbnail_url: string | null;
-  category: string;
-  sort_order: number;
-  is_published: boolean;
-  duration_seconds: number | null;
-};
-
-const categoryLabels: Record<string, string> = {
-  "getting-started": "Getting started",
-  funnels: "Funnels",
-  sharing: "Sharing",
-  videos: "Videos",
-  billing: "Billing & plans",
-  advanced: "Advanced",
-};
+import { PlayCircle, Search, BookOpen, X } from "lucide-react";
+import {
+  tutorials,
+  tutorialCategoryLabels,
+  type Tutorial,
+  type TutorialCategory,
+} from "@/config/tutorials";
 
 export default function HelpCenterPage() {
   useDocumentTitle("Help Center · Nevorai Flow");
   const [query, setQuery] = useState("");
   const [active, setActive] = useState<Tutorial | null>(null);
 
-  const { data: tutorials = [], isLoading } = useQuery({
-    queryKey: ["tutorial-videos"],
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("tutorial_videos")
-        .select("*")
-        .eq("is_published", true)
-        .order("sort_order", { ascending: true });
-      if (error) throw error;
-      return (data || []) as Tutorial[];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
-
   const grouped = useMemo(() => {
     const filtered = tutorials.filter((t) => {
       if (!query) return true;
       const q = query.toLowerCase();
-      return t.title.toLowerCase().includes(q) || (t.description || "").toLowerCase().includes(q);
+      return (
+        t.title.toLowerCase().includes(q) ||
+        t.description.toLowerCase().includes(q)
+      );
     });
-    const map = new Map<string, Tutorial[]>();
+    const map = new Map<TutorialCategory, Tutorial[]>();
     for (const t of filtered) {
-      const k = t.category || "getting-started";
-      if (!map.has(k)) map.set(k, []);
-      map.get(k)!.push(t);
+      if (!map.has(t.category)) map.set(t.category, []);
+      map.get(t.category)!.push(t);
     }
     return Array.from(map.entries());
-  }, [tutorials, query]);
+  }, [query]);
 
   return (
     <div className="space-y-6">
@@ -75,7 +45,10 @@ export default function HelpCenterPage() {
       </div>
 
       <div className="relative max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+        <Search
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          size={16}
+        />
         <Input
           placeholder="Search tutorials..."
           value={query}
@@ -84,21 +57,17 @@ export default function HelpCenterPage() {
         />
       </div>
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-56 w-full rounded-xl" />
-          ))}
-        </div>
-      ) : grouped.length === 0 ? (
+      {grouped.length === 0 ? (
         <Card className="p-10 text-center text-muted-foreground">
-          No tutorials yet. Check back soon!
+          No tutorials match "{query}".
         </Card>
       ) : (
         grouped.map(([cat, items]) => (
           <section key={cat} className="space-y-3">
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">{categoryLabels[cat] || cat}</h2>
+              <h2 className="text-lg font-semibold">
+                {tutorialCategoryLabels[cat]}
+              </h2>
               <Badge variant="secondary">{items.length}</Badge>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -109,8 +78,13 @@ export default function HelpCenterPage() {
                   className="group overflow-hidden rounded-xl border border-border bg-card text-left transition-all hover:border-primary/50 hover:shadow-md"
                 >
                   <div className="relative aspect-video w-full overflow-hidden bg-muted">
-                    {t.thumbnail_url ? (
-                      <img src={t.thumbnail_url} alt={t.title} className="h-full w-full object-cover" loading="lazy" />
+                    {t.thumbnailUrl ? (
+                      <img
+                        src={t.thumbnailUrl}
+                        alt={t.title}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10">
                         <PlayCircle className="text-primary/60" size={48} />
@@ -122,9 +96,9 @@ export default function HelpCenterPage() {
                   </div>
                   <div className="p-4">
                     <div className="font-semibold leading-tight">{t.title}</div>
-                    {t.description && (
-                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{t.description}</p>
-                    )}
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                      {t.description}
+                    </p>
                   </div>
                 </button>
               ))}
@@ -142,27 +116,30 @@ export default function HelpCenterPage() {
             className="w-full max-w-3xl overflow-hidden rounded-xl bg-card shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
+            <div className="flex items-center justify-between border-b border-border p-3">
+              <div className="font-semibold">{active.title}</div>
+              <button
+                onClick={() => setActive(null)}
+                className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
             <div className="aspect-video w-full bg-black">
               <iframe
-                src={active.video_url}
+                src={active.videoUrl}
                 title={active.title}
                 className="h-full w-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
             </div>
-            <div className="p-4">
-              <div className="text-lg font-semibold">{active.title}</div>
-              {active.description && (
-                <p className="mt-1 text-sm text-muted-foreground">{active.description}</p>
-              )}
-              <button
-                onClick={() => setActive(null)}
-                className="mt-4 rounded-md bg-muted px-4 py-2 text-sm font-medium hover:bg-muted/70"
-              >
-                Close
-              </button>
-            </div>
+            {active.description && (
+              <div className="p-4 text-sm text-muted-foreground">
+                {active.description}
+              </div>
+            )}
           </div>
         </div>
       )}
