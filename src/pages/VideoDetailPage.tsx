@@ -288,7 +288,7 @@ const VideoDetailPage = () => {
               />
               <SettingRow
                 title="Allow others to reuse this video"
-                desc="Public viewers see a 'Copy nFlow Link' button."
+                desc="Public viewers see a 'Copy Nevorai Flow Link' button."
                 checked={allowCopyLink}
                 onChange={setAllowCopyLink}
               />

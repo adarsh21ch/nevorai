@@ -158,7 +158,7 @@ const VideosPage = () => {
               className="flex-1 sm:flex-none border-primary/50 text-primary hover:bg-primary/10"
               onClick={() => setLinkModalOpen(true)}
             >
-              <Link2 size={16} /> Add by nFlow Link
+              <Link2 size={16} /> Add by Nevorai Flow Link
             </Button>
           </div>
         </div>
@@ -200,13 +200,13 @@ const VideosPage = () => {
           <div className="glass-card p-8 sm:p-12 text-center w-full max-w-full">
             <Video size={40} className="text-muted-foreground mx-auto mb-3" />
             <h3 className="font-heading font-semibold mb-2">{search ? "No videos found" : "No videos yet"}</h3>
-            <p className="text-sm text-muted-foreground mb-6">Upload a video or add one using an nFlow link.</p>
+            <p className="text-sm text-muted-foreground mb-6">Upload a video or add one using an Nevorai Flow link.</p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button variant="hero" onClick={() => setUploadModalOpen(true)}>
                 <Upload size={16} /> Upload Video
               </Button>
               <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary/10" onClick={() => setLinkModalOpen(true)}>
-                <Link2 size={16} /> Add by nFlow Link
+                <Link2 size={16} /> Add by Nevorai Flow Link
               </Button>
             </div>
           </div>
