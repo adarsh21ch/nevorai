@@ -636,13 +636,36 @@ const LandingPageEditor = () => {
           <>
             <div className="p-4 bg-muted/50 rounded-xl space-y-3">
               <Label className="font-semibold">Select Video</Label>
-              <Select value={form.post_submit_video_asset_id || "__none__"} onValueChange={(v) => updateField("post_submit_video_asset_id", v === "__none__" ? null : v)}>
-                <SelectTrigger className="bg-muted border-border"><SelectValue placeholder="Select a video..." /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">None</SelectItem>
-                  {videos.map((v: any) => (<SelectItem key={v.id} value={v.id}>{v.title}</SelectItem>))}
-                </SelectContent>
-              </Select>
+              {selectedPostSubmitVideo ? (
+                <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-background/40">
+                  <div className="w-20 h-12 rounded bg-muted overflow-hidden flex-shrink-0">
+                    {(selectedPostSubmitVideo as any).thumbnail_url ? (
+                      <img src={(selectedPostSubmitVideo as any).thumbnail_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center"><VideoIcon size={16} className="text-muted-foreground" /></div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{(selectedPostSubmitVideo as any).title}</p>
+                    <p className="text-xs text-muted-foreground">From your video library</p>
+                  </div>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setVideoPickerOpen(true)}>Change</Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => updateField("post_submit_video_asset_id", null)}>Remove</Button>
+                </div>
+              ) : (
+                <Button type="button" variant="outline" className="w-full justify-start gap-2" onClick={() => setVideoPickerOpen(true)}>
+                  <VideoIcon size={16} /> Pick a video from your library
+                </Button>
+              )}
+              <VideoPickerModal
+                open={videoPickerOpen}
+                onClose={() => setVideoPickerOpen(false)}
+                onSelect={(videoId, title) => {
+                  updateField("post_submit_video_asset_id", videoId);
+                  if (!form.post_submit_video_title) updateField("post_submit_video_title", title);
+                  setVideoPickerOpen(false);
+                }}
+              />
             </div>
             <div className="p-4 bg-muted/50 rounded-xl space-y-3">
               <div><Label>Video Title</Label><Input value={form.post_submit_video_title} onChange={(e) => updateField("post_submit_video_title", e.target.value)} className="mt-1.5 bg-muted border-border" /></div>
