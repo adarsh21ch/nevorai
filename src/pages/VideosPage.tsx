@@ -31,7 +31,7 @@ const VideosPage = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [search, setSearch] = useState("");
-  const [view, setView] = useState<"grid" | "list">(isMobile ? "list" : "grid");
+  const [view, setView] = useState<"grid" | "list">("list");
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [shareVideo, setShareVideo] = useState<{ id: string; title: string } | null>(null);
