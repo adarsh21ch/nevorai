@@ -687,7 +687,7 @@ const PricingFullPage = () => {
     </>
   );
 
-  return isDashboardUpgradeView ? <DashboardLayout>{pageBody}</DashboardLayout> : <div className="min-h-screen">{pageBody}</div>;
+  return isDashboardUpgradeView ? <DashboardLayout>{pageBody}</DashboardLayout> : <div data-theme="dark" className="min-h-screen bg-hero-bg text-white">{pageBody}</div>;
 };
 
 export default PricingFullPage;
