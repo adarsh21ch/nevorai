@@ -1,12 +1,12 @@
 export const brand = {
-  name: "Nevorai Flow",
+  name: "nnFlow by Nevorai",
   nameShort: "Flow",
   nameAccent: "Flow",
-  fullBrand: "Flow by Nevorai",
+  fullBrand: "nFlow by Nevorai",
   parent: "Nevorai",
   tagline: "Turn every video into a smart sales funnel.",
   description:
-    "Upload a video, share a smart link, capture leads. Flow by Nevorai turns every video into a sales funnel.",
+    "Upload a video, share a smart link, capture leads. nFlow by Nevorai turns every video into a sales funnel.",
   domain: "flow.nevorai.com",
   supportEmail: "teamnevorai@gmail.com",
   social: {
@@ -15,9 +15,9 @@ export const brand = {
     whatsapp: "https://wa.me/919329040508",
   },
   footer: {
-    poweredBy: "Powered by Nevorai Flow",
-    poweredByFull: "Powered by Flow by Nevorai",
+    poweredBy: "Powered by nnFlow by Nevorai",
+    poweredByFull: "Powered by nFlow by Nevorai",
     madeIn: "Made in India 🇮🇳",
-    copyright: `© ${new Date().getFullYear()} Nevorai Flow. All rights reserved.`,
+    copyright: `© ${new Date().getFullYear()} nnFlow by Nevorai. All rights reserved.`,
   },
 } as const;

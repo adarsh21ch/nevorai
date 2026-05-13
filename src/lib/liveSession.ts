@@ -142,9 +142,9 @@ export function buildICS(opts: {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Nevorai Flow//Live Sessions//EN",
+    "PRODID:-//nnFlow by Nevorai//Live Sessions//EN",
     "BEGIN:VEVENT",
-    `UID:${opts.uid}@Nevorai Flow`,
+    `UID:${opts.uid}@nnFlow by Nevorai`,
     `DTSTAMP:${toICSDate(new Date())}`,
     `DTSTART:${toICSDate(opts.start)}`,
     `DTEND:${toICSDate(opts.end)}`,
