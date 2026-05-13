@@ -10,7 +10,20 @@ import {
 } from "lucide-react";
 
 import { CopyNflowLinkButton } from "@/components/CopyNflowLinkButton";
-import { sanitizeText, normalizePhone } from "@/lib/sanitize";
+import { sanitizeText } from "@/lib/sanitize";
+import {
+  normalizePhone,
+  trimSmart,
+  validatePhone,
+  validateEmail,
+  validateRequired,
+  phoneInputProps,
+  emailInputProps,
+  nameInputProps,
+  cityInputProps,
+  scrollToFirstError,
+} from "@/lib/leadInputs";
+import { Loader2 } from "lucide-react";
 import { StepCodeGate } from "@/components/funnel/StepCodeGate";
 
 interface FunnelStep {
