@@ -993,6 +993,7 @@ const RegistrationForm = ({
       <Button variant="hero" className="w-full" onClick={onSubmit} disabled={submitting}>
         {submitting ? <><Loader2 size={16} className="animate-spin mr-2 inline" /> Submitting…</> : "Register & Continue"}
       </Button>
+      <PrivacyMicrocopy />
     </div>
   );
 };

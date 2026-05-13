@@ -663,6 +663,7 @@ export const MultiStepViewer = ({
                             <Button type="submit" disabled={leadSubmitting} className="w-full h-14 text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl">
                               {leadSubmitting ? <><Loader2 size={16} className="animate-spin mr-2 inline" /> Submitting…</> : <>Submit →</>}
                             </Button>
+                            <PrivacyMicrocopy color={sc.textMuted} />
                           </form>
                         </>
                       )}
