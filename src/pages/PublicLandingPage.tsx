@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "@/lib/router-compat";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,18 @@ import { LandingPageCodeGate } from "@/components/funnel/LandingPageCodeGate";
 import { DateOfBirthInput } from "@/components/funnel/DateOfBirthInput";
 import { PostSubmitVideoPlayer } from "@/components/landing/PostSubmitVideoPlayer";
 import { BrandingWatermark } from "@/components/BrandingWatermark";
+import {
+  normalizePhone,
+  trimSmart,
+  validatePhone,
+  validateEmail,
+  validateRequired,
+  phoneInputProps,
+  emailInputProps,
+  nameInputProps,
+  cityInputProps,
+  scrollToFirstError,
+} from "@/lib/leadInputs";
 
 const PublicLandingPage = () => {
   const { slug } = useParams<{ slug: string }>();
