@@ -12,6 +12,18 @@ import {
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { googleCalendarUrl, buildICS, downloadICS } from "@/lib/liveSession";
+import {
+  normalizePhone,
+  trimSmart,
+  validatePhone,
+  validateEmail,
+  validateRequired,
+  phoneInputProps,
+  emailInputProps,
+  nameInputProps,
+  cityInputProps,
+  scrollToFirstError,
+} from "@/lib/leadInputs";
 
 type ViewerState = "waiting" | "live" | "ended" | "replay";
 
