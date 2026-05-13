@@ -30,7 +30,7 @@ export const NFlowLogo = ({
   return (
     <div className={cn("flex flex-col leading-none", className)}>
       <div className={cn("font-heading tracking-tight", textColor, s.name)}>
-        <span className="font-normal">n</span>
+        <span className="font-medium">n</span>
         <span className="font-extrabold">Flow</span>
       </div>
       <span className={cn("font-medium tracking-wide mt-0.5", s.by, subColor)}>
