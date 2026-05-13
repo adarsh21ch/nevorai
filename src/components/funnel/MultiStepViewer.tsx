@@ -23,7 +23,7 @@ import {
   cityInputProps,
   scrollToFirstError,
 } from "@/lib/leadInputs";
-import { Loader2 } from "lucide-react";
+
 import { StepCodeGate } from "@/components/funnel/StepCodeGate";
 
 interface FunnelStep {
