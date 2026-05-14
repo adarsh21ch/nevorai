@@ -173,7 +173,10 @@ const VideosPage = () => {
       <div className="space-y-6 w-full max-w-full overflow-x-hidden box-border">
         {/* Header */}
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-xl sm:text-2xl font-heading font-bold">My Videos</h1>
+          <div className="flex items-baseline gap-3 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-heading font-bold">My Videos</h1>
+            <StorageUsageInline />
+          </div>
           <Button size="sm" onClick={() => setUploadModalOpen(true)} className="flex items-center gap-1.5">
             <Upload size={14} /> Upload Video
           </Button>
