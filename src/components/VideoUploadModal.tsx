@@ -109,6 +109,13 @@ export const VideoUploadModal = ({ open, onClose, onSuccess }: Props) => {
       return;
     }
 
+    // Storage quota gate — block before any upload starts.
+    if (!storage.isLoading && storage.wouldExceed(f.size)) {
+      setStorageLimitOpen(true);
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
+
     setFormatWarning(result === "warn" ? FORMAT_WARNING_MSG : null);
     setFile(f);
     if (!title) setTitle(f.name.replace(/\.[^/.]+$/, ""));
