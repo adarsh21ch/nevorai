@@ -2,26 +2,48 @@ import { useState, useEffect } from "react";
 import { useParams } from "@/lib/router-compat";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Logo } from "@/components/landing/Logo";
-import { Video, AlertTriangle, BadgeCheck, User as UserIcon } from "lucide-react";
+import NFlowLogo from "@/components/brand/NFlowLogo";
+import {
+  Video,
+  AlertTriangle,
+  Eye,
+  Clock,
+  Calendar,
+  Link2,
+  Share2,
+  Check,
+  Sun,
+  Moon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 import { VideoUploadModal } from "@/components/VideoUploadModal";
-import { CopyNflowLinkButton } from "@/components/CopyNflowLinkButton";
 import { BrandingWatermark } from "@/components/BrandingWatermark";
+import {
+  formatViewCount,
+  formatDuration,
+  formatRelativeDate,
+} from "@/lib/format";
+import { toast } from "sonner";
 
 const PublicVideoPage = () => {
   const { id } = useParams();
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [videoError, setVideoError] = useState(false);
   const [reuploadOpen, setReuploadOpen] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const { data: video, isLoading, error, refetch } = useQuery({
     queryKey: ["public-video", id],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("video_assets")
-        .select("id, title, description, public_url, thumbnail_url, duration_seconds, is_shared, owner_id, allow_copy_link, allow_seek, allow_playback_speed")
+        .select(
+          "id, title, description, public_url, thumbnail_url, duration_seconds, is_shared, owner_id, allow_copy_link, allow_seek, allow_playback_speed, view_count, created_at",
+        )
         .eq("id", id!)
         .eq("is_shared", true)
         .single();
@@ -34,24 +56,7 @@ const PublicVideoPage = () => {
     refetchOnWindowFocus: false,
   });
 
-  // Creator identity for the YouTube-style strip beneath the player.
-  const { data: creator } = useQuery({
-    queryKey: ["public-video-creator", video?.owner_id],
-    queryFn: async () => {
-      if (!video?.owner_id) return null;
-      const { data } = await supabase
-        .from("profiles")
-        .select("full_name, avatar_url, city, kyc_status")
-        .eq("id", video.owner_id)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!video?.owner_id,
-    staleTime: 10 * 60 * 1000,
-  });
-
-  // Best-effort view ping — increments view_count once per browser session so
-  // the owner's onboarding "magic moment" sees them open it on their phone.
+  // View ping — once per session.
   useEffect(() => {
     if (!id) return;
     const flag = `nflow:viewed:${id}`;
@@ -65,12 +70,66 @@ const PublicVideoPage = () => {
           .eq("id", id)
           .maybeSingle();
         const next = (data?.view_count ?? 0) + 1;
-        await (supabase as any).from("video_assets").update({ view_count: next }).eq("id", id);
+        await (supabase as any)
+          .from("video_assets")
+          .update({ view_count: next })
+          .eq("id", id);
       } catch {
         /* silent */
       }
     })();
   }, [id]);
+
+  // Per-video meta tags
+  useEffect(() => {
+    if (!video || typeof document === "undefined") return;
+    document.title = `${video.title} — Nevorai`;
+    const setMeta = (name: string, content: string, prop = false) => {
+      const attr = prop ? "property" : "name";
+      let el = document.querySelector(`meta[${attr}="${name}"]`);
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute(attr, name);
+        document.head.appendChild(el);
+      }
+      el.setAttribute("content", content);
+    };
+    setMeta("description", video.description || video.title);
+    setMeta("og:title", video.title, true);
+    setMeta("og:description", video.description || video.title, true);
+    setMeta("og:url", window.location.href, true);
+    if (video.thumbnail_url) setMeta("og:image", video.thumbnail_url, true);
+    setMeta("og:site_name", "Nevorai", true);
+  }, [video]);
+
+  const handleCopyLink = () => {
+    try {
+      navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      toast.success("Link copied");
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      toast.error("Could not copy link");
+    }
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: video?.title ?? "Nevorai video",
+      text: "Watch this video on Nevorai",
+      url: typeof window !== "undefined" ? window.location.href : "",
+    };
+    if (typeof navigator !== "undefined" && (navigator as any).share) {
+      try {
+        await (navigator as any).share(shareData);
+        return;
+      } catch {
+        /* user dismissed */
+      }
+    }
+    handleCopyLink();
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -85,27 +144,44 @@ const PublicVideoPage = () => {
         <div className="text-center">
           <Video size={48} className="text-muted-foreground mx-auto mb-4" />
           <h1 className="text-xl font-heading font-bold mb-2">Video Not Found</h1>
-          <p className="text-sm text-muted-foreground">This video doesn't exist or is no longer available.</p>
+          <p className="text-sm text-muted-foreground">
+            This video doesn't exist or is no longer available.
+          </p>
         </div>
       </div>
     );
   }
 
   const isOwner = !!user && user.id === video.owner_id;
+  const showDescToggle =
+    !!video.description && video.description.length > 200;
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-center mb-8">
-          <Logo size="sm" />
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Top header */}
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border">
+        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
+          <NFlowLogo size="sm" />
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full hover:bg-muted transition-colors"
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
         </div>
+      </header>
 
-        <div className="aspect-video bg-card rounded-xl overflow-hidden mb-6 relative">
+      {/* Player */}
+      <div className="max-w-3xl mx-auto px-0 sm:px-4 mt-4">
+        <div className="aspect-video bg-black sm:rounded-2xl overflow-hidden relative">
           {videoError ? (
-            <div className="w-full h-full flex flex-col items-center justify-center text-center px-4 gap-3">
+            <div className="w-full h-full flex flex-col items-center justify-center text-center px-4 gap-3 bg-card">
               <AlertTriangle size={36} className="text-destructive" />
               <p className="text-sm font-medium">Video format not supported.</p>
-              <p className="text-xs text-muted-foreground">Please re-upload as MP4 format.</p>
+              <p className="text-xs text-muted-foreground">
+                Please re-upload as MP4 format.
+              </p>
               {isOwner && (
                 <Button size="sm" variant="hero" onClick={() => setReuploadOpen(true)}>
                   Re-upload
@@ -116,7 +192,11 @@ const PublicVideoPage = () => {
             <video
               src={video.public_url}
               controls
-              controlsList={`${video.allow_seek === false ? "nodownload noplaybackrate " : ""}${video.allow_playback_speed === false ? "noplaybackrate" : ""}`.trim() || undefined}
+              controlsList={
+                `${video.allow_seek === false ? "nodownload noplaybackrate " : ""}${
+                  video.allow_playback_speed === false ? "noplaybackrate" : ""
+                }`.trim() || undefined
+              }
               autoPlay
               muted
               preload="auto"
@@ -129,21 +209,16 @@ const PublicVideoPage = () => {
                 const allowSeek = video.allow_seek !== false;
                 const allowSpeed = video.allow_playback_speed !== false;
                 const maxRef = { v: 0 };
-                el.ontimeupdate = () => { if (el.currentTime > maxRef.v) maxRef.v = el.currentTime; };
+                el.ontimeupdate = () => {
+                  if (el.currentTime > maxRef.v) maxRef.v = el.currentTime;
+                };
                 el.onseeking = () => {
-                  if (!allowSeek && el.currentTime > maxRef.v + 0.5) el.currentTime = maxRef.v;
+                  if (!allowSeek && el.currentTime > maxRef.v + 0.5)
+                    el.currentTime = maxRef.v;
                 };
-                el.onratechange = () => { if (!allowSpeed && el.playbackRate !== 1) el.playbackRate = 1; };
-                const tryUnmuted = async () => {
-                  try {
-                    el.muted = false;
-                    await el.play();
-                  } catch {
-                    el.muted = true;
-                    el.play().catch(() => {});
-                  }
+                el.onratechange = () => {
+                  if (!allowSpeed && el.playbackRate !== 1) el.playbackRate = 1;
                 };
-                tryUnmuted();
               }}
             />
           ) : (
@@ -152,59 +227,91 @@ const PublicVideoPage = () => {
             </div>
           )}
         </div>
+      </div>
 
-        <h1 className="text-2xl font-heading font-bold mb-2">{video.title}</h1>
+      {/* Title + meta */}
+      <div className="max-w-3xl mx-auto px-4 py-4 space-y-3">
+        <h1 className="text-xl sm:text-2xl font-heading font-bold leading-tight tracking-tight">
+          {video.title || "Untitled video"}
+        </h1>
 
-        {/* Creator strip — YouTube-style */}
-        {creator && (
-          <div className="mb-4 flex items-center gap-3 rounded-xl border border-border bg-card/40 p-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">
-              {creator.avatar_url ? (
-                <img src={creator.avatar_url} alt={creator.full_name || "Creator"} className="h-full w-full object-cover" />
-              ) : (
-                <UserIcon size={18} />
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <p className="truncate text-sm font-heading font-semibold">{creator.full_name || "Creator"}</p>
-                {creator.kyc_status === "verified" && (
-                  <span title="Verified creator" className="inline-flex items-center text-primary">
-                    <BadgeCheck size={15} />
-                  </span>
-                )}
-              </div>
-              {creator.city && <p className="truncate text-xs text-muted-foreground">{creator.city}</p>}
-            </div>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          {typeof video.view_count === "number" && video.view_count > 0 && (
+            <span className="flex items-center gap-1">
+              <Eye size={12} />
+              {formatViewCount(video.view_count)} views
+            </span>
+          )}
+          {!!video.duration_seconds && (
+            <span className="flex items-center gap-1">
+              <Clock size={12} />
+              {formatDuration(video.duration_seconds)}
+            </span>
+          )}
+          {video.created_at && (
+            <span className="flex items-center gap-1">
+              <Calendar size={12} />
+              {formatRelativeDate(video.created_at)}
+            </span>
+          )}
+        </div>
 
-        {video.description && <p className="text-sm text-muted-foreground mb-4">{video.description}</p>}
-        {video.duration_seconds && (
-          <p className="text-xs text-muted-foreground">
-            Duration: {Math.floor(video.duration_seconds / 60)}:{(video.duration_seconds % 60).toString().padStart(2, "0")}
-          </p>
-        )}
-
-        {/* Copy Nevorai Link — viewer-facing reuse button (compact) */}
-        {video.allow_copy_link !== false && (
-          <div className="mt-4 flex justify-end">
-            <CopyNflowLinkButton videoId={video.id} />
-          </div>
-        )}
-
-        <div className="mt-8 text-center">
-          <p className="text-xs text-muted-foreground"><span className="gradient-text font-heading font-semibold">Nevorai</span></p>
+        {/* Action chips */}
+        <div className="flex flex-wrap gap-2 pt-1">
+          {video.allow_copy_link !== false && (
+            <button
+              onClick={handleCopyLink}
+              className="flex items-center gap-1.5 px-4 h-11 rounded-full bg-muted hover:bg-muted/80 text-sm font-medium transition-colors"
+            >
+              {copied ? <Check size={14} /> : <Link2 size={14} />}
+              {copied ? "Copied" : "Copy link"}
+            </button>
+          )}
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-1.5 px-4 h-11 rounded-full bg-muted hover:bg-muted/80 text-sm font-medium transition-colors"
+          >
+            <Share2 size={14} />
+            Share
+          </button>
         </div>
       </div>
+
+      {/* Description */}
+      {video.description && (
+        <div className="max-w-3xl mx-auto px-4 mb-10">
+          <div className="rounded-xl bg-muted/50 p-4">
+            <div
+              className={`text-sm leading-relaxed whitespace-pre-wrap ${
+                descExpanded ? "" : "line-clamp-4"
+              }`}
+            >
+              {video.description}
+            </div>
+            {showDescToggle && (
+              <button
+                onClick={() => setDescExpanded((v) => !v)}
+                className="mt-2 text-xs font-semibold text-primary hover:underline"
+              >
+                {descExpanded ? "Show less" : "Show more"}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {isOwner && (
         <VideoUploadModal
           open={reuploadOpen}
           onClose={() => setReuploadOpen(false)}
-          onSuccess={() => { setVideoError(false); setReuploadOpen(false); refetch(); }}
+          onSuccess={() => {
+            setVideoError(false);
+            setReuploadOpen(false);
+            refetch();
+          }}
         />
       )}
+
       <BrandingWatermark ownerId={video?.owner_id} />
     </div>
   );
