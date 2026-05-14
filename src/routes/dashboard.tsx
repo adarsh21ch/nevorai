@@ -132,13 +132,17 @@ function DashboardPage() {
 
         {(() => {
           const hour = new Date().getHours();
-          const greet = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+          const greet =
+            hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : hour < 21 ? "Good evening" : "Good night";
           const firstName = profile?.full_name?.split(" ")[0] || "there";
           return (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <h1 className="text-2xl font-heading font-bold">{greet}, {firstName} 👋</h1>
-                <p className="mt-1 text-sm text-muted-foreground">Here's what's happening on Flow today.</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  nFlow by Nevorai
+                </p>
+                <h1 className="mt-1 text-2xl font-heading font-bold">{greet}, {firstName} 👋</h1>
+                <p className="mt-1 text-sm text-muted-foreground">Here's what's happening on nFlow today.</p>
               </div>
               <div className="flex gap-2">
                 <Link to="/funnels/create"><Button variant="hero" size="sm"><Plus size={14} /> Create Funnel</Button></Link>
