@@ -17,6 +17,8 @@ import { Switch } from "@/components/ui/switch";
 import { sanitizeText, sanitizeFilename } from "@/lib/sanitize";
 import { Link } from "@/lib/router-compat";
 import { WhatsAppShareButton } from "@/components/WhatsAppShareButton";
+import { useStorageUsage } from "@/hooks/useStorageUsage";
+import { StorageLimitModal } from "@/components/StorageLimitModal";
 
 interface Props {
   open: boolean;
