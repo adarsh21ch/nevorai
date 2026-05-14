@@ -113,7 +113,7 @@ export const VideoUploadModal = ({ open, onClose, onSuccess, skipStorageCheck = 
     }
 
     // Storage quota gate — block before any upload starts.
-    if (!storage.isLoading && storage.wouldExceed(f.size)) {
+    if (!skipStorageCheck && !storage.isLoading && storage.wouldExceed(f.size)) {
       setStorageLimitOpen(true);
       if (fileRef.current) fileRef.current.value = "";
       return;
