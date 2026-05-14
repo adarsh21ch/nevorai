@@ -501,8 +501,7 @@ const LivePage = () => {
       ? !!form.title.trim() && !!form.funnel_id && form.scheduled_times.some(Boolean)
       : !!form.title.trim() && !!form.meeting_url;
 
-  return (
-    <DashboardLayout>
+  const content = (
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -1020,8 +1019,8 @@ const LivePage = () => {
         tier={tier}
         reason="live"
       />
-    </DashboardLayout>
   );
+  return embedded ? content : <DashboardLayout>{content}</DashboardLayout>;
 };
 
 export default LivePage;

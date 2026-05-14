@@ -72,8 +72,7 @@ const FunnelsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
     </span>
   ) : null;
 
-  return (
-    <DashboardLayout>
+  const content = (
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -194,8 +193,8 @@ const FunnelsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
         tier={tier}
         reason="funnels"
       />
-    </DashboardLayout>
   );
+  return embedded ? content : <DashboardLayout>{content}</DashboardLayout>;
 };
 
 export default FunnelsPage;
