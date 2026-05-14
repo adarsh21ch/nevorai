@@ -24,7 +24,8 @@ import { StorageLimitModal } from "@/components/StorageLimitModal";
 interface Props {
   open: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (videoId?: string) => void;
+  skipStorageCheck?: boolean;
 }
 
 const ALLOWED_EXTENSIONS = [".mp4", ".mov", ".webm"];
