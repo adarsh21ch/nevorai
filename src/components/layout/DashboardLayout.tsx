@@ -3,7 +3,7 @@ import { Logo } from "@/components/landing/Logo";
 import {
   LayoutDashboard, Layers, Video, IndianRupee, BarChart2,
   User, Bell, LogOut, ChevronLeft, ChevronRight, Shield,
-  Radio, FileText, Menu, Crown, HelpCircle, Home, Wrench, Activity,
+  Radio, FileText, Crown, HelpCircle, Home, Wrench, Activity,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,6 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 // theme handled in ProfilePage
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTrialStatus } from "@/hooks/useTrialStatus";
 import { TrialExpiredGate } from "@/components/TrialExpiredGate";
 import { TrialBanner } from "@/components/TrialBanner";
