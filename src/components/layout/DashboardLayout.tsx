@@ -203,52 +203,6 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                     </span>
                   )}
                 </Link>
-                <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                  <SheetTrigger asChild>
-                    <button className="flex h-11 w-11 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-                      <Menu size={20} />
-                    </button>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="w-[85vw] max-w-72 p-0">
-                    <div className="border-b border-border p-4">
-                      <Logo size="sm" showByline />
-                    </div>
-                    <nav className="max-h-[calc(100vh-160px)] space-y-0.5 overflow-y-auto px-2 py-2">
-                      <p className="px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Main</p>
-                      {navItems.map(renderMobileNavItem)}
-                      <div className="my-2 border-t border-border" />
-                      <p className="px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Account</p>
-                      {bottomItems.map(renderMobileNavItem)}
-                      {isAdmin && (
-                        <>
-                          <div className="my-2 border-t border-border" />
-                          <Link
-                            to="/admin"
-                            onClick={() => setMobileMenuOpen(false)}
-                            onMouseEnter={() => preloadRoute("/admin")}
-                            onFocus={() => preloadRoute("/admin")}
-                            className={cn(
-                              "flex min-h-[46px] items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all",
-                              location.pathname.startsWith("/admin") ? "bg-primary/10 text-primary" : "text-foreground hover:bg-muted"
-                            )}
-                          >
-                            <Shield size={20} />
-                            <span>Admin Panel</span>
-                          </Link>
-                        </>
-                      )}
-                    </nav>
-                    <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-card p-3">
-                      <button
-                        onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
-                        className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-destructive transition-all hover:bg-destructive/10"
-                      >
-                        <LogOut size={18} />
-                        <span>Logout</span>
-                      </button>
-                    </div>
-                  </SheetContent>
-                </Sheet>
               </div>
             </div>
           </div>
