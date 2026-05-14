@@ -12,8 +12,8 @@ import { formatCompact, formatInt } from "@/lib/format";
 
 const COLORS = ["hsl(var(--primary))", "#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"];
 
-const InsightsPage = () => {
-  useDocumentTitle("Insights");
+const InsightsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
+  useDocumentTitle(embedded ? "Tools" : "Insights");
   const { user } = useAuth();
 
   const { data: funnels = [] } = useQuery({
@@ -136,9 +136,8 @@ const InsightsPage = () => {
 
   const tooltipStyle = { background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, color: "hsl(var(--foreground))" };
 
-  return (
-    <DashboardLayout>
-      <div className="space-y-6">
+  const content = (
+    <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-heading font-bold">Insights</h1>
           <div className="page-header-accent" />
@@ -299,9 +298,9 @@ const InsightsPage = () => {
             <p className="text-[10px] text-muted-foreground">converted / unique</p>
           </div>
         </div>
-      </div>
-    </DashboardLayout>
+    </div>
   );
+  return embedded ? content : <DashboardLayout>{content}</DashboardLayout>;
 };
 
 export default InsightsPage;
