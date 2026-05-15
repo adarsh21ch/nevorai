@@ -270,6 +270,30 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Price-parity guard: if user passed display_price and no upgrade proration applies,
+      // refuse the order if the displayed price doesn't match what we would charge.
+      if (displayPriceProvided && !isPlanUpgrade) {
+        if (Math.round(displayPriceNum) !== Math.round(authoritativeAmount)) {
+          await serviceClient.from("payment_audit_logs").insert({
+            user_id: user.id,
+            event_type: "price_mismatch_blocked",
+            payload: {
+              plan_key,
+              tier_id: resolvedTierId,
+              display_price: displayPriceNum,
+              server_price: authoritativeAmount,
+            },
+            source: "frontend",
+            idempotency_key: `mismatch_${user.id}_${Date.now()}`,
+          });
+          return jsonResponse({
+            error: "Displayed price has changed. Please refresh the page and try again.",
+            display_price: displayPriceNum,
+            server_price: authoritativeAmount,
+          }, 409);
+        }
+      }
+
       const orderNotes: Record<string, string> = {
         user_id: user.id,
         plan_key,
