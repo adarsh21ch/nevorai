@@ -287,7 +287,7 @@ const PublicLandingPage = () => {
   return (
     <div className={`min-h-screen flex flex-col ${bgClass}`}>
       <header className="flex items-center justify-center px-4 md:px-8 py-4 border-b border-border">
-        <Logo size="sm" />
+        <a href="https://nevorai.com" target="_blank" rel="noopener noreferrer"><Logo size="sm" /></a>
       </header>
 
       <main className="flex-1 px-4 md:px-8 py-8 max-w-7xl mx-auto w-full">
