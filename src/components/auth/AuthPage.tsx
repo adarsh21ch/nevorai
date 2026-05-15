@@ -165,14 +165,6 @@ export default function AuthPage() {
 
   const handleVerifyOtp = async (e: React.FormEvent) => { e.preventDefault(); await verifyOtpCode(otp); };
 
-  // Auto-submit OTP when 6 digits are entered (typing or paste)
-  useEffect(() => {
-    if (stage === "nevorai-otp" && otp.length === 6 && !submitting) {
-      void verifyOtpCode(otp);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [otp, stage]);
-
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) { toast.error("Please enter your name"); return; }
