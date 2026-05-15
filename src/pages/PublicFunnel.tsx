@@ -32,7 +32,7 @@ import {
   scrollToFirstError,
 } from "@/lib/leadInputs";
 import { PrivacyMicrocopy } from "@/components/funnel/PrivacyMicrocopy";
-import { BrandingWatermark } from "@/components/BrandingWatermark";
+
 
 /* ─── Speed Popover ─── */
 const SPEED_OPTIONS = [0.75, 1, 1.25, 1.5, 2];
