@@ -191,7 +191,7 @@ const PublicVideoPage = () => {
         <div className="h-0.5 w-full bg-primary" />
 
         <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
-          <NFlowLogo size="sm" />
+          <a href="https://nevorai.com" target="_blank" rel="noopener noreferrer"><NFlowLogo size="sm" /></a>
           <button
             onClick={toggleTheme}
             className="p-2 rounded-full hover:bg-muted transition-colors"
