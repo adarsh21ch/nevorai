@@ -87,7 +87,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:description", content: "The smarter way to share business videos. Know exactly who watched, when, and how much. Nevorai." },
       { property: "og:site_name", content: "Nevorai" },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://flow.nevorai.com" },
+      { property: "og:url", content: "https://nevorai.com" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Nevorai — Share videos that get watched" },
       { name: "twitter:description", content: "The smarter way to share business videos. Know exactly who watched, when, and how much. Nevorai." },
