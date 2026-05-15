@@ -1223,11 +1223,29 @@ const FunnelEditor = () => {
     </>
   );
 
-  const renderWizardContent = () => {
-    if (!modeChosen) return renderModePicker();
-    const label = visibleSteps[wizardStep]?.label;
-    return renderByLabel(label) ?? renderBasicInfo();
+  const labelToId = (label: string) => `section-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}`;
+
+  const sectionCompleteByLabel = (label: string): boolean => {
+    switch (label) {
+      case "Name & Info": return !!funnel.title.trim();
+      case "Video": return !!selectedVideo;
+      case "Build Journey": return flowSteps.length > 0;
+      case "Lead Capture": return leadForm.capture_enabled;
+      case "Contact Info": return !!(funnel.contact_whatsapp || funnel.contact_phone || funnel.contact_instagram);
+      case "Payment": return !!funnel.upi_id || !!funnel.qr_code_url;
+      case "Publish": return !!funnel.is_published;
+      default: return false;
+    }
   };
+
+  const editorSections: EditorSection[] = visibleSteps.map((s) => ({
+    id: labelToId(s.label),
+    label: s.label,
+    num: (s as any).num,
+    icon: s.icon,
+    locked: !!getStepLock(s.label),
+    complete: sectionCompleteByLabel(s.label),
+  }));
 
   if (authLoading || (isEdit && (funnelLoading || leadFormLoading || stepsLoading))) {
     return (
@@ -1261,130 +1279,76 @@ const FunnelEditor = () => {
     );
   }
 
+  if (!modeChosen) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-2xl mx-auto glass-card p-6 sm:p-8">
+          {renderModePicker()}
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  const headerNode = (
+    <div className="sticky top-14 lg:top-0 z-30 bg-background/95 backdrop-blur -mx-4 px-4 py-3 mb-4 border-b border-border flex items-center justify-between gap-2">
+      <div className="flex-1 min-w-0">
+        <h1 className="text-lg sm:text-xl font-heading font-bold truncate">{funnel.title || "New Funnel"}</h1>
+        {isAutoSaving ? (
+          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+            Saving…
+          </p>
+        ) : lastSavedAt ? (
+          <p className="text-xs text-muted-foreground">Auto-saved {lastSavedAt.toLocaleTimeString()}</p>
+        ) : null}
+      </div>
+      <Button
+        variant="hero"
+        size="sm"
+        onClick={() => saveMutation.mutate()}
+        disabled={saveMutation.isPending || !funnel.title}
+        className="shrink-0"
+      >
+        {saveMutation.isPending ? "Saving..." : isEdit ? "Update" : "Save"}
+      </Button>
+    </div>
+  );
+
   return (
     <DashboardLayout>
-      <div className="flex gap-6 min-h-[calc(100vh-8rem)]">
-        {modeChosen && (
-          <div className="hidden lg:flex flex-col gap-1 w-48 shrink-0">
-            {visibleSteps.map((s, i) => {
-              const lock = getStepLock(s.label);
-              return (
-                <button key={i} onClick={() => setWizardStep(i)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
-                    wizardStep === i
-                      ? "bg-primary/10 border-l-[3px] border-primary text-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted border-l-[3px] border-transparent"
-                  }`}
-                >
-                  <s.icon size={15} className={wizardStep === i ? "text-primary" : ""} />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-semibold tracking-[0.05em] text-muted-foreground/50">{(s as any).num || i + 1}</p>
-                    <p className="text-[13px] font-semibold leading-tight flex items-center gap-1.5">
-                      {s.label}
-                      {lock && <Lock size={10} className="text-amber-500 shrink-0" />}
-                    </p>
-                  </div>
-                  {i === lastStepIdx && funnel.is_published && <Check size={14} className="ml-auto text-emerald-500" />}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        <div className="flex-1 flex gap-6 min-w-0">
-          <div className="flex-1 max-w-2xl min-w-0">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex-1 min-w-0">
-                <h1 className="text-lg sm:text-xl font-heading font-bold truncate">{funnel.title || "New Funnel"}</h1>
-                {isAutoSaving ? (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                    Saving…
-                  </p>
-                ) : lastSavedAt ? (
-                  <p className="text-xs text-muted-foreground">Auto-saved {lastSavedAt.toLocaleTimeString()}</p>
-                ) : null}
-              </div>
-              {modeChosen && (
-                <Button variant="hero" size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !funnel.title} className="shrink-0 ml-2">
-                  {saveMutation.isPending ? "Saving..." : "Save"}
-                </Button>
-              )}
-            </div>
-
-            {modeChosen && (
-              <div className="lg:hidden grid grid-cols-4 sm:grid-cols-5 gap-1.5 pb-3 mb-3">
-                {visibleSteps.map((s, i) => {
-                  const lock = getStepLock(s.label);
-                  return (
-                    <button key={i} onClick={() => setWizardStep(i)}
-                      className={`relative flex flex-col items-center gap-1 px-1.5 py-2 rounded-lg text-[10px] font-semibold transition-all ${
-                        wizardStep === i
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted/60 text-muted-foreground"
-                      }`}
-                    >
-                      <s.icon size={14} />
-                      <span className="truncate w-full text-center leading-tight">{s.label.split(' ').slice(-1)[0]}</span>
-                      {lock && (
-                        <span className="absolute top-0.5 right-0.5">
-                          <Lock size={9} className="text-amber-500" />
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {modeChosen && (
-              <div className="flex items-center gap-1 mb-4">
-                {visibleSteps.map((_, i) => (
-                  <div key={i} className={`h-1 flex-1 rounded-full transition-all ${i <= wizardStep ? "bg-primary" : "bg-muted"}`} />
-                ))}
-              </div>
-            )}
-
-            <div className="glass-card p-4 sm:p-6 space-y-4">
-              {currentStepLock ? (
+      <EditorScrollLayout
+        sections={editorSections}
+        header={headerNode}
+        rightPane={
+          <FunnelLivePreview
+            funnel={funnel}
+            selectedVideo={selectedVideo}
+            flowSteps={flowSteps}
+            leadForm={leadForm}
+            previewStepIndex={editingStepIdx}
+          />
+        }
+      >
+        {visibleSteps.map((s) => {
+          const lock = getStepLock(s.label);
+          const content = renderByLabel(s.label);
+          return (
+            <EditorSectionBlock key={s.label} id={labelToId(s.label)}>
+              {lock ? (
                 <StepLockOverlay
-                  featureName={currentStepLock.featureName}
-                  requiredPlan={currentStepLock.requiredPlan}
-                  priceLabel={currentStepLock.priceLabel}
+                  featureName={lock.featureName}
+                  requiredPlan={lock.requiredPlan}
+                  priceLabel={lock.priceLabel}
                 >
-                  {renderWizardContent()}
+                  {content}
                 </StepLockOverlay>
               ) : (
-                renderWizardContent()
+                content
               )}
-            </div>
-
-            <div className="flex gap-3 mt-4">
-              {(modeChosen && wizardStep > 0) && <Button variant="outline" size="sm" onClick={() => setWizardStep(wizardStep - 1)}>Previous</Button>}
-              <div className="flex-1" />
-              {!modeChosen ? null : wizardStep < lastStepIdx ? (
-                <Button variant="default" size="sm" onClick={() => setWizardStep(wizardStep + 1)}>Next</Button>
-              ) : (
-                <Button variant="hero" size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !funnel.title}>
-                  {saveMutation.isPending ? "Saving..." : isEdit ? "Update" : "Create Funnel"}
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {modeChosen && (
-            <div className="hidden xl:block w-[300px] shrink-0 sticky top-4 h-[calc(100vh-10rem)]">
-              <FunnelLivePreview
-                funnel={funnel}
-                selectedVideo={selectedVideo}
-                flowSteps={flowSteps}
-                leadForm={leadForm}
-                previewStepIndex={editingStepIdx}
-              />
-            </div>
-          )}
-        </div>
-      </div>
+            </EditorSectionBlock>
+          );
+        })}
+      </EditorScrollLayout>
     </DashboardLayout>
   );
 };
