@@ -11,7 +11,7 @@ import {
   AlertTriangle, BadgeCheck, Volume2, VolumeX,
   Maximize, Minimize, Share2, Loader2, Gauge, Sun, Moon
 } from "lucide-react";
-import logoImg from "@/assets/nevorai-flow-logo.png";
+import logoImg from "@/assets/nevorai-funnel-logo.png";
 import { MultiStepViewer } from "@/components/funnel/MultiStepViewer";
 import { CodeGateScreen } from "@/components/funnel/CodeGateScreen";
 import { PrivateLeadForm } from "@/components/funnel/PrivateLeadForm";
@@ -903,7 +903,7 @@ const PublicFunnel = () => {
   if (!canView) return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: tc.bg }}>
       <div className="text-center">
-        <h1 className="text-xl font-heading font-bold mb-2" style={{ color: tc.text }}>Funnel Not Found</h1>
+        <h1 className="text-xl font-heading font-bold mb-2" style={{ color: tc.text }}>Flow Not Found</h1>
         <p className="text-sm" style={{ color: tc.textMuted }}>This funnel doesn't exist or has been unpublished.</p>
       </div>
     </div>
