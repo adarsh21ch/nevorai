@@ -882,6 +882,7 @@ const PublicLivePage = () => {
               <div className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-emerald-500/90 text-white text-[11px] font-bold shadow">
                 REPLAY
               </div>
+              <div style={{ position: "absolute", bottom: 10, right: 12, color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 500, letterSpacing: "0.3px", pointerEvents: "none", userSelect: "none", textShadow: "0 1px 3px rgba(0,0,0,0.5)", zIndex: 10 }}>nevorai.com</div>
             </div>
             {allSlots.length > 0 && (
               <p className="text-xs text-muted-foreground text-center">
