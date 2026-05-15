@@ -120,7 +120,7 @@ const VideosPage = () => {
   };
 
   const useInFunnel = (videoId: string) => {
-    navigate(`/funnels/create?videoId=${videoId}`);
+    navigate({ to: "/funnels/create", search: { videoId } });
   };
 
   const copyLink = (videoId: string) => {
