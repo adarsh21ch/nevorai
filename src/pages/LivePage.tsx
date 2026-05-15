@@ -560,12 +560,7 @@ const LivePage = ({ embedded = false }: { embedded?: boolean } = {}) => {
                     ⚠ This session is currently <strong>live</strong>. Edits will only affect future scheduled slots.
                   </div>
                 )}
-                <div className="flex items-center gap-1.5 mt-3">
-                  {Array.from({ length: totalSteps }).map((_, i) => (
-                    <div key={i} className={`h-1 flex-1 rounded-full transition-colors ${i + 1 <= step ? "bg-primary" : "bg-muted"}`} />
-                  ))}
-                </div>
-                <p className="text-[11px] text-muted-foreground mt-1.5">Step {step} of {totalSteps}</p>
+                <p className="text-[11px] text-muted-foreground mt-1.5">Fill out all sections, then schedule.</p>
               </div>
 
               {step === 1 && (
