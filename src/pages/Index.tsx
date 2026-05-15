@@ -3,10 +3,8 @@ import { Navigate } from "@/lib/router-compat";
 
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
-import { LeakyFunnel } from "@/components/landing/LeakyFunnel";
-import { ConversionCalculator } from "@/components/landing/ConversionCalculator";
-import { ProspectJourney } from "@/components/landing/ProspectJourney";
-import { WhyNevorai } from "@/components/landing/WhyNevorai";
+import { StorySections } from "@/components/landing/StorySections";
+import { ResultsComparison } from "@/components/landing/ResultsComparison";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { Testimonials } from "@/components/landing/Testimonials";
 import { PricingSection } from "@/components/landing/PricingSection";
@@ -41,10 +39,8 @@ const Index = () => {
     <div data-theme="dark" className="min-h-screen landing-page overflow-x-clip bg-hero-bg text-white">
       <Navbar />
       <HeroSection />
-      <LeakyFunnel />
-      <ConversionCalculator />
-      <ProspectJourney />
-      <WhyNevorai />
+      <StorySections />
+      <ResultsComparison />
       <FeaturesSection />
       <Testimonials />
       <PricingSection />
