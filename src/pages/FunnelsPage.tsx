@@ -167,6 +167,9 @@ const FunnelsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
                       <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0"><MoreVertical size={15} /></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem asChild>
+                        <a href={`/funnels/${f.id}/edit`}><Layers size={13} className="mr-2" /> Edit Funnel</a>
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/f/${f.slug}`); toast.success("Link copied!"); }}>
                         <Copy size={13} className="mr-2" /> Copy Funnel Link
                       </DropdownMenuItem>
