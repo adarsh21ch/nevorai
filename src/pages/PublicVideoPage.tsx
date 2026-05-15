@@ -260,7 +260,7 @@ const PublicVideoPage = () => {
             <div
               style={{
                 position: "absolute",
-                bottom: 10,
+                bottom: 56,
                 right: 12,
                 color: "rgba(255,255,255,0.7)",
                 fontSize: 12,
