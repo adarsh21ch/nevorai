@@ -561,7 +561,7 @@ const FunnelEditor = () => {
             update("funnel_mode", "multi");
             if (flowSteps.length === 0) setFlowSteps([createEmptyStep(0)]);
             setModeChosen(true);
-            setWizardStep(0);
+            // No wizard step navigation needed.
           }}
           className="p-6 rounded-xl border-2 border-border hover:border-primary/50 hover:bg-primary/5 text-left transition-all group"
         >
