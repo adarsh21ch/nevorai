@@ -9,7 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useState, useEffect, useCallback } from "react";
-import { Save, Star, Mail, CheckCircle2, XCircle, Loader2, AlertTriangle, Clock } from "lucide-react";
+import { Save, Star, Mail, CheckCircle2, XCircle, Loader2, AlertTriangle, Clock, BadgeCheck } from "lucide-react";
+import { VerifiedBadgeToggle } from "@/components/admin/VerifiedBadgeToggle";
 // TrialSettingsCard moved to AdminSubscriptionsPage (Plans tab)
 
 const AdminSettingsPage = () => {
