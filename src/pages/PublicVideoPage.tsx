@@ -36,6 +36,19 @@ const PublicVideoPage = () => {
   const [reuploadOpen, setReuploadOpen] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
+  const playerWrapRef = useRef<HTMLDivElement | null>(null);
+
+  const requestWrapperFullscreen = () => {
+    const w: any = playerWrapRef.current;
+    const doc: any = document;
+    const isFs = !!(doc.fullscreenElement || doc.webkitFullscreenElement);
+    if (isFs) {
+      (doc.exitFullscreen || doc.webkitExitFullscreen)?.call(doc);
+      return;
+    }
+    if (w?.requestFullscreen) w.requestFullscreen().catch(() => {});
+    else if (w?.webkitRequestFullscreen) w.webkitRequestFullscreen();
+  };
 
   const { data: video, isLoading, error, refetch } = useQuery({
     queryKey: ["public-video", id],
