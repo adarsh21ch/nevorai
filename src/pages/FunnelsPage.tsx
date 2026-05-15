@@ -167,7 +167,7 @@ const FunnelsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
                       <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0"><MoreVertical size={15} /></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem onClick={() => {
+                      <DropdownMenuItem onSelect={() => {
                         console.log("[EditButton] Navigating to edit page for funnel:", f.id);
                         navigateToRoute({ to: "/funnels/$id/edit", params: { id: f.id } });
                       }}>
