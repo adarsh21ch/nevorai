@@ -150,6 +150,7 @@ const AdminUsersPage = () => {
                   <th className="p-4 text-xs text-muted-foreground font-medium">User</th>
                   <th className="p-4 text-xs text-muted-foreground font-medium">Plan</th>
                   <th className="p-4 text-xs text-muted-foreground font-medium">KYC</th>
+                  <th className="p-4 text-xs text-muted-foreground font-medium text-center">Verified</th>
                   <th className="p-4 text-xs text-muted-foreground font-medium">Joined</th>
                   <th className="p-4 text-xs text-muted-foreground font-medium text-right">Views (this month)</th>
                   <th className="p-4 text-xs text-muted-foreground font-medium text-right">Actions</th>
@@ -159,11 +160,11 @@ const AdminUsersPage = () => {
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="border-b border-border">
-                      <td className="p-4" colSpan={6}><div className="h-4 bg-muted rounded animate-pulse" /></td>
+                      <td className="p-4" colSpan={7}><div className="h-4 bg-muted rounded animate-pulse" /></td>
                     </tr>
                   ))
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No users found</td></tr>
+                  <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No users found</td></tr>
                 ) : (
                   filtered.map((p: any) => {
                     const sub = subMap[p.id];
@@ -185,6 +186,9 @@ const AdminUsersPage = () => {
                           <span className={`px-2 py-0.5 rounded-full text-xs ${p.kyc_status === "verified" ? "bg-success/10 text-success" : p.kyc_status === "pending" ? "bg-warning/10 text-warning" : "bg-muted text-muted-foreground"}`}>
                             {p.kyc_status || "none"}
                           </span>
+                        </td>
+                        <td className="p-4">
+                          <VerifiedToggle userId={p.id} value={!!p.is_verified} />
                         </td>
                         <td className="p-4 text-xs text-muted-foreground">
                           {p.created_at ? new Date(p.created_at).toLocaleDateString("en-IN") : "—"}
