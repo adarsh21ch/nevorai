@@ -47,11 +47,11 @@ const createEmptyStep = (order: number, type: string = "video"): FlowStep => ({
   booking_url: "",
 });
 
-// Pretty slug from a title — no random suffix.
-// Collision handling happens in `ensureUniqueSlug` at save time.
+// Pretty base slug from a title. Trimmed to 40 chars to leave room for the
+// random suffix that `ensureUniqueSlug` appends at save time.
 const generateSlug = (title: string) => {
   return (
-    title.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/(^-|-$)/g, "").slice(0, 60)
+    title.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/(^-|-$)/g, "").slice(0, 40)
     || "my-funnel"
   );
 };
@@ -63,18 +63,15 @@ const RESERVED_SLUGS = new Set([
   "analytics","payments","upgrade","kyc","notifications","f","v","l","s",
 ]);
 
-const ensureUniqueSlug = async (base: string, ignoreFunnelId?: string): Promise<string> => {
-  const safeBase = RESERVED_SLUGS.has(base) ? `${base}-1` : base;
-  let candidate = safeBase;
-  for (let n = 2; n < 1000; n++) {
-    const q = supabase.from("funnels").select("id").eq("slug", candidate).limit(1);
-    const { data, error } = await q;
-    if (error) return candidate;
-    const taken = (data ?? []).some((row: any) => row.id !== ignoreFunnelId);
-    if (!taken) return candidate;
-    candidate = `${safeBase}-${n}`;
-  }
-  return `${safeBase}-${Date.now().toString(36)}`;
+// Always appends a 4-char random base62 suffix so URLs cannot be enumerated
+// by stripping a numeric "-2" tail. Existing slugs (edit path) are NOT
+// re-suffixed — we only generate when this funnel has no slug yet.
+const ensureUniqueSlug = async (base: string, existingSlug?: string): Promise<string> => {
+  // Preserve any slug that's already saved on this funnel — never break a
+  // shared link by re-rolling its suffix.
+  if (existingSlug && existingSlug.trim()) return existingSlug.trim();
+  const safeBase = RESERVED_SLUGS.has(base) ? `${base}-x` : base;
+  return generateUniqueSuffixedSlug(safeBase, "funnels");
 };
 
 const SINGLE_STEPS = [
