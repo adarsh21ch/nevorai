@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "@/lib/router-compat";
+import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,7 +46,7 @@ const LandingPagesPage = ({ embedded = false }: { embedded?: boolean } = {}) => 
   const handleCreate = () => {
     if (isFree) { setModalType("upgrade"); setModalOpen(true); return; }
     if (!canCreateLandingPage) { setModalType("limit"); setModalOpen(true); return; }
-    navigate("/landing-pages/create");
+    navigate({ to: "/landing-pages/create" });
   };
 
   const filtered = (pages as any[]).filter((p: any) => {
@@ -141,7 +141,7 @@ const LandingPagesPage = ({ embedded = false }: { embedded?: boolean } = {}) => 
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical size={16} /></Button></DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => navigate(`/landing-pages/${page.id}/edit`)}><Pencil size={14} className="mr-2" /> Edit</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate({ to: "/landing-pages/$id/edit", params: { id: page.id } })}><Pencil size={14} className="mr-2" /> Edit</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => window.open(`/l/${page.slug}`, "_blank")}><ExternalLink size={14} className="mr-2" /> Preview</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => deletePage(page.id)} className="text-destructive"><Trash2 size={14} className="mr-2" /> Delete</DropdownMenuItem>
                     </DropdownMenuContent>
@@ -158,8 +158,8 @@ const LandingPagesPage = ({ embedded = false }: { embedded?: boolean } = {}) => 
                 </div>
                 <p className="text-xs text-muted-foreground">Created {format(new Date(page.created_at), "d MMM yyyy")}</p>
                 <div className="flex flex-wrap gap-2 pt-1">
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/landing-pages/${page.id}/edit`)}>Edit</Button>
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/landing-pages/${page.id}`)}>Registrations</Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate({ to: "/landing-pages/$id/edit", params: { id: page.id } })}>Edit</Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate({ to: "/landing-pages/$id", params: { id: page.id } })}>Registrations</Button>
                   <Button variant="outline" size="sm" onClick={() => window.open(`/l/${page.slug}`, "_blank")}>Preview</Button>
                   <WhatsAppShareButton url={`${typeof window !== "undefined" ? window.location.origin : ""}/l/${page.slug}`} message={`Check this out: ${page.title}`} size="sm" iconOnly />
                 </div>

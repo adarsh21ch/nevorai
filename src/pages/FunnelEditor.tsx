@@ -178,22 +178,22 @@ const FunnelEditor = () => {
   const { data: userProfile } = useQuery({
     queryKey: ["my-profile", user?.id],
     queryFn: async () => { if (!user) return null; const { data } = await supabase.from("profiles").select("full_name, avatar_url, bio").eq("id", user.id).single(); return data; },
-    enabled: !!user,
+    enabled: !!user && !authLoading,
   });
   const { data: existingFunnel, isLoading: funnelLoading, error: funnelError } = useQuery({
     queryKey: ["funnel", id],
     queryFn: async () => { if (!id) return null; const { data } = await supabase.from("funnels").select("*").eq("id", id).single(); return data; },
-    enabled: isEdit && !!user?.id,
+    enabled: isEdit && !!user?.id && !authLoading,
   });
   const { data: existingLeadForm, isLoading: leadFormLoading } = useQuery({
     queryKey: ["funnel-lead-form", id],
     queryFn: async () => { if (!id) return null; const { data } = await supabase.from("funnel_lead_form_config").select("*").eq("funnel_id", id).single(); return data; },
-    enabled: isEdit && !!user?.id,
+    enabled: isEdit && !!user?.id && !authLoading,
   });
   const { data: existingSteps, isLoading: stepsLoading } = useQuery({
     queryKey: ["funnel-steps", id],
     queryFn: async () => { if (!id) return []; const { data } = await supabase.from("funnel_steps").select("*").eq("funnel_id", id).order("step_order"); return data || []; },
-    enabled: isEdit && !!user?.id,
+    enabled: isEdit && !!user?.id && !authLoading,
   });
 
   useEffect(() => {
