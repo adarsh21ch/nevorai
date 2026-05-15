@@ -72,6 +72,8 @@ import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminSubscriptionsRouteImport } from './routes/admin.subscriptions'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminKycRouteImport } from './routes/admin.kyc'
+import { Route as LandingPagesIdIndexRouteImport } from './routes/landing-pages.$id.index'
+import { Route as FlowsIdIndexRouteImport } from './routes/flows.$id.index'
 import { Route as FSlugIndexRouteImport } from './routes/f.$slug.index'
 import { Route as LandingPagesIdEditRouteImport } from './routes/landing-pages.$id.edit'
 import { Route as FunnelsIdEditRouteImport } from './routes/funnels.$id.edit'
@@ -309,9 +311,7 @@ const LandingPagesIdRoute = LandingPagesIdRouteImport.update({
   id: '/landing-pages/$id',
   path: '/landing-pages/$id',
   getParentRoute: () => rootRouteImport,
-} as any).lazy(() =>
-  import('./routes/landing-pages.$id.lazy').then((d) => d.Route),
-)
+} as any)
 const LSlugRoute = LSlugRouteImport.update({
   id: '/l/$slug',
   path: '/l/$slug',
@@ -336,7 +336,7 @@ const FlowsIdRoute = FlowsIdRouteImport.update({
   id: '/flows/$id',
   path: '/flows/$id',
   getParentRoute: () => rootRouteImport,
-} as any).lazy(() => import('./routes/flows.$id.lazy').then((d) => d.Route))
+} as any)
 const CompareNevoraiVsYoutubeRoute = CompareNevoraiVsYoutubeRouteImport.update({
   id: '/compare/nevorai-vs-youtube',
   path: '/compare/nevorai-vs-youtube',
@@ -411,6 +411,20 @@ const AdminKycRoute = AdminKycRouteImport.update({
   path: '/admin/kyc',
   getParentRoute: () => rootRouteImport,
 } as any).lazy(() => import('./routes/admin.kyc.lazy').then((d) => d.Route))
+const LandingPagesIdIndexRoute = LandingPagesIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LandingPagesIdRoute,
+} as any).lazy(() =>
+  import('./routes/landing-pages.$id.index.lazy').then((d) => d.Route),
+)
+const FlowsIdIndexRoute = FlowsIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => FlowsIdRoute,
+} as any).lazy(() =>
+  import('./routes/flows.$id.index.lazy').then((d) => d.Route),
+)
 const FSlugIndexRoute = FSlugIndexRouteImport.update({
   id: '/f/$slug/',
   path: '/f/$slug/',
@@ -512,6 +526,8 @@ export interface FileRoutesByFullPath {
   '/funnels/$id/edit': typeof FunnelsIdEditRoute
   '/landing-pages/$id/edit': typeof LandingPagesIdEditRoute
   '/f/$slug/': typeof FSlugIndexRoute
+  '/flows/$id/': typeof FlowsIdIndexRoute
+  '/landing-pages/$id/': typeof LandingPagesIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -558,12 +574,10 @@ export interface FileRoutesByTo {
   '/compare/nevorai-vs-google-drive': typeof CompareNevoraiVsGoogleDriveRoute
   '/compare/nevorai-vs-vimeo': typeof CompareNevoraiVsVimeoRoute
   '/compare/nevorai-vs-youtube': typeof CompareNevoraiVsYoutubeRoute
-  '/flows/$id': typeof FlowsIdRouteWithChildren
   '/flows/create': typeof FlowsCreateRoute
   '/funnels/$id': typeof FunnelsIdRouteWithChildren
   '/funnels/create': typeof FunnelsCreateRoute
   '/l/$slug': typeof LSlugRoute
-  '/landing-pages/$id': typeof LandingPagesIdRouteWithChildren
   '/landing-pages/create': typeof LandingPagesCreateRoute
   '/live/$id': typeof LiveIdRoute
   '/s/$slug': typeof SSlugRoute
@@ -582,6 +596,8 @@ export interface FileRoutesByTo {
   '/funnels/$id/edit': typeof FunnelsIdEditRoute
   '/landing-pages/$id/edit': typeof LandingPagesIdEditRoute
   '/f/$slug': typeof FSlugIndexRoute
+  '/flows/$id': typeof FlowsIdIndexRoute
+  '/landing-pages/$id': typeof LandingPagesIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -653,6 +669,8 @@ export interface FileRoutesById {
   '/funnels/$id/edit': typeof FunnelsIdEditRoute
   '/landing-pages/$id/edit': typeof LandingPagesIdEditRoute
   '/f/$slug/': typeof FSlugIndexRoute
+  '/flows/$id/': typeof FlowsIdIndexRoute
+  '/landing-pages/$id/': typeof LandingPagesIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -725,6 +743,8 @@ export interface FileRouteTypes {
     | '/funnels/$id/edit'
     | '/landing-pages/$id/edit'
     | '/f/$slug/'
+    | '/flows/$id/'
+    | '/landing-pages/$id/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -771,12 +791,10 @@ export interface FileRouteTypes {
     | '/compare/nevorai-vs-google-drive'
     | '/compare/nevorai-vs-vimeo'
     | '/compare/nevorai-vs-youtube'
-    | '/flows/$id'
     | '/flows/create'
     | '/funnels/$id'
     | '/funnels/create'
     | '/l/$slug'
-    | '/landing-pages/$id'
     | '/landing-pages/create'
     | '/live/$id'
     | '/s/$slug'
@@ -795,6 +813,8 @@ export interface FileRouteTypes {
     | '/funnels/$id/edit'
     | '/landing-pages/$id/edit'
     | '/f/$slug'
+    | '/flows/$id'
+    | '/landing-pages/$id'
   id:
     | '__root__'
     | '/'
@@ -865,6 +885,8 @@ export interface FileRouteTypes {
     | '/funnels/$id/edit'
     | '/landing-pages/$id/edit'
     | '/f/$slug/'
+    | '/flows/$id/'
+    | '/landing-pages/$id/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1374,6 +1396,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminKycRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/landing-pages/$id/': {
+      id: '/landing-pages/$id/'
+      path: '/'
+      fullPath: '/landing-pages/$id/'
+      preLoaderRoute: typeof LandingPagesIdIndexRouteImport
+      parentRoute: typeof LandingPagesIdRoute
+    }
+    '/flows/$id/': {
+      id: '/flows/$id/'
+      path: '/'
+      fullPath: '/flows/$id/'
+      preLoaderRoute: typeof FlowsIdIndexRouteImport
+      parentRoute: typeof FlowsIdRoute
+    }
     '/f/$slug/': {
       id: '/f/$slug/'
       path: '/f/$slug'
@@ -1447,10 +1483,12 @@ const VideosRouteWithChildren =
 
 interface FlowsIdRouteChildren {
   FlowsIdEditRoute: typeof FlowsIdEditRoute
+  FlowsIdIndexRoute: typeof FlowsIdIndexRoute
 }
 
 const FlowsIdRouteChildren: FlowsIdRouteChildren = {
   FlowsIdEditRoute: FlowsIdEditRoute,
+  FlowsIdIndexRoute: FlowsIdIndexRoute,
 }
 
 const FlowsIdRouteWithChildren =
@@ -1470,10 +1508,12 @@ const FunnelsIdRouteWithChildren = FunnelsIdRoute._addFileChildren(
 
 interface LandingPagesIdRouteChildren {
   LandingPagesIdEditRoute: typeof LandingPagesIdEditRoute
+  LandingPagesIdIndexRoute: typeof LandingPagesIdIndexRoute
 }
 
 const LandingPagesIdRouteChildren: LandingPagesIdRouteChildren = {
   LandingPagesIdEditRoute: LandingPagesIdEditRoute,
+  LandingPagesIdIndexRoute: LandingPagesIdIndexRoute,
 }
 
 const LandingPagesIdRouteWithChildren = LandingPagesIdRoute._addFileChildren(
