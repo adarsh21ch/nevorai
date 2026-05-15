@@ -247,9 +247,12 @@ export const VideoUploadModal = ({ open, onClose, onSuccess, skipStorageCheck = 
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
-      <DialogContent className="bg-card border-border max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="font-heading">{doneVideoId ? "Video ready 🎉" : "Upload Video"}</DialogTitle>
+      <DialogContent className="bg-card border-border max-w-md max-h-[90vh] overflow-y-auto rounded-2xl p-6 sm:p-7 shadow-2xl">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="font-heading text-center text-xl">{doneVideoId ? "Video ready 🎉" : "Upload video"}</DialogTitle>
+          {!doneVideoId && (
+            <p className="text-center text-xs text-muted-foreground">Drop a clip in — we'll handle the rest.</p>
+          )}
         </DialogHeader>
 
         {doneVideoId ? (
@@ -337,26 +340,30 @@ export const VideoUploadModal = ({ open, onClose, onSuccess, skipStorageCheck = 
           {!file ? (
             <button
               onClick={() => fileRef.current?.click()}
-              className="w-full border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center gap-3 hover:border-primary/50 transition-colors"
+              className="w-full border-2 border-dashed border-border rounded-2xl p-10 flex flex-col items-center gap-3 hover:border-primary/60 hover:bg-primary/5 transition-all group"
             >
-              <Upload size={32} className="text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                Tap to select a video file
+              <div className="size-14 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <Upload size={26} className="text-primary" />
+              </div>
+              <span className="text-sm font-medium text-foreground">
+                Tap to select a video
               </span>
-              <span className="text-xs text-muted-foreground/60">
+              <span className="text-xs text-muted-foreground/70 text-center">
                 Max 500 MB · MP4 (best), MOV, WEBM, M4V, MKV, AVI
               </span>
             </button>
           ) : (
-            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-              <FileVideo size={20} className="text-primary shrink-0" />
+            <div className="flex items-center gap-3 p-3.5 bg-muted rounded-xl border border-border">
+              <div className="size-10 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+                <FileVideo size={18} className="text-primary" />
+              </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium truncate">{file.name}</p>
                 <p className="text-xs text-muted-foreground">{formatSize(file.size)}</p>
               </div>
               {!busy && (
-                <button onClick={() => { setFile(null); setTitle(""); setError(null); setFormatWarning(null); }} className="text-muted-foreground hover:text-foreground">
-                  <X size={16} />
+                <button onClick={() => { setFile(null); setTitle(""); setError(null); setFormatWarning(null); }} className="size-7 rounded-full bg-muted-foreground/10 hover:bg-muted-foreground/20 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
+                  <X size={14} />
                 </button>
               )}
             </div>
@@ -478,7 +485,7 @@ export const VideoUploadModal = ({ open, onClose, onSuccess, skipStorageCheck = 
           <Button
             onClick={runUpload}
             disabled={!file || !title.trim() || busy}
-            className="w-full"
+            className="w-full h-11 rounded-xl text-sm font-semibold"
             variant="hero"
           >
             {processing ? (
@@ -486,7 +493,7 @@ export const VideoUploadModal = ({ open, onClose, onSuccess, skipStorageCheck = 
             ) : uploading ? (
               <><Loader2 size={16} className="animate-spin" /> Uploading… {progress}%</>
             ) : (
-              <><Upload size={16} /> Upload Video</>
+              <><Upload size={16} /> Upload video</>
             )}
           </Button>
         </div>
