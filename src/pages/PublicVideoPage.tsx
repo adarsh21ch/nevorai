@@ -289,6 +289,16 @@ const PublicVideoPage = () => {
               nevorai.com
             </div>
           )}
+          {!videoError && video.public_url && (
+            <button
+              type="button"
+              onClick={requestWrapperFullscreen}
+              aria-label="Toggle fullscreen"
+              className="absolute top-2 right-2 z-10 p-1.5 rounded-md bg-black/40 hover:bg-black/60 text-white/90 backdrop-blur-sm transition-colors"
+            >
+              <Maximize size={16} />
+            </button>
+          )}
         </div>
       </div>
 
