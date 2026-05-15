@@ -23,6 +23,7 @@ import { UpgradeModal } from "@/components/UpgradeModal";
 import { computeSessionSlots, currentLiveSlot, nextSlot as nextSlotFn, sessionDurationSec } from "@/lib/liveSession";
 import { VideoPickerModal } from "@/components/VideoPickerModal";
 import { useConfirm } from "@/components/ui/confirm-dialog";
+import { EditorScrollLayout, EditorSectionBlock, type EditorSection } from "@/components/editor/EditorScrollLayout";
 
 import { generateUniqueSuffixedSlug } from "@/lib/slugSuffix";
 
