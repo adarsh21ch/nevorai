@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Link, useNavigate } from "@/lib/router-compat";
+import { useNavigate as useTanStackNavigate } from "@tanstack/react-router";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,8 +18,9 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 const FunnelsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
   useDocumentTitle(embedded ? "Tools" : "Funnels");
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const navigateToRoute = useTanStackNavigate();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search, 200);
@@ -29,13 +31,13 @@ const FunnelsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
   const { isFree, canCreateFunnel, config, counts, tier } = usePlanLimits();
   const confirm = useConfirm();
 
-  const { data: funnels = [], isLoading } = useQuery({
+  const { data: funnels = [], isLoading, error, refetch } = useQuery({
     queryKey: ["my-funnels", user?.id],
     queryFn: async () => {
       const { data } = await supabase.from("funnels").select("*").eq("owner_id", user!.id).order("created_at", { ascending: false });
       return data || [];
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   const deleteMutation = useMutation({
@@ -103,7 +105,7 @@ const FunnelsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
           </div>
         </div>
 
-        {isLoading ? (
+        {authLoading || isLoading ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="glass-card p-5 animate-pulse">
@@ -112,6 +114,13 @@ const FunnelsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
                 <div className="h-3 bg-muted rounded w-1/3" />
               </div>
             ))}
+          </div>
+        ) : error ? (
+          <div className="glass-card p-12 text-center">
+            <Layers size={40} className="text-muted-foreground mx-auto mb-4" />
+            <h3 className="font-heading font-semibold mb-2">Couldn’t load funnels</h3>
+            <p className="text-sm text-muted-foreground mb-6">Please try again.</p>
+            <Button variant="outline" onClick={() => refetch()}>Retry</Button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="glass-card p-12 text-center">
@@ -158,7 +167,10 @@ const FunnelsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
                       <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0"><MoreVertical size={15} /></Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem onClick={() => navigate(`/funnels/${f.id}/edit`)}>
+                      <DropdownMenuItem onSelect={() => {
+                        console.log("[EditButton] Navigating to edit page for funnel:", f.id);
+                        navigateToRoute({ to: "/funnels/$id/edit", params: { id: f.id } });
+                      }}>
                         <Layers size={13} className="mr-2" /> Edit Funnel
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/f/${f.slug}`); toast.success("Link copied!"); }}>
