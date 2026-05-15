@@ -334,6 +334,9 @@ const FunnelEditor = () => {
     mutationFn: async () => {
       const payload = buildPayload();
       if (!payload) throw new Error("Not authenticated");
+      // Ensure slug is clean + globally unique (no random hash suffix).
+      const desired = (funnel.slug && funnel.slug.trim()) ? generateSlug(funnel.slug) : generateSlug(funnel.title);
+      payload.slug = await ensureUniqueSlug(desired, isEdit ? id : undefined);
       if (funnel.access_code_plain && funnel.access_code_plain.trim()) {
         const enc = new TextEncoder();
         const buf = await crypto.subtle.digest("SHA-256", enc.encode(funnel.access_code_plain.trim().toUpperCase()));
