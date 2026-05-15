@@ -37,11 +37,21 @@ const iconClass: Record<StatColor, string> = {
 
 const Dashboard = () => {
   useDocumentTitle("Dashboard");
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const monthly = useMonthlyViews();
   const daily = useDailyViews();
   const { hasVideos, latestVideo, isLoading: videosLoading } = useHasVideos();
+
+  if (authLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   // First-run "magic moment" onboarding: send brand-new users through the
   // 4-step self-share flow before they ever see the dashboard.
@@ -55,16 +65,16 @@ const Dashboard = () => {
   }
 
 
-  const { data: funnels = [] } = useQuery({
+  const { data: funnels = [], isLoading: funnelsLoading, error: funnelsError, refetch: refetchFunnels } = useQuery({
     queryKey: ["my-funnels", user?.id],
     queryFn: async () => {
       const { data } = await supabase.from("funnels").select("*").eq("owner_id", user!.id).order("created_at", { ascending: false });
       return data || [];
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
-  const { data: leadCount = 0 } = useQuery({
+  const { data: leadCount = 0, isLoading: leadCountLoading, error: leadCountError, refetch: refetchLeadCount } = useQuery({
     queryKey: ["total-leads", user?.id],
     queryFn: async () => {
       const funnelIds = funnels.map((f) => f.id);
@@ -72,10 +82,10 @@ const Dashboard = () => {
       const { count } = await supabase.from("funnel_leads").select("*", { count: "exact", head: true }).in("funnel_id", funnelIds);
       return count || 0;
     },
-    enabled: funnels.length > 0,
+    enabled: !!user?.id && funnels.length > 0,
   });
 
-  const { data: activeLive } = useQuery({
+  const { data: activeLive, isLoading: activeLiveLoading, error: activeLiveError, refetch: refetchActiveLive } = useQuery({
     queryKey: ["active-live-session", user?.id],
     queryFn: async () => {
       if (!user) return null;
@@ -88,9 +98,41 @@ const Dashboard = () => {
         .maybeSingle();
       return data;
     },
-    enabled: !!user,
+    enabled: !!user?.id,
     refetchInterval: 30000,
   });
+
+  if (funnelsLoading || leadCountLoading || activeLiveLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (funnelsError || leadCountError || activeLiveError) {
+    return (
+      <DashboardLayout>
+        <div className="premium-card p-10 text-center">
+          <h1 className="text-xl font-heading font-semibold">Couldn’t load dashboard</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Please try again.</p>
+          <Button
+            variant="outline"
+            className="mt-4"
+            onClick={() => {
+              refetchFunnels();
+              refetchLeadCount();
+              refetchActiveLive();
+            }}
+          >
+            Retry
+          </Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   const totalViews = funnels.reduce((a, f) => a + (f.total_views || 0), 0);
   const publishedCount = funnels.filter((f) => f.is_published).length;
