@@ -436,7 +436,7 @@ const PublicLivePage = () => {
     const isEnded = stateData.state === "ended";
     return (
       <div className="min-h-[100dvh] bg-background">
-        <div className="border-b border-border px-4 py-3"><Logo size="sm" /></div>
+        <div className="border-b border-border px-4 py-3"><a href="https://nevorai.com" target="_blank" rel="noopener noreferrer"><Logo size="sm" /></a></div>
         <div className="max-w-lg mx-auto px-4 py-8 space-y-6">
           <div className="text-center space-y-3">
             {isLive && <LiveDot />}
@@ -468,7 +468,7 @@ const PublicLivePage = () => {
   return (
     <div className="min-h-[100dvh] bg-background">
       <div className="border-b border-border px-4 py-3 flex items-center justify-between">
-        <Logo size="sm" />
+        <a href="https://nevorai.com" target="_blank" rel="noopener noreferrer"><Logo size="sm" /></a>
         {(stateData.state === "live" || stateData.state === "replay") && (
           <button onClick={handleShareNative} className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5">
             <Share2 size={14} /> Share
@@ -601,9 +601,6 @@ const PublicLivePage = () => {
                 <Radio size={18} className="mr-1" /> Join Live Session
               </Button>
               <p className="text-[11px] text-muted-foreground">Audio will be enabled automatically</p>
-              <p className="text-[10px] text-muted-foreground pt-2">
-                Powered by <span className="text-primary font-semibold">Nevorai</span>
-              </p>
             </div>
           );
         })()}
@@ -689,6 +686,7 @@ const PublicLivePage = () => {
                   bumpControls();
                 }}
               />
+              <div style={{ position: "absolute", bottom: 10, right: 12, color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 500, letterSpacing: "0.3px", pointerEvents: "none", userSelect: "none", textShadow: "0 1px 3px rgba(0,0,0,0.5)", zIndex: 10 }}>nevorai.com</div>
 
               {/* Audio fallback banner */}
               {showAudioBanner && (
@@ -884,6 +882,7 @@ const PublicLivePage = () => {
               <div className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-emerald-500/90 text-white text-[11px] font-bold shadow">
                 REPLAY
               </div>
+              <div style={{ position: "absolute", bottom: 10, right: 12, color: "rgba(255,255,255,0.7)", fontSize: 12, fontWeight: 500, letterSpacing: "0.3px", pointerEvents: "none", userSelect: "none", textShadow: "0 1px 3px rgba(0,0,0,0.5)", zIndex: 10 }}>nevorai.com</div>
             </div>
             {allSlots.length > 0 && (
               <p className="text-xs text-muted-foreground text-center">
@@ -914,11 +913,10 @@ const PublicLivePage = () => {
           );
         })()}
 
-        {/* Footer */}
-        <div className="text-center pt-4">
-          <p className="text-[10px] text-muted-foreground"><span className="text-primary font-semibold">Nevorai</span></p>
-        </div>
       </div>
+      <footer style={{ textAlign: "center", padding: "24px 16px", color: "#9ca3af", fontSize: 13, borderTop: "1px solid hsl(var(--border))" }}>
+        © 2026 Nevorai · All Rights Reserved · India
+      </footer>
     </div>
   );
 };

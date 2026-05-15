@@ -32,7 +32,7 @@ import {
   scrollToFirstError,
 } from "@/lib/leadInputs";
 import { PrivacyMicrocopy } from "@/components/funnel/PrivacyMicrocopy";
-import { BrandingWatermark } from "@/components/BrandingWatermark";
+
 
 /* ─── Speed Popover ─── */
 const SPEED_OPTIONS = [0.75, 1, 1.25, 1.5, 2];
@@ -458,14 +458,12 @@ const CustomVideoPlayer = ({
         </div>
       )}
 
-      {started && (
-        <div
-          className="absolute right-3 text-[11px] text-white/75 font-medium pointer-events-none select-none z-10 tracking-wide"
-          style={{ bottom: 56, textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}
-        >
-          Nevorai
-        </div>
-      )}
+      <div
+        className="absolute right-3 text-[12px] font-medium pointer-events-none select-none z-10"
+        style={{ bottom: 10, color: "rgba(255,255,255,0.7)", letterSpacing: "0.3px", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}
+      >
+        nevorai.com
+      </div>
 
       {autoplayMuted && started && muted && (
         <button
@@ -1072,11 +1070,10 @@ const PublicFunnel = () => {
         }}
       >
         <div className="flex items-center gap-2">
-          <img src={logoImg} alt="Nevorai" className="h-6 w-6" />
-          <div className="flex items-baseline text-[16px]" style={{ lineHeight: 1 }}>
-            <span style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", fontStyle: "italic", fontWeight: 300, color: tc.text, letterSpacing: "-0.02em" }}>n</span>
-            <span style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", fontWeight: 800, color: tc.text, letterSpacing: "-0.03em" }}>Flow</span>
-          </div>
+          <a href="https://nevorai.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+            <img src={logoImg} alt="Nevorai" className="h-6 w-6" />
+            <span style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", fontWeight: 700, color: tc.text, letterSpacing: "-0.02em", fontSize: 16, lineHeight: 1 }}>Nevorai</span>
+          </a>
         </div>
         <div className="flex items-center gap-1">
           <button
@@ -1361,9 +1358,9 @@ const PublicFunnel = () => {
 
         <div className="flex-1" />
 
-        <div className="mt-16 pt-6 pb-8 text-center" style={{ borderTop: `1px solid ${tc.footerBorder}` }}>
-          <p className="text-[11px] tracking-wide" style={{ color: tc.footerText }}>© {new Date().getFullYear()} Nevorai · All rights reserved</p>
-        </div>
+        <footer style={{ textAlign: "center", padding: "24px 16px", color: "#9ca3af", fontSize: 13, borderTop: `1px solid ${tc.footerBorder}`, marginTop: 64 }}>
+          © 2026 Nevorai · All Rights Reserved · India
+        </footer>
       </div>
       )}
 
@@ -1381,7 +1378,7 @@ const PublicFunnel = () => {
           50%      { box-shadow: 0 0 0 6px hsl(var(--primary) / 0); }
         }
       `}</style>
-      <BrandingWatermark ownerId={(funnel as any)?.owner_id} />
+      
     </div>
   );
 };

@@ -191,7 +191,7 @@ const PublicVideoPage = () => {
         <div className="h-0.5 w-full bg-primary" />
 
         <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
-          <NFlowLogo size="sm" />
+          <a href="https://nevorai.com" target="_blank" rel="noopener noreferrer"><NFlowLogo size="sm" /></a>
           <button
             onClick={toggleTheme}
             className="p-2 rounded-full hover:bg-muted transition-colors"
@@ -254,6 +254,25 @@ const PublicVideoPage = () => {
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <Video size={48} className="text-muted-foreground" />
+            </div>
+          )}
+          {!videoError && video.public_url && (
+            <div
+              style={{
+                position: "absolute",
+                bottom: 10,
+                right: 12,
+                color: "rgba(255,255,255,0.7)",
+                fontSize: 12,
+                fontWeight: 500,
+                letterSpacing: "0.3px",
+                pointerEvents: "none",
+                userSelect: "none",
+                textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+                zIndex: 10,
+              }}
+            >
+              nevorai.com
             </div>
           )}
         </div>
@@ -389,16 +408,9 @@ const PublicVideoPage = () => {
         />
       )}
 
-      {/* Bottom brand line */}
-      <footer className="mt-auto max-w-3xl mx-auto w-full px-4 py-6 text-center">
-        <a
-          href="https://nevorai.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-        >
-          © 2026 Nevorai · All Rights Reserved
-        </a>
+      {/* Footer */}
+      <footer style={{ textAlign: "center", padding: "24px 16px", color: "#9ca3af", fontSize: 13, borderTop: "1px solid hsl(var(--border))", marginTop: "auto" }}>
+        © 2026 Nevorai · All Rights Reserved · India
       </footer>
     </div>
   );

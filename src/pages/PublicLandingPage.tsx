@@ -14,7 +14,7 @@ import { TestimonialsViewer } from "@/components/funnel/TestimonialsViewer";
 import { LandingPageCodeGate } from "@/components/funnel/LandingPageCodeGate";
 import { DateOfBirthInput } from "@/components/funnel/DateOfBirthInput";
 import { PostSubmitVideoPlayer } from "@/components/landing/PostSubmitVideoPlayer";
-import { BrandingWatermark } from "@/components/BrandingWatermark";
+
 import {
   normalizePhone,
   trimSmart,
@@ -79,6 +79,19 @@ const PublicLandingPage = () => {
     };
     load();
   }, [slug]);
+
+  useEffect(() => {
+    if (!page) return;
+    document.title = `${page.title || "Page"} | Nevorai`;
+    const setMeta = (name: string, content: string, prop = false) => {
+      const attr = prop ? "property" : "name";
+      let el = document.querySelector(`meta[${attr}="${name}"]`);
+      if (!el) { el = document.createElement("meta"); el.setAttribute(attr, name); document.head.appendChild(el); }
+      el.setAttribute("content", content);
+    };
+    setMeta("og:site_name", "Nevorai", true);
+    setMeta("og:title", page.title || "Nevorai", true);
+  }, [page]);
 
   const validateLeadFields = (): Record<string, string | null> => {
     const e: Record<string, string | null> = {};
@@ -274,7 +287,7 @@ const PublicLandingPage = () => {
   return (
     <div className={`min-h-screen flex flex-col ${bgClass}`}>
       <header className="flex items-center justify-center px-4 md:px-8 py-4 border-b border-border">
-        <Logo size="sm" />
+        <a href="https://nevorai.com" target="_blank" rel="noopener noreferrer"><Logo size="sm" /></a>
       </header>
 
       <main className="flex-1 px-4 md:px-8 py-8 max-w-7xl mx-auto w-full">
@@ -469,10 +482,9 @@ const PublicLandingPage = () => {
         )}
       </main>
 
-      <footer className="text-center py-6 text-xs text-muted-foreground border-t border-border">
-        Nevorai
+      <footer style={{ textAlign: "center", padding: "24px 16px", color: "#9ca3af", fontSize: 13, borderTop: "1px solid hsl(var(--border))" }}>
+        © 2026 Nevorai · All Rights Reserved · India
       </footer>
-      <BrandingWatermark ownerId={page?.owner_id} />
     </div>
   );
 };
