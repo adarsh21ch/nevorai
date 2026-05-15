@@ -27,7 +27,7 @@ const FREE_VARIANT = "outline" as const;
  * Build the Free-plan feature list entirely from the admin `plan_config` row.
  * Always shows: marketplace + public content + Nevorai video link (constant
  * platform capabilities). Everything else is driven by DB so admin edits to
- * max_funnels / max_videos / daily_view_limit / feature_* immediately reflect
+ * max_funnels / daily_view_limit / feature_* immediately reflect
  * on the public pricing card.
  */
 const buildFreeFeatures = (config: any): { text: string; included: boolean; tooltip?: string }[] => {
