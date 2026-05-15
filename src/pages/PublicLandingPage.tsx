@@ -469,10 +469,9 @@ const PublicLandingPage = () => {
         )}
       </main>
 
-      <footer className="text-center py-6 text-xs text-muted-foreground border-t border-border">
-        Nevorai
+      <footer style={{ textAlign: "center", padding: "24px 16px", color: "#9ca3af", fontSize: 13, borderTop: "1px solid hsl(var(--border))" }}>
+        © 2026 Nevorai · All Rights Reserved · India
       </footer>
-      <BrandingWatermark ownerId={page?.owner_id} />
     </div>
   );
 };
