@@ -26,6 +26,7 @@ import { TestimonialsBuilderStep } from "@/components/funnel/TestimonialsBuilder
 import { toast } from "sonner";
 import { sanitizeText } from "@/lib/sanitize";
 import { generateUniqueSuffixedSlug } from "@/lib/slugSuffix";
+import { EditorScrollLayout, EditorSectionBlock, type EditorSection } from "@/components/editor/EditorScrollLayout";
 
 const TEXT_FIELDS = [
   "title", "description", "form_title", "form_subtitle", "form_button_text",
