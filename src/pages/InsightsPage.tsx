@@ -1,6 +1,7 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, Users, TrendingUp, Layers, FileText, BarChart3, Target, UserCheck } from "lucide-react";
@@ -14,24 +15,24 @@ const COLORS = ["hsl(var(--primary))", "#6366F1", "#10B981", "#F59E0B", "#EF4444
 
 const InsightsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
   useDocumentTitle(embedded ? "Tools" : "Insights");
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
-  const { data: funnels = [] } = useQuery({
+  const { data: funnels = [], isLoading: funnelsLoading, error: funnelsError, refetch: refetchFunnels } = useQuery({
     queryKey: ["my-funnels", user?.id],
     queryFn: async () => {
       const { data } = await supabase.from("funnels").select("*").eq("owner_id", user!.id);
       return data || [];
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
-  const { data: landingPages = [] } = useQuery({
+  const { data: landingPages = [], isLoading: landingPagesLoading, error: landingPagesError, refetch: refetchLandingPages } = useQuery({
     queryKey: ["my-landing-pages", user?.id],
     queryFn: async () => {
       const { data } = await supabase.from("landing_pages").select("*").eq("owner_id", user!.id);
       return data || [];
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   const { data: leads = [] } = useQuery({
@@ -42,16 +43,16 @@ const InsightsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
       const { data } = await supabase.from("funnel_leads").select("*").in("funnel_id", ids);
       return data || [];
     },
-    enabled: funnels.length > 0,
+    enabled: !!user?.id && funnels.length > 0,
   });
 
-  const { data: registrations = [] } = useQuery({
+  const { data: registrations = [], isLoading: registrationsLoading, error: registrationsError, refetch: refetchRegistrations } = useQuery({
     queryKey: ["all-registrations-insights", user?.id],
     queryFn: async () => {
       const { data } = await supabase.from("landing_page_registrations").select("*").eq("owner_id", user!.id);
       return data || [];
     },
-    enabled: !!user,
+    enabled: !!user?.id,
   });
 
   const { data: videoAnalytics = [] } = useQuery({
@@ -62,8 +63,37 @@ const InsightsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
       const { data } = await supabase.from("funnel_video_analytics").select("*").in("funnel_id", ids).order("recorded_at", { ascending: true });
       return data || [];
     },
-    enabled: funnels.length > 0,
+    enabled: !!user?.id && funnels.length > 0,
   });
+
+  const isLoading = authLoading || funnelsLoading || landingPagesLoading || registrationsLoading;
+  const error = funnelsError || landingPagesError || registrationsError;
+
+  if (isLoading) {
+    const loadingState = <div className="premium-card p-10 text-center"><p className="text-sm text-muted-foreground">Loading insights...</p></div>;
+    return embedded ? loadingState : <DashboardLayout>{loadingState}</DashboardLayout>;
+  }
+
+  if (error) {
+    const errorState = (
+      <div className="premium-card p-10 text-center">
+        <h1 className="text-xl font-heading font-semibold">Couldn’t load insights</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Please try again.</p>
+        <Button
+          variant="outline"
+          className="mt-4"
+          onClick={() => {
+            refetchFunnels();
+            refetchLandingPages();
+            refetchRegistrations();
+          }}
+        >
+          Retry
+        </Button>
+      </div>
+    );
+    return embedded ? errorState : <DashboardLayout>{errorState}</DashboardLayout>;
+  }
 
   // KPIs
   const totalFunnelViews = funnels.reduce((a, f) => a + (f.total_views || 0), 0);
