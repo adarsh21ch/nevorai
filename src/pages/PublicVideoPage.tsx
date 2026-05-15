@@ -205,7 +205,7 @@ const PublicVideoPage = () => {
 
       {/* Player */}
       <div className="max-w-3xl mx-auto w-full px-0 sm:px-4 mt-4">
-        <div className="aspect-video bg-black sm:rounded-2xl overflow-hidden relative">
+        <div ref={playerWrapRef} className="aspect-video bg-black sm:rounded-2xl overflow-hidden relative">
           {videoError ? (
             <div className="w-full h-full flex flex-col items-center justify-center text-center px-4 gap-3 bg-card">
               <AlertTriangle size={36} className="text-destructive" />
@@ -224,9 +224,9 @@ const PublicVideoPage = () => {
               src={video.public_url}
               controls
               controlsList={
-                `${video.allow_seek === false ? "nodownload noplaybackrate " : ""}${
+                `nofullscreen ${video.allow_seek === false ? "nodownload noplaybackrate " : ""}${
                   video.allow_playback_speed === false ? "noplaybackrate" : ""
-                }`.trim() || undefined
+                }`.trim()
               }
               autoPlay
               muted
