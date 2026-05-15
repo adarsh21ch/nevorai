@@ -1358,9 +1358,9 @@ const PublicFunnel = () => {
 
         <div className="flex-1" />
 
-        <div className="mt-16 pt-6 pb-8 text-center" style={{ borderTop: `1px solid ${tc.footerBorder}` }}>
-          <p className="text-[11px] tracking-wide" style={{ color: tc.footerText }}>© {new Date().getFullYear()} Nevorai · All rights reserved</p>
-        </div>
+        <footer style={{ textAlign: "center", padding: "24px 16px", color: "#9ca3af", fontSize: 13, borderTop: `1px solid ${tc.footerBorder}`, marginTop: 64 }}>
+          © 2026 Nevorai · All Rights Reserved · India
+        </footer>
       </div>
       )}
 
