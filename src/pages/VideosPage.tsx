@@ -18,12 +18,16 @@ import { VideoLinkModal } from "@/components/VideoLinkModal";
 import { VideoUploadModal } from "@/components/VideoUploadModal";
 import { VideoShareModal } from "@/components/VideoShareModal";
 import { VideoRenameModal } from "@/components/VideoRenameModal";
+import { VideoDetailsModal } from "@/components/VideoDetailsModal";
 import { StorageUsageInline } from "@/components/StorageUsageCard";
 import { VideoThumbnail } from "@/components/VideoThumbnail";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
+
+const buildPublicVideoUrl = (v: { id: string; slug?: string | null }) =>
+  `${window.location.origin}/v/${v.slug || v.id}`;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const getDisplayTitle = (raw?: string | null): string => {
