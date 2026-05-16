@@ -11,6 +11,7 @@ import {
 
 import { CopyNflowLinkButton } from "@/components/CopyNflowLinkButton";
 import { sanitizeText } from "@/lib/sanitize";
+import { captureAttribution } from "@/lib/tracking";
 import {
   normalizePhone,
   trimSmart,
