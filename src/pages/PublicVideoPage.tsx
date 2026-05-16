@@ -255,13 +255,18 @@ const PublicVideoPage = () => {
                 if (!el) return;
                 const allowSeek = video.allow_seek !== false;
                 const allowSpeed = video.allow_playback_speed !== false;
-                const maxRef = { v: 0 };
+                const maxRef = { v: 0, warned: false };
                 el.ontimeupdate = () => {
                   if (el.currentTime > maxRef.v) maxRef.v = el.currentTime;
                 };
                 el.onseeking = () => {
-                  if (!allowSeek && el.currentTime > maxRef.v + 0.5)
+                  if (!allowSeek && el.currentTime > maxRef.v + 0.5) {
                     el.currentTime = maxRef.v;
+                    if (!maxRef.warned) {
+                      maxRef.warned = true;
+                      toast("This video must be watched in order", { duration: 2500 });
+                    }
+                  }
                 };
                 el.onratechange = () => {
                   if (!allowSpeed && el.playbackRate !== 1) el.playbackRate = 1;
