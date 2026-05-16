@@ -5,21 +5,26 @@ import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePageVisible } from "@/hooks/usePageVisible";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Eye, Users, UserCheck, Radio, Layers, FileText, Video, BarChart3, TrendingUp, Target } from "lucide-react";
+import { Eye, Users, UserCheck, Radio, Layers, FileText, Video, BarChart3, TrendingUp, Target, Search, LayoutGrid, List } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, AreaChart, Area, CartesianGrid, Legend,
+  PieChart, Pie, Cell, AreaChart, Area, CartesianGrid,
 } from "recharts";
 import { formatCompact, formatInt } from "@/lib/format";
 import { KpiCard } from "@/components/insights/KpiCard";
 import { LivePulseDot } from "@/components/insights/LivePulseDot";
 import { ActivityFeed, type ActivityItem } from "@/components/insights/ActivityFeed";
+import { EntityCard } from "@/components/insights/EntityCard";
+import { InsightsEmptyState } from "@/components/insights/EmptyState";
 import { cn } from "@/lib/utils";
 
 const COLORS = ["hsl(var(--primary))", "#6366F1", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6"];
+
+type SortKey = "recent" | "views" | "leads" | "alpha";
 
 type Period = "today" | "7d" | "30d" | "all";
 type Tab = "overview" | "videos" | "funnels" | "landing-pages" | "live";
