@@ -441,6 +441,8 @@ const CustomVideoPlayer = ({
         className="w-full h-full object-contain"
         playsInline
         preload="metadata"
+        controlsList={!allowSeek ? "nodownload noplaybackrate noremoteplayback" : "nodownload"}
+        disablePictureInPicture={!allowSeek}
         onTimeUpdate={handleTimeUpdate}
         onSeeking={handleSeeking}
         onLoadedMetadata={() => { if (videoRef.current) { setDuration(videoRef.current.duration); if (initialTime > 0) videoRef.current.currentTime = initialTime; } }}
