@@ -128,9 +128,15 @@ const VideosPage = () => {
     navigate({ to: "/funnels/create", search: { videoId } });
   };
 
-  const copyLink = (videoId: string) => {
-    navigator.clipboard.writeText(`${window.location.origin}/v/${videoId}`);
-    toast.success("Public video link copied!");
+  const copyLink = (v: { id: string; slug?: string | null }) => {
+    navigator.clipboard.writeText(buildPublicVideoUrl(v));
+    toast.success("Link copied!");
+  };
+
+  const shareWhatsApp = (v: { id: string; slug?: string | null; title: string }) => {
+    const url = buildPublicVideoUrl(v);
+    const text = encodeURIComponent(`Watch this video: ${v.title}\n${url}`);
+    window.open(`https://wa.me/?text=${text}`, "_blank", "noopener,noreferrer");
   };
 
   const removeLinkedVideo = async (videoId: string) => {
