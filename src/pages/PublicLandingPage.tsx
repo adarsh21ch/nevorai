@@ -94,6 +94,11 @@ const PublicLandingPage = () => {
     setMeta("og:title", page.title || "Nevorai", true);
   }, [page]);
 
+  useEffect(() => {
+    if (!page?.id) return;
+    return trackEntityView("landing_page", page.id);
+  }, [page?.id]);
+
   const validateLeadFields = (): Record<string, string | null> => {
     const e: Record<string, string | null> = {};
     const fields = (page ? [
