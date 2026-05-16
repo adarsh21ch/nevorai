@@ -14,6 +14,7 @@ import { TestimonialsViewer } from "@/components/funnel/TestimonialsViewer";
 import { LandingPageCodeGate } from "@/components/funnel/LandingPageCodeGate";
 import { DateOfBirthInput } from "@/components/funnel/DateOfBirthInput";
 import { PostSubmitVideoPlayer } from "@/components/landing/PostSubmitVideoPlayer";
+import { trackEntityView, captureAttribution } from "@/lib/tracking";
 
 import {
   normalizePhone,
