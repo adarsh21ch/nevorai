@@ -252,6 +252,27 @@ const InsightsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
           </div>
         </div>
 
+        {/* Top Videos */}
+        <div className="premium-card p-5">
+          <h3 className="text-sm font-heading font-semibold mb-1 flex items-center gap-2">
+            <Video size={14} className="text-primary" /> Top Videos
+          </h3>
+          <p className="text-[11px] text-muted-foreground mb-4">
+            Detailed watch-time & completion metrics will appear here once player tracking is enabled.
+          </p>
+          {topVideos.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={topVideos}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} />
+                <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey="views" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : <p className="text-sm text-muted-foreground text-center py-12">No videos yet</p>}
+        </div>
+
         {/* Charts Row 2 */}
         <div className="grid lg:grid-cols-3 gap-4">
           <div className="premium-card p-5">
