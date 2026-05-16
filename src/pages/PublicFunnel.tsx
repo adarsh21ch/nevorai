@@ -876,6 +876,7 @@ const PublicFunnel = () => {
         watch_progress_at_submit: watchSeconds,
         device_type: /Mobi/.test(navigator.userAgent) ? "mobile" : "desktop",
         user_agent: navigator.userAgent,
+        ...captureAttribution("funnel", funnel!.id, funnel!.slug),
       });
     },
     onSuccess: () => { setLeadSubmitted(true); toast.success("Thank you! Your details have been submitted."); },
