@@ -19,6 +19,7 @@ import { FunnelDailyLimitGate } from "@/components/funnel/FunnelDailyLimitGate";
 import { CreatorInactiveGate } from "@/components/funnel/CreatorInactiveGate";
 import { CopyNflowLinkButton } from "@/components/CopyNflowLinkButton";
 import { sanitizeText } from "@/lib/sanitize";
+import { trackEntityView, captureAttribution } from "@/lib/tracking";
 import {
   normalizePhone,
   trimSmart,
