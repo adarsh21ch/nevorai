@@ -150,7 +150,13 @@ const PublicLandingPage = () => {
 
     setSubmitting(true);
     try {
-      const payload: any = { landing_page_id: page.id, honeypot: "", ...formData, user_agent: navigator.userAgent };
+      const payload: any = {
+        landing_page_id: page.id,
+        honeypot: "",
+        ...formData,
+        user_agent: navigator.userAgent,
+        attribution: captureAttribution("landing_page", page.id, page.slug),
+      };
       const { data, error } = await supabase.functions.invoke("submit-landing-page-registration", { body: payload });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
