@@ -345,6 +345,32 @@ const InsightsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
   const topFunnels = [...funnels].sort((a, b) => (b.total_views || 0) - (a.total_views || 0)).slice(0, 5);
   const topLPs = [...landingPages].sort((a, b) => (b.total_views || 0) - (a.total_views || 0)).slice(0, 5);
 
+  // Per-entity event view & lead counts (period-scoped)
+  const videoViewCount: Record<string, number> = {};
+  videoViews.forEach((v: any) => { videoViewCount[v.video_id] = (videoViewCount[v.video_id] || 0) + 1; });
+  const funnelViewCount: Record<string, number> = {};
+  funnelViews.forEach((v: any) => { funnelViewCount[v.funnel_id] = (funnelViewCount[v.funnel_id] || 0) + 1; });
+  const lpViewCount: Record<string, number> = {};
+  lpViews.forEach((v: any) => { lpViewCount[v.landing_page_id] = (lpViewCount[v.landing_page_id] || 0) + 1; });
+  const funnelLeadCount: Record<string, number> = {};
+  leads.forEach((l: any) => { if (l.funnel_id) funnelLeadCount[l.funnel_id] = (funnelLeadCount[l.funnel_id] || 0) + 1; });
+  const lpRegCount: Record<string, number> = {};
+  registrations.forEach((r: any) => { if (r.landing_page_id) lpRegCount[r.landing_page_id] = (lpRegCount[r.landing_page_id] || 0) + 1; });
+
+  const sortFn = (a: any, b: any, vA: number, vB: number, lA: number, lB: number) => {
+    if (sort === "alpha") return (a.title || "").localeCompare(b.title || "");
+    if (sort === "views") return vB - vA;
+    if (sort === "leads") return lB - lA;
+    return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+  };
+  const matchSearch = (t: string) => !search || t.toLowerCase().includes(search.toLowerCase());
+
+  const sortedVideos = [...videos].filter((v) => matchSearch(v.title || "")).sort((a, b) => sortFn(a, b, a.view_count || 0, b.view_count || 0, 0, 0));
+  const sortedFunnels = [...funnels].filter((v) => matchSearch(v.title || "")).sort((a, b) => sortFn(a, b, a.total_views || 0, b.total_views || 0, a.total_leads || 0, b.total_leads || 0));
+  const sortedLPs = [...landingPages].filter((v) => matchSearch(v.title || "")).sort((a, b) => sortFn(a, b, a.total_views || 0, b.total_views || 0, a.total_registrations || 0, b.total_registrations || 0));
+  const sortedLives = [...liveSessions].filter((v) => matchSearch(v.title || "")).sort((a, b) => sortFn(a, b, a.total_views || 0, b.total_views || 0, a.registration_count || 0, b.registration_count || 0));
+
+
   // Attribution: source_type breakdown of leads+regs
   const attribCounts: Record<string, number> = {};
   [...leads, ...registrations].forEach((row: any) => {
