@@ -259,16 +259,21 @@ const InsightsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
   const liveViewers = liveMap.total;
 
 
-  // === Recent activity feed (30s polling) ===
+  // === Recent activity feed (30s polling) — leads, registrations AND views ===
   const { data: feedItems = [] } = useQuery<ActivityItem[]>({
-    queryKey: ["activity-feed", user?.id, funnelIds.length, lpIds.length],
+    queryKey: ["activity-feed", user?.id, period, funnelIds.length, lpIds.length, videoViews.length, funnelViews.length, lpViews.length],
     queryFn: async () => {
       const items: ActivityItem[] = [];
+      const funnelMap = new Map(funnels.map((f) => [f.id, { title: f.title, slug: f.slug }]));
+      const lpMap = new Map(landingPages.map((l) => [l.id, { title: l.title, slug: l.slug }]));
+      const videoMap = new Map(videos.map((v) => [v.id, { title: v.title }]));
+
       if (funnelIds.length) {
-        const { data: rows } = await supabase.from("funnel_leads").select("id,name,email,submitted_at,funnel_id,source_type,utm_source").in("funnel_id", funnelIds).order("submitted_at", { ascending: false }).limit(20);
-        const titleMap = new Map(funnels.map((f) => [f.id, { title: f.title, slug: f.slug }]));
+        let lq = supabase.from("funnel_leads").select("id,name,email,submitted_at,funnel_id,source_type,utm_source").in("funnel_id", funnelIds).order("submitted_at", { ascending: false }).limit(20);
+        if (startIso) lq = lq.gte("submitted_at", startIso);
+        const { data: rows } = await lq;
         (rows || []).forEach((r: any) => {
-          const f = titleMap.get(r.funnel_id);
+          const f = funnelMap.get(r.funnel_id);
           items.push({
             id: `lead-${r.id}`,
             kind: "lead",
@@ -281,10 +286,12 @@ const InsightsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
           });
         });
       }
-      const { data: regs } = await supabase.from("landing_page_registrations").select("id,name,email,submitted_at,landing_page_id,utm_source").eq("owner_id", user!.id).order("submitted_at", { ascending: false }).limit(20);
-      const lpTitleMap = new Map(landingPages.map((l) => [l.id, { title: l.title, slug: l.slug }]));
+
+      let rq = supabase.from("landing_page_registrations").select("id,name,email,submitted_at,landing_page_id,utm_source").eq("owner_id", user!.id).order("submitted_at", { ascending: false }).limit(20);
+      if (startIso) rq = rq.gte("submitted_at", startIso);
+      const { data: regs } = await rq;
       (regs || []).forEach((r: any) => {
-        const lp = lpTitleMap.get(r.landing_page_id);
+        const lp = lpMap.get(r.landing_page_id);
         items.push({
           id: `reg-${r.id}`,
           kind: "registration",
@@ -296,8 +303,47 @@ const InsightsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
           meta: r.utm_source ? `via ${r.utm_source}` : undefined,
         });
       });
+
+      // Add view events (already period-scoped from upstream queries)
+      videoViews.slice(0, 20).forEach((v: any) => {
+        const vid = videoMap.get(v.video_id);
+        items.push({
+          id: `vview-${v.video_id}-${v.started_at}`,
+          kind: "view",
+          entityType: "video",
+          entityTitle: vid?.title ?? "Video",
+          entityHref: `/insights/videos/${v.video_id}`,
+          who: null,
+          at: v.started_at,
+        });
+      });
+      funnelViews.slice(0, 20).forEach((v: any) => {
+        const f = funnelMap.get(v.funnel_id);
+        items.push({
+          id: `fview-${v.funnel_id}-${v.started_at}`,
+          kind: "view",
+          entityType: "funnel",
+          entityTitle: f?.title ?? "Funnel",
+          entityHref: f ? `/funnels/${v.funnel_id}` : undefined,
+          who: null,
+          at: v.started_at,
+        });
+      });
+      lpViews.slice(0, 20).forEach((v: any) => {
+        const lp = lpMap.get(v.landing_page_id);
+        items.push({
+          id: `lpview-${v.landing_page_id}-${v.started_at}`,
+          kind: "view",
+          entityType: "landing_page",
+          entityTitle: lp?.title ?? "Landing page",
+          entityHref: lp ? `/landing-pages/${v.landing_page_id}` : undefined,
+          who: null,
+          at: v.started_at,
+        });
+      });
+
       items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
-      return items.slice(0, 30);
+      return items.slice(0, 40);
     },
     enabled: !!user?.id,
     refetchInterval: visible ? 30_000 : false,
