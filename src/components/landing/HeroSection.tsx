@@ -70,15 +70,14 @@ export const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.7 }}
           >
-            <Link to="/auth?tab=signup" className="relative group">
-              <div className="absolute -inset-1 rounded-full bg-gradient-brand blur opacity-40 group-hover:opacity-70 transition duration-300" />
-              <button className="relative px-10 py-4 rounded-full bg-gradient-brand text-white font-bold shadow-glow-brand-lg hover:scale-[1.02] transition-transform">
+            <Link to="/auth?tab=signup" className="w-full sm:w-auto">
+              <button className="btn-saffron-premium w-full sm:w-auto">
                 Start Free →
               </button>
             </Link>
             <a
               href="#how-it-works"
-              className="px-8 py-4 rounded-full font-semibold text-white/80 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-2"
+              className="btn-glass-premium w-full sm:w-auto inline-flex items-center justify-center gap-2"
             >
               <Play size={18} />
               See How It Works
