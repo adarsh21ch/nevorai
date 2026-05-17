@@ -244,8 +244,22 @@ const PublicVideoPage = () => {
         {/* 2px brand accent line at top */}
         <div className="h-0.5 w-full bg-primary" />
 
-        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
-          <a href="https://nevorai.com" target="_blank" rel="noopener noreferrer"><NFlowLogo size="sm" /></a>
+        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            {openedByApp && (
+              <button
+                onClick={() => window.close()}
+                className="p-2 rounded-full hover:bg-muted transition-colors -ml-2"
+                aria-label="Close tab"
+                title="Close"
+              >
+                <X size={18} />
+              </button>
+            )}
+            <a href="https://nevorai.com" target="_blank" rel="noopener noreferrer" className="min-w-0">
+              <Logo size="sm" />
+            </a>
+          </div>
           <button
             onClick={toggleTheme}
             className="p-2 rounded-full hover:bg-muted transition-colors"
