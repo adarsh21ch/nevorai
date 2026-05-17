@@ -4,9 +4,11 @@ import { Navigate } from "@/lib/router-compat";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { StorySections } from "@/components/landing/StorySections";
+import { WhoIsItFor } from "@/components/landing/WhoIsItFor";
 import { ResultsComparison } from "@/components/landing/ResultsComparison";
 import { ConversionCalculator } from "@/components/landing/ConversionCalculator";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
+import { EarlyAccess } from "@/components/landing/EarlyAccess";
 import { Testimonials } from "@/components/landing/Testimonials";
 import { PricingSection } from "@/components/landing/PricingSection";
 import { FAQSection } from "@/components/landing/FAQSection";
@@ -40,10 +42,13 @@ const Index = () => {
     <div data-theme="dark" className="min-h-screen landing-page overflow-x-clip bg-hero-bg text-white">
       <Navbar />
       <HeroSection />
-      <StorySections />
+      <StorySections ids={["story.skip", "story.no-skip"]} />
+      <WhoIsItFor />
+      <StorySections ids={["story.unknown", "story.realtime", "story.clutter", "story.clean"]} />
       <ResultsComparison />
       <ConversionCalculator />
       <FeaturesSection />
+      <EarlyAccess />
       <Testimonials />
       <PricingSection />
       <FAQSection />

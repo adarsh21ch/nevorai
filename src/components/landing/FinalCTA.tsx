@@ -1,38 +1,69 @@
 import { motion } from "framer-motion";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/lib/router-compat";
 
+const chips = [
+  "No credit card needed",
+  "1 GB free forever",
+  "Setup in 2 minutes",
+];
+
 export const FinalCTA = () => {
   return (
-    <section className="py-20 sm:py-24 relative overflow-hidden bg-gradient-brand">
+    <section className="py-12 sm:py-20 relative overflow-hidden bg-gradient-brand">
       <div
         aria-hidden="true"
         className="absolute inset-0 pointer-events-none"
-        style={{ background: "radial-gradient(ellipse at top, rgba(255,255,255,0.15) 0%, transparent 60%)" }}
+        style={{ background: "radial-gradient(ellipse at top, rgba(255,255,255,0.18) 0%, transparent 60%)" }}
       />
       <div className="container-app relative z-10">
         <motion.div
-          className="text-center max-w-2xl mx-auto"
+          className="text-center max-w-3xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <h2 className="heading-display font-heading font-extrabold mb-4 text-white">
-            Start Converting More Prospects Today
+          <h2 className="font-heading font-extrabold text-white text-3xl md:text-5xl leading-[1.1] mb-4">
+            Ready to convert twice as much?
           </h2>
-          <p className="mb-8 text-base md:text-lg text-white/90">
-            Start free. No credit card. Upgrade only when you need more capacity.
+          <p className="text-base md:text-lg text-white/90 mb-8">
+            Same effort. Twice the conversion. Start free in 2 minutes.
           </p>
-          <Link to="/auth?tab=signup">
+
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8">
+            {chips.map((c) => (
+              <span
+                key={c}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/15 border border-white/20 text-xs sm:text-sm font-medium text-white backdrop-blur-sm"
+              >
+                <Check className="h-3.5 w-3.5" />
+                {c}
+              </span>
+            ))}
+          </div>
+
+          <Link to="/auth?tab=signup" className="block sm:inline-block">
             <Button
               size="xl"
-              className="rounded-full font-bold border-0 hover:scale-105 transition-transform bg-white text-base sm:text-lg px-10 sm:px-14 py-4 min-h-11 shadow-elegant"
+              className="w-full sm:w-auto rounded-full font-bold border-0 hover:scale-105 transition-transform bg-white text-base sm:text-lg px-10 sm:px-14 py-4 min-h-11 shadow-elegant"
             >
               <span className="text-gradient-brand">Start Free →</span>
             </Button>
           </Link>
-          <p className="mt-5 text-xs text-white/80">
-            Join 2,400+ network marketers already converting more prospects.
+
+          <div className="mt-5 text-sm text-white/80">
+            Or{" "}
+            <Link
+              to="/contact"
+              className="underline underline-offset-4 font-semibold text-white hover:text-white/90"
+            >
+              book a 5-minute walkthrough →
+            </Link>
+          </div>
+
+          <p className="mt-8 text-xs text-white/70">
+            Built for creators who sell. Made in India 🇮🇳
           </p>
         </motion.div>
       </div>
