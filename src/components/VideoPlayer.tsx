@@ -108,7 +108,7 @@ export function VideoPlayer({
   const progressRef = useRef<HTMLDivElement>(null);
   const hideTimerRef = useRef<number | null>(null);
   const longPressTimerRef = useRef<number | null>(null);
-  const lastTapRef = useRef<{ t: number; x: number } | null>(null);
+  
   const prevRateRef = useRef(1);
   const maxWatchedRef = useRef(0);
 
