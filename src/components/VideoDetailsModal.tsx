@@ -60,10 +60,19 @@ export const VideoDetailsModal = ({ open, onClose, videoId, onSuccess }: Props) 
         allow_seek: allowSeek,
         show_upload_date: showUploadDate,
       };
-      const { error } = await (supabase as any)
+      let { error } = await (supabase as any)
         .from("video_assets")
         .update(payload)
         .eq("id", videoId);
+      if (error && /show_upload_date/i.test(error.message || "")) {
+        // Column not yet migrated — retry without it.
+        const { show_upload_date: _omit, ...fallback } = payload;
+        const retry = await (supabase as any)
+          .from("video_assets")
+          .update(fallback)
+          .eq("id", videoId);
+        error = retry.error;
+      }
       if (error) throw error;
       toast.success("Video updated");
       onSuccess();
