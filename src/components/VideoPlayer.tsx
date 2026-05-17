@@ -9,8 +9,6 @@ import {
   Minimize,
   MoreVertical,
   PictureInPicture2,
-  RotateCcw,
-  RotateCw,
   Copy,
   Share2,
   Download,
