@@ -282,7 +282,7 @@ const VideosPage = () => {
             </div>
             <h3 className="text-base font-semibold mb-1">{search ? "No videos found" : "No videos yet"}</h3>
             <p className="text-sm text-muted-foreground mb-5 max-w-[280px] mx-auto">Upload a video and share it with your clients. See exactly who watches and how much.</p>
-            <Button onClick={() => setUploadModalOpen(true)}>
+            <Button onClick={openUploadFlow}>
               <Upload size={14} className="mr-1.5" /> Upload Your First Video
             </Button>
           </div>
