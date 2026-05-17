@@ -43,7 +43,7 @@ export const HeroSection = () => {
                 Same effort.
               </motion.span>
               <motion.span
-                className="block text-gradient-brand text-4xl sm:text-5xl md:text-7xl"
+                className="block text-gradient-hero text-4xl sm:text-5xl md:text-7xl"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
