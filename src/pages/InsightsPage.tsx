@@ -153,7 +153,7 @@ const InsightsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
     },
     enabled: !!user?.id,
     staleTime: 30_000,
-    refetchInterval: visible ? 60_000 : false,
+    refetchInterval: visible ? 30_000 : false,
   });
 
   const { data: leadsPrev = [] } = useQuery({
@@ -177,7 +177,7 @@ const InsightsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
     },
     enabled: !!user?.id,
     staleTime: 30_000,
-    refetchInterval: visible ? 60_000 : false,
+    refetchInterval: visible ? 30_000 : false,
   });
 
   const { data: regsPrev = [] } = useQuery({
