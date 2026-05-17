@@ -29,6 +29,16 @@ interface Props {
 export function EditorScrollLayout({ sections, children, rightPane, header }: Props) {
   const [active, setActive] = useState<string>(sections[0]?.id ?? "");
   const containerRef = useRef<HTMLDivElement>(null);
+  const chipRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  // Auto-scroll active chip into horizontal center on mobile chip strip.
+  useEffect(() => {
+    const el = chipRefs.current[active];
+    if (!el) return;
+    try {
+      el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    } catch {}
+  }, [active]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -106,37 +116,39 @@ export function EditorScrollLayout({ sections, children, rightPane, header }: Pr
 
       <div className="flex-1 flex gap-6 min-w-0">
         <div className="flex-1 max-w-2xl min-w-0">
-          {header}
-
-          {/* Mobile sticky chip strip */}
-          <div className="lg:hidden sticky top-[52px] z-20 -mx-3 sm:-mx-4 px-3 sm:px-4 py-2 bg-background/95 backdrop-blur border-b border-border mb-3">
-            <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
-              {sections.map((s, i) => {
-                const isActive = active === s.id;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => jumpTo(s.id)}
-                    className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-semibold transition-all ${
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted/60 text-muted-foreground"
-                    }`}
-                  >
-                    <s.icon size={12} />
-                    <span>
-                      {s.num ?? i + 1} {s.label}
-                    </span>
-                    {s.locked && <LockIcon size={10} className="text-amber-500" />}
-                    {s.complete && !isActive && <Check size={10} className="text-emerald-500" />}
-                  </button>
-                );
-              })}
+          {/* Sticky group: header + (mobile-only) chip strip pin together at top */}
+          <div className="sticky top-0 z-30 mb-3 bg-background/95 backdrop-blur">
+            {header}
+            <div className="lg:hidden px-3 sm:px-4 py-2 border-b border-border">
+              <div className="flex gap-1.5 overflow-x-auto no-scrollbar scroll-smooth">
+                {sections.map((s, i) => {
+                  const isActive = active === s.id;
+                  return (
+                    <button
+                      key={s.id}
+                      ref={(el) => { chipRefs.current[s.id] = el; }}
+                      type="button"
+                      onClick={() => jumpTo(s.id)}
+                      className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-semibold transition-all ${
+                        isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted/60 text-muted-foreground"
+                      }`}
+                    >
+                      <s.icon size={12} />
+                      <span>
+                        {s.num ?? i + 1} {s.label}
+                      </span>
+                      {s.locked && <LockIcon size={10} className="text-amber-500" />}
+                      {s.complete && !isActive && <Check size={10} className="text-emerald-500" />}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          <div className="space-y-6">{children}</div>
+          <div className="px-3 sm:px-4 md:px-8 space-y-6">{children}</div>
         </div>
 
         {rightPane && (

@@ -4,6 +4,7 @@ import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePageVisible } from "@/hooks/usePageVisible";
+import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -72,6 +73,7 @@ const InsightsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
   useDocumentTitle(embedded ? "Tools" : isMobile ? "Activity" : "Insights");
   const { user, loading: authLoading } = useAuth();
   const visible = usePageVisible();
+  const { features } = usePlanLimits();
 
   const [tab, setTab] = useState<Tab>(getInitialTab);
   const [period, setPeriod] = useState<Period>(getInitialPeriod);
@@ -443,8 +445,8 @@ const InsightsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="videos">Videos</TabsTrigger>
             <TabsTrigger value="funnels">Funnels</TabsTrigger>
-            <TabsTrigger value="landing-pages">Landing</TabsTrigger>
-            <TabsTrigger value="live">Live</TabsTrigger>
+            {features.landingPages && <TabsTrigger value="landing-pages">Landing</TabsTrigger>}
+            {features.goLive && <TabsTrigger value="live">Live</TabsTrigger>}
           </TabsList>
         </div>
 
