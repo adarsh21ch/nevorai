@@ -445,8 +445,8 @@ const InsightsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="videos">Videos</TabsTrigger>
             <TabsTrigger value="funnels">Funnels</TabsTrigger>
-            <TabsTrigger value="landing-pages">Landing</TabsTrigger>
-            <TabsTrigger value="live">Live</TabsTrigger>
+            {features.landingPages && <TabsTrigger value="landing-pages">Landing</TabsTrigger>}
+            {features.goLive && <TabsTrigger value="live">Live</TabsTrigger>}
           </TabsList>
         </div>
 
