@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Search, Grid, List, Link2, Share2, Pencil, Rocket, Upload, Copy, Trash2, RefreshCw, Loader2, Settings, Play, MoreVertical, Users } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -65,6 +65,17 @@ const VideosPage = () => {
   const [view, setView] = useState<"grid" | "list">("list");
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+
+  const openUploadFlow = () => uploadInputRef.current?.click();
+  const handleUploadPicked = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] || null;
+    e.target.value = "";
+    if (!f) return;
+    setPendingFile(f);
+    setUploadModalOpen(true);
+  };
   const [shareVideo, setShareVideo] = useState<{ id: string; title: string } | null>(null);
   const [renameVideo, setRenameVideo] = useState<{ id: string; title: string } | null>(null);
   const [detailsVideo, setDetailsVideo] = useState<{ id: string } | null>(null);
@@ -191,9 +202,16 @@ const VideosPage = () => {
             <h1 className="text-xl sm:text-2xl font-heading font-bold">My Videos</h1>
             <StorageUsageInline />
           </div>
-          <Button size="sm" onClick={() => setUploadModalOpen(true)} className="flex items-center gap-1.5">
+          <Button size="sm" onClick={openUploadFlow} className="flex items-center gap-1.5">
             <Upload size={14} /> Upload Video
           </Button>
+          <input
+            ref={uploadInputRef}
+            type="file"
+            accept=".mp4,.mov,.webm,.m4v,.mkv,.avi,video/*"
+            className="hidden"
+            onChange={handleUploadPicked}
+          />
         </div>
 
         <div className="-mt-2">
@@ -264,7 +282,7 @@ const VideosPage = () => {
             </div>
             <h3 className="text-base font-semibold mb-1">{search ? "No videos found" : "No videos yet"}</h3>
             <p className="text-sm text-muted-foreground mb-5 max-w-[280px] mx-auto">Upload a video and share it with your clients. See exactly who watches and how much.</p>
-            <Button onClick={() => setUploadModalOpen(true)}>
+            <Button onClick={openUploadFlow}>
               <Upload size={14} className="mr-1.5" /> Upload Your First Video
             </Button>
           </div>
@@ -459,8 +477,9 @@ const VideosPage = () => {
         {/* Modals */}
         <VideoUploadModal
           open={uploadModalOpen}
-          onClose={() => setUploadModalOpen(false)}
+          onClose={() => { setUploadModalOpen(false); setPendingFile(null); }}
           onSuccess={invalidateVideos}
+          initialFile={pendingFile}
         />
 
         <VideoLinkModal

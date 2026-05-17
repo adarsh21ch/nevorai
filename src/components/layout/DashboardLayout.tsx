@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from "@/lib/router-compat";
+import { Link as TLink } from "@tanstack/react-router";
 import { Logo } from "@/components/landing/Logo";
 import {
   LayoutDashboard, Layers, Video, IndianRupee, BarChart2,
@@ -201,18 +202,18 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
                 ? location.pathname === item.path
                 : location.pathname.startsWith(item.path);
               return (
-                <Link
+                <TLink
                   key={item.path}
-                  to={item.path}
-                  onMouseEnter={() => preloadRoute(item.path)}
+                  to={item.path as any}
+                  preload="intent"
                   className={cn(
-                    "flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium transition-colors",
+                    "flex min-h-[64px] min-w-0 flex-col items-center justify-center gap-1 px-1 text-[10px] font-medium transition-transform duration-100 active:scale-95",
                     active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
                   <item.icon size={20} strokeWidth={active ? 2.5 : 1.8} />
                   <span className="truncate">{item.label}</span>
-                </Link>
+                </TLink>
               );
             })}
           </div>
