@@ -6,7 +6,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Search, Eye, Users, IndianRupee, MoreVertical, Copy, Share2, Layers, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -37,6 +37,7 @@ const FunnelsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
       const { data } = await supabase.from("funnels").select("*").eq("owner_id", user!.id).order("created_at", { ascending: false });
       return data || [];
     },
+    placeholderData: keepPreviousData,
     enabled: !!user?.id,
   });
 
