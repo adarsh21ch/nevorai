@@ -35,7 +35,7 @@ export const VideoDetailsModal = ({ open, onClose, videoId, onSuccess }: Props) 
     (async () => {
       const { data } = await (supabase as any)
         .from("video_assets")
-        .select("title, description, allow_seek, show_upload_date")
+        .select("*")
         .eq("id", videoId)
         .maybeSingle();
       setTitle(data?.title || "");
