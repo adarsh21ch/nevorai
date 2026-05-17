@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "@/lib/router-compat";
 import { startVideoView, heartbeatVideoView } from "@/lib/videoTracking.functions";
 import { useQuery } from "@tanstack/react-query";
