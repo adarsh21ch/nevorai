@@ -9,8 +9,6 @@ import {
   Minimize,
   MoreVertical,
   PictureInPicture2,
-  RotateCcw,
-  RotateCw,
   Copy,
   Share2,
   Download,
@@ -85,18 +83,6 @@ function ControlButton({
   );
 }
 
-/** Skip 10s icon with "10" text overlay */
-function SkipIcon({ dir }: { dir: "back" | "forward" }) {
-  const Icon = dir === "back" ? RotateCcw : RotateCw;
-  return (
-    <span className="relative inline-flex items-center justify-center">
-      <Icon className="h-5 w-5 sm:h-5 sm:w-5" />
-      <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold leading-none pt-[1px] select-none pointer-events-none">
-        10
-      </span>
-    </span>
-  );
-}
 
 export function VideoPlayer({
   src,
@@ -122,7 +108,7 @@ export function VideoPlayer({
   const progressRef = useRef<HTMLDivElement>(null);
   const hideTimerRef = useRef<number | null>(null);
   const longPressTimerRef = useRef<number | null>(null);
-  const lastTapRef = useRef<{ t: number; x: number } | null>(null);
+  
   const prevRateRef = useRef(1);
   const maxWatchedRef = useRef(0);
 
@@ -137,7 +123,7 @@ export function VideoPlayer({
   const [canPiP, setCanPiP] = useState(false);
   const [canNativeShare, setCanNativeShare] = useState(false);
   const [hoverFrac, setHoverFrac] = useState<number | null>(null);
-  const [seekFlash, setSeekFlash] = useState<{ dir: "back" | "forward"; key: number } | null>(null);
+  
 
   useEffect(() => {
     setCanPiP(typeof document !== "undefined" && !!(document as any).pictureInPictureEnabled);
@@ -179,18 +165,7 @@ export function VideoPlayer({
     else v.pause();
   }, []);
 
-  const skip = useCallback(
-    (delta: number) => {
-      if (!allowSeek) return;
-      const v = videoRef.current;
-      if (!v) return;
-      let target = Math.max(0, Math.min(v.duration || 0, v.currentTime + delta));
-      v.currentTime = target;
-      setSeekFlash({ dir: delta < 0 ? "back" : "forward", key: Date.now() });
-      window.setTimeout(() => setSeekFlash(null), 500);
-    },
-    [allowSeek],
-  );
+
 
   const toggleMute = useCallback(() => {
     const v = videoRef.current;
@@ -287,32 +262,6 @@ export function VideoPlayer({
           e.preventDefault();
           toggleFullscreen();
           break;
-        case "ArrowLeft":
-          if (allowSeek) {
-            e.preventDefault();
-            skip(-5);
-          }
-          break;
-        case "ArrowRight":
-          if (allowSeek) {
-            e.preventDefault();
-            skip(5);
-          }
-          break;
-        case "j":
-        case "J":
-          if (allowSeek) {
-            e.preventDefault();
-            skip(-10);
-          }
-          break;
-        case "l":
-        case "L":
-          if (allowSeek) {
-            e.preventDefault();
-            skip(10);
-          }
-          break;
         case "ArrowUp":
           e.preventDefault();
           setVol(Math.min(1, (v.volume || 0) + 0.1));
@@ -331,7 +280,7 @@ export function VideoPlayer({
     };
     el.addEventListener("keydown", onKey);
     return () => el.removeEventListener("keydown", onKey);
-  }, [togglePlay, toggleMute, toggleFullscreen, skip, setVol, seekToFraction, allowSeek, showControls]);
+  }, [togglePlay, toggleMute, toggleFullscreen, setVol, seekToFraction, allowSeek, showControls]);
 
   const url = shareUrl ?? (typeof window !== "undefined" ? window.location.href : "");
   const handleCopy = useCallback(() => {
@@ -386,31 +335,16 @@ export function VideoPlayer({
       if (v && v.playbackRate !== prevRateRef.current) {
         v.playbackRate = prevRateRef.current;
       }
-      const touch = e.changedTouches[0];
-      if (!touch) return;
-      const now = Date.now();
-      const rect = wrapRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const x = touch.clientX - rect.left;
-      const last = lastTapRef.current;
-      if (last && now - last.t < 300 && Math.abs(x - last.x) < 60) {
-        // Double tap
-        if (allowSeek) {
-          if (x < rect.width / 2) skip(-10);
-          else skip(10);
-        }
-        lastTapRef.current = null;
-      } else {
-        lastTapRef.current = { t: now, x };
-        window.setTimeout(() => {
-          if (lastTapRef.current && lastTapRef.current.t === now) {
-            setControlsVisible((vis) => !vis);
-            lastTapRef.current = null;
-          }
-        }, 320);
+      // Ignore taps that land on interactive controls (let them handle themselves)
+      const target = e.target as HTMLElement | null;
+      if (target && target.closest("button, input, [role='menu'], [data-no-tap]")) {
+        return;
       }
+      // Single tap anywhere on video: toggle play/pause + show controls.
+      togglePlay();
+      showControls();
     },
-    [allowSeek, skip],
+    [togglePlay, showControls],
   );
 
   const bufferedPct = duration > 0 ? (buffered / duration) * 100 : 0;
@@ -547,18 +481,6 @@ export function VideoPlayer({
         </button>
       )}
 
-      {/* Double-tap +/-10s flash */}
-      {seekFlash && (
-        <div
-          key={seekFlash.key}
-          className={cn(
-            "absolute top-1/2 -translate-y-1/2 px-4 py-2 rounded-full bg-black/70 text-white text-sm font-semibold pointer-events-none animate-in fade-in zoom-in duration-200",
-            seekFlash.dir === "back" ? "left-8" : "right-8",
-          )}
-        >
-          {seekFlash.dir === "back" ? "−10s" : "+10s"}
-        </div>
-      )}
 
       {/* Bottom gradient + controls */}
       <div
@@ -576,12 +498,12 @@ export function VideoPlayer({
         )}
         onMouseEnter={cancelHide}
       >
-        {/* Progress bar (hidden for live) */}
+        {/* Progress bar (hidden for live) — sits flush above the control bar */}
         {!live && (
           <div
             ref={progressRef}
             className={cn(
-              "relative w-full mb-1.5 group/seek py-2",
+              "relative w-full group/seek py-1.5 sm:py-2",
               allowSeek ? "cursor-pointer" : "cursor-default",
             )}
             onClick={(e) => {
@@ -608,13 +530,14 @@ export function VideoPlayer({
             <div
               className={cn(
                 "relative w-full rounded-full transition-[height] duration-150 bg-white/25",
+                // Mobile: 4px default, 6px active. Desktop: 3px default, 6px on hover. FS: 4px / 8px.
                 allowSeek
                   ? isFs
-                    ? "h-1 group-hover/seek:h-2"
-                    : "h-[3px] group-hover/seek:h-1.5"
+                    ? "h-1 group-hover/seek:h-2 group-active/seek:h-2"
+                    : "h-1 sm:h-[3px] group-hover/seek:h-1.5 group-active/seek:h-1.5"
                   : isFs
                     ? "h-1"
-                    : "h-[3px]",
+                    : "h-1 sm:h-[3px]",
               )}
             >
               <div
@@ -627,7 +550,12 @@ export function VideoPlayer({
               />
               {allowSeek && (
                 <div
-                  className="absolute top-1/2 -translate-y-1/2 w-2 h-2 bg-primary rounded-full -ml-1 opacity-0 group-hover/seek:opacity-100 transition-opacity"
+                  className={cn(
+                    "absolute top-1/2 -translate-y-1/2 bg-primary rounded-full",
+                    // Mobile: always-visible 12px scrubber. Desktop: 8px, hover-only.
+                    "w-3 h-3 -ml-1.5 sm:w-2 sm:h-2 sm:-ml-1",
+                    "opacity-100 sm:opacity-0 sm:group-hover/seek:opacity-100 transition-opacity",
+                  )}
                   style={{ left: `${progressPct}%` }}
                 />
               )}
