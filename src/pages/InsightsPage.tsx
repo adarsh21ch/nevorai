@@ -73,6 +73,7 @@ const InsightsPage = ({ embedded = false }: { embedded?: boolean } = {}) => {
   useDocumentTitle(embedded ? "Tools" : isMobile ? "Activity" : "Insights");
   const { user, loading: authLoading } = useAuth();
   const visible = usePageVisible();
+  const { features } = usePlanLimits();
 
   const [tab, setTab] = useState<Tab>(getInitialTab);
   const [period, setPeriod] = useState<Period>(getInitialPeriod);
