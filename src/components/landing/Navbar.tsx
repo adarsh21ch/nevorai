@@ -1,11 +1,20 @@
 import { Link, useLocation, useNavigate } from "@/lib/router-compat";
 import { Button } from "@/components/ui/button";
 import { Logo } from "./Logo";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown, Home, Shield, Network, GraduationCap } from "lucide-react";
 import { useState, useEffect } from "react";
+
+const useCases = [
+  { Icon: Home, title: "Real Estate", tag: "Property tours that close", to: "/use-cases/real-estate" },
+  { Icon: Shield, title: "Insurance Agents", tag: "Policy explainers that qualify leads", to: "/use-cases/insurance-agents" },
+  { Icon: Network, title: "Network Marketing", tag: "Plan videos that convert", to: "/use-cases/network-marketing" },
+  { Icon: GraduationCap, title: "Online Coaches", tag: "Course previews that sell", to: "/use-cases/coaches" },
+];
 
 export const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const [useCasesOpen, setUseCasesOpen] = useState(false);
+  const [mobileUseCasesOpen, setMobileUseCasesOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const isHome = location.pathname === "/";
@@ -45,6 +54,46 @@ export const Navbar = () => {
 
         <div className="hidden md:flex items-center gap-6">
           <a href="/#features" onClick={(e) => handleSectionClick(e, "#features")} className="text-sm text-white/80 hover:text-white transition-colors cursor-pointer">Features</a>
+
+          {/* Use Cases dropdown */}
+          <div
+            className="relative"
+            onMouseEnter={() => setUseCasesOpen(true)}
+            onMouseLeave={() => setUseCasesOpen(false)}
+          >
+            <button
+              type="button"
+              className="flex items-center gap-1 text-sm text-white/80 hover:text-white transition-colors cursor-pointer"
+              onClick={() => setUseCasesOpen((v) => !v)}
+              aria-expanded={useCasesOpen}
+            >
+              Use Cases
+              <ChevronDown size={14} className={`transition-transform ${useCasesOpen ? "rotate-180" : ""}`} />
+            </button>
+            {useCasesOpen && (
+              <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 w-[320px]">
+                <div className="rounded-xl border border-white/10 bg-hero-bg/95 backdrop-blur-xl shadow-elegant p-2">
+                  {useCases.map(({ Icon, title, tag, to }) => (
+                    <Link
+                      key={to}
+                      to={to}
+                      onClick={() => setUseCasesOpen(false)}
+                      className="flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-white/[0.06] transition-colors group"
+                    >
+                      <div className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-brand">
+                        <Icon className="h-4 w-4 text-white" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-white group-hover:text-brand-emerald transition-colors">{title}</div>
+                        <div className="text-xs text-white/60">{tag}</div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <a href="/#pricing" onClick={(e) => handleSectionClick(e, "#pricing")} className="text-sm text-white/80 hover:text-white transition-colors cursor-pointer">Pricing</a>
           <a href="/#faq" onClick={(e) => handleSectionClick(e, "#faq")} className="text-sm text-white/80 hover:text-white transition-colors cursor-pointer">FAQ</a>
           <Link to="/auth">
@@ -65,6 +114,38 @@ export const Navbar = () => {
       {open && (
         <div className="md:hidden border-t border-white/[0.06] p-4 flex flex-col gap-3 bg-hero-bg/95">
           <a href="/#features" onClick={(e) => handleSectionClick(e, "#features")} className="text-sm text-white/80 py-3 cursor-pointer min-h-11">Features</a>
+
+          {/* Mobile Use Cases accordion */}
+          <button
+            type="button"
+            className="flex items-center justify-between text-sm text-white/80 py-3 min-h-11"
+            onClick={() => setMobileUseCasesOpen((v) => !v)}
+            aria-expanded={mobileUseCasesOpen}
+          >
+            <span>Use Cases</span>
+            <ChevronDown size={16} className={`transition-transform ${mobileUseCasesOpen ? "rotate-180" : ""}`} />
+          </button>
+          {mobileUseCasesOpen && (
+            <div className="flex flex-col gap-1 pl-2 -mt-2 mb-1 border-l border-white/10">
+              {useCases.map(({ Icon, title, tag, to }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  onClick={() => setOpen(false)}
+                  className="flex items-start gap-3 px-3 py-2.5 rounded-lg hover:bg-white/[0.06] min-h-11"
+                >
+                  <div className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-brand">
+                    <Icon className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-white">{title}</div>
+                    <div className="text-xs text-white/60">{tag}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+
           <a href="/#pricing" onClick={(e) => handleSectionClick(e, "#pricing")} className="text-sm text-white/80 py-3 cursor-pointer min-h-11">Pricing</a>
           <a href="/#faq" onClick={(e) => handleSectionClick(e, "#faq")} className="text-sm text-white/80 py-3 cursor-pointer min-h-11">FAQ</a>
           <Link to="/auth" onClick={() => setOpen(false)}>
