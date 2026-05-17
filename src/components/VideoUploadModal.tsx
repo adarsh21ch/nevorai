@@ -275,12 +275,34 @@ export const VideoUploadModal = ({ open, onClose, onSuccess, skipStorageCheck = 
         </DialogHeader>
 
         {doneVideoId ? (
-          <DoneStep
-            videoId={doneVideoId}
-            publicUrl={publicUrl}
-            onCopy={copyDoneLink}
-            onClose={finishAndClose}
-          />
+          <div className="space-y-4 pt-2">
+            <div className="flex items-center justify-center">
+              <CheckCircle2 size={48} className="text-emerald-400" />
+            </div>
+            <p className="text-center text-sm text-muted-foreground">
+              Your video is live. Share the link anywhere.
+            </p>
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 p-2">
+              <input
+                readOnly
+                value={publicUrl}
+                className="flex-1 bg-transparent text-xs outline-none px-2"
+              />
+              <Button size="sm" variant="outline" onClick={copyDoneLink}>
+                <Copy size={14} className="mr-1" /> Copy
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              <Button asChild variant="outline" className="flex-1">
+                <a href={publicUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink size={14} className="mr-1" /> Open
+                </a>
+              </Button>
+              <Button onClick={finishAndClose} className="flex-1">
+                Done
+              </Button>
+            </div>
+          </div>
         ) : (
         <div className="space-y-4">
           {/* Pro Tip collapsible */}
