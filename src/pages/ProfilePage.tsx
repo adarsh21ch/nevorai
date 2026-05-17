@@ -31,7 +31,17 @@ const ProfilePage = () => {
   const { theme, toggleTheme } = useTheme();
   const { isAdmin } = useAdmin();
   const trial = useTrialStatus();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
+
+  // Prefetch likely-next routes from Profile so first-tap is instant.
+  useEffect(() => {
+    const paths = ["/billing", "/payments", "/pricing", "/kyc", "/notifications", "/settings", "/help", "/install"];
+    const run = () => paths.forEach((p) => { try { void router.preloadRoute({ to: p as any }); } catch {} });
+    const ric = (typeof window !== "undefined" ? (window as any).requestIdleCallback : null) as
+      | ((cb: () => void, opts?: { timeout: number }) => number) | null;
+    if (ric) ric(run, { timeout: 1500 }); else setTimeout(run, 200);
+  }, [router]);
   const [editOpen, setEditOpen] = useState(false);
   const [form, setForm] = useState({
     full_name: "", phone: "", city: "", bio: "", company: "",
