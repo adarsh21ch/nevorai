@@ -96,7 +96,7 @@ export const VideoUploadModal = ({ open, onClose, onSuccess, skipStorageCheck = 
   const storage = useStorageUsage();
 
   // Auto-open file picker on first open with no file
-  React.useEffect(() => {
+  useEffect(() => {
     if (open && !file && !doneVideoId && !autoPickRef.current) {
       autoPickRef.current = true;
       // small delay so the dialog mounts before the picker
