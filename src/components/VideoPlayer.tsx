@@ -335,31 +335,16 @@ export function VideoPlayer({
       if (v && v.playbackRate !== prevRateRef.current) {
         v.playbackRate = prevRateRef.current;
       }
-      const touch = e.changedTouches[0];
-      if (!touch) return;
-      const now = Date.now();
-      const rect = wrapRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const x = touch.clientX - rect.left;
-      const last = lastTapRef.current;
-      if (last && now - last.t < 300 && Math.abs(x - last.x) < 60) {
-        // Double tap
-        if (allowSeek) {
-          if (x < rect.width / 2) skip(-10);
-          else skip(10);
-        }
-        lastTapRef.current = null;
-      } else {
-        lastTapRef.current = { t: now, x };
-        window.setTimeout(() => {
-          if (lastTapRef.current && lastTapRef.current.t === now) {
-            setControlsVisible((vis) => !vis);
-            lastTapRef.current = null;
-          }
-        }, 320);
+      // Ignore taps that land on interactive controls (let them handle themselves)
+      const target = e.target as HTMLElement | null;
+      if (target && target.closest("button, input, [role='menu'], [data-no-tap]")) {
+        return;
       }
+      // Single tap anywhere on video: toggle play/pause + show controls.
+      togglePlay();
+      showControls();
     },
-    [allowSeek, skip],
+    [togglePlay, showControls],
   );
 
   const bufferedPct = duration > 0 ? (buffered / duration) * 100 : 0;
