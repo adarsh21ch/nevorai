@@ -855,7 +855,8 @@ const LandingPageEditor = () => {
         </Button>
       </div>
     </>
-  );
+    );
+  };
 
   const renderTestimonialsStep = () => (
     <div className="space-y-6">
