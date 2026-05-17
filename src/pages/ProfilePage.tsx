@@ -46,31 +46,84 @@ const ProfilePage = () => {
   const [form, setForm] = useState({
     full_name: "", phone: "", city: "", bio: "", company: "",
     instagram_url: "", whatsapp_number: "",
+    username: "", cta_label: "", cta_url: "",
   });
+  const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken" | "invalid">("idle");
+  const [cropFile, setCropFile] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile) {
+      const p = profile as any;
       setForm({
         full_name: profile.full_name || "", phone: profile.phone || "", city: profile.city || "",
         bio: profile.bio || "", company: profile.company || "",
         instagram_url: profile.instagram_url || "", whatsapp_number: profile.whatsapp_number || "",
+        username: p.username || "", cta_label: p.cta_label || "", cta_url: p.cta_url || "",
       });
+      setAvatarUrl(profile.avatar_url || null);
     }
   }, [profile]);
 
+  // Username uniqueness check (debounced)
+  useEffect(() => {
+    const u = form.username.trim().toLowerCase();
+    if (!u) { setUsernameStatus("idle"); return; }
+    if (!/^[a-z0-9_]{3,20}$/.test(u)) { setUsernameStatus("invalid"); return; }
+    if ((profile as any)?.username === u) { setUsernameStatus("available"); return; }
+    setUsernameStatus("checking");
+    const t = setTimeout(async () => {
+      const { data } = await (supabase as any)
+        .from("profiles").select("id").eq("username", u).maybeSingle();
+      setUsernameStatus(data ? "taken" : "available");
+    }, 400);
+    return () => clearTimeout(t);
+  }, [form.username, profile]);
+
   const handleSave = async () => {
     if (!user) return;
+    if (form.username && usernameStatus !== "available") {
+      toast.error("Fix username before saving"); return;
+    }
+    if (form.cta_url && !/^https?:\/\/|^mailto:|^tel:|^wa\.me/i.test(form.cta_url)) {
+      toast.error("CTA URL must start with https://, mailto:, tel: or wa.me"); return;
+    }
     const cleanForm = sanitizeFields(form, [
-      "full_name", "city", "bio", "company", "instagram_url",
-    ]);
+      "full_name", "city", "bio", "company", "instagram_url", "cta_label",
+    ]) as any;
     cleanForm.phone = normalizePhone(form.phone);
     cleanForm.whatsapp_number = normalizePhone(form.whatsapp_number);
+    cleanForm.username = form.username.trim().toLowerCase() || null;
+    cleanForm.cta_url = form.cta_url.trim() || null;
+    cleanForm.cta_label = (cleanForm.cta_label || "").slice(0, 30) || null;
     setLoading(true);
-    const { error } = await supabase.from("profiles").update(cleanForm).eq("id", user.id);
+    const { error } = await (supabase as any).from("profiles").update(cleanForm).eq("id", user.id);
     setLoading(false);
-    if (error) { toast.error("Failed to save"); return; }
+    if (error) { toast.error(error.message || "Failed to save"); return; }
     await refreshProfile();
     toast.success("Profile updated!");
+  };
+
+  const onPickPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(f.type)) {
+      toast.error("Use JPG, PNG or WebP"); return;
+    }
+    if (f.size > 5 * 1024 * 1024) { toast.error("Max 5 MB"); return; }
+    const reader = new FileReader();
+    reader.onload = () => setCropFile(reader.result as string);
+    reader.readAsDataURL(f);
+  };
+
+  const removePhoto = async () => {
+    if (!user) return;
+    if (!confirm("Remove your profile photo?")) return;
+    await (supabase as any).from("profiles").update({ avatar_url: null }).eq("id", user.id);
+    setAvatarUrl(null);
+    await refreshProfile();
+    toast.success("Photo removed");
   };
 
   const initials = (profile?.full_name || "U")
