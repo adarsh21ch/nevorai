@@ -723,20 +723,40 @@ const LandingPageEditor = () => {
     </>
   );
 
-  const renderPublishStep = () => (
+  const renderPublishStep = () => {
+    const isLive = form.status === "published";
+    return (
     <>
-      <h2 className="text-lg font-heading font-semibold">Publish</h2>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-heading font-semibold flex items-center gap-2">
+            <Rocket size={18} className="text-primary" /> Publish
+          </h2>
+          <p className="text-sm text-muted-foreground">Review and publish your landing page.</p>
+        </div>
+        <span
+          className={`mt-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+            isLive ? "bg-emerald-500/15 text-emerald-500" : "bg-red-500/15 text-red-500"
+          }`}
+        >
+          <span className={`h-2 w-2 rounded-full ${isLive ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`} />
+          {isLive ? "Live" : "Draft"}
+        </span>
+      </div>
       <div className="space-y-4 mt-4">
-        <div className="p-4 bg-muted/50 rounded-xl space-y-3">
-          <Label className="font-semibold">Status</Label>
+        <div className="rounded-xl p-4 bg-gradient-to-br from-emerald-500/10 via-primary/10 to-blue-500/10 border-2 border-emerald-500/30 shadow-[0_0_24px_-8px_rgba(0,200,150,0.45)] space-y-3">
+          <Label className="font-semibold flex items-center gap-1.5">
+            <Rocket size={14} className="text-emerald-500" /> Status
+          </Label>
           <Select value={form.status} onValueChange={(v) => updateField("status", v)}>
-            <SelectTrigger className="bg-muted border-border"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="bg-background border-border"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="draft">Draft</SelectItem>
               <SelectItem value="published">Published</SelectItem>
               <SelectItem value="archived">Archived</SelectItem>
             </SelectContent>
           </Select>
+          <p className="text-xs text-muted-foreground">Tip: clicking Save will publish automatically.</p>
         </div>
 
         <div className="p-4 bg-muted/50 rounded-xl space-y-3">
@@ -835,7 +855,8 @@ const LandingPageEditor = () => {
         </Button>
       </div>
     </>
-  );
+    );
+  };
 
   const renderTestimonialsStep = () => (
     <div className="space-y-6">
@@ -926,7 +947,7 @@ const LandingPageEditor = () => {
             <Eye size={14} className="mr-1.5" /> Preview
           </Button>
         )}
-        <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !form.title}>
+        <Button size="sm" onClick={() => { updateField("status", "published"); setTimeout(() => saveMutation.mutate(), 50); }} disabled={saveMutation.isPending || !form.title}>
           <Save size={14} className="mr-1.5" /> {saveMutation.isPending ? "Saving..." : "Save"}
         </Button>
       </div>

@@ -149,8 +149,8 @@ const FunnelEditor = () => {
     allow_seek: false, allow_speed_change: true, lock_cta: false,
     cta_enabled: true, cta_text: "Get Started", cta_timing_seconds: 60, cta_url: "",
     video_access_minutes: null as number | null,
-    show_contact_buttons: true, contact_whatsapp: "", contact_phone: "", contact_instagram: "",
-    show_contact_after_cta: true, whatsapp_auto_message: true, whatsapp_message_template: "Hi {name}, thanks for watching!",
+    show_contact_buttons: false, contact_whatsapp: "", contact_phone: "", contact_instagram: "",
+    show_contact_after_cta: true, whatsapp_auto_message: false, whatsapp_message_template: "Hi {name}, thanks for watching!",
     audio_note_url: "", audio_note_timing: "before", audio_note_autoplay: false, audio_lock_video: false,
     payment_enabled: false, upi_id: "", qr_code_url: "", payment_instructions: "",
     is_live_broadcast: false, broadcast_scheduled_at: "", broadcast_password: "", broadcast_replay_enabled: true,
@@ -159,14 +159,14 @@ const FunnelEditor = () => {
     required_fields: { email: false, city: false, state: false, whatsapp: false } as { email: boolean; city: boolean; state: boolean; whatsapp: boolean },
     speaker_mode: "account" as "none" | "account" | "custom",
     speaker_name: "", speaker_photo_url: "", speaker_about: "",
-    video_topics_enabled: true,
+    video_topics_enabled: false,
     video_topics: [] as string[],
     speaker_scope: "global" as "global" | "per_step",
     video_topics_scope: "global" as "global" | "per_step",
   });
 
   const [leadForm, setLeadForm] = useState({
-    capture_enabled: true, capture_timing: "before_video",
+    capture_enabled: false, capture_timing: "before_video",
     show_name: true, name_required: true, show_phone: true, phone_required: true,
     show_email: false, email_required: false, show_city: true, city_required: false,
     custom_field_label: "", show_custom: false, custom_required: false,
@@ -330,9 +330,10 @@ const FunnelEditor = () => {
   }, [user, funnel, selectedVideo]);
 
   const saveMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (opts?: { publish?: boolean }) => {
       const payload = buildPayload();
       if (!payload) throw new Error("Not authenticated");
+      if (opts?.publish) payload.is_published = true;
       // Preserve existing slug on edit; generate suffixed slug for new funnels.
       // The random suffix protects against URL enumeration regardless of whether
       // the user typed a custom slug or we derived one from the title.
@@ -1186,8 +1187,30 @@ const FunnelEditor = () => {
 
   const renderPublishStep = () => (
     <>
-      <h2 className="text-lg font-heading font-semibold">Publish</h2>
-      <p className="text-sm text-muted-foreground">Review and publish your funnel.</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-heading font-semibold flex items-center gap-2">
+            <Rocket size={18} className="text-primary" /> Publish
+          </h2>
+          <p className="text-sm text-muted-foreground">Review and publish your funnel.</p>
+        </div>
+        {/* Top-right status dot */}
+        <span
+          className={`mt-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+            funnel.is_published
+              ? "bg-emerald-500/15 text-emerald-500"
+              : "bg-red-500/15 text-red-500"
+          }`}
+        >
+          <span
+            className={`h-2 w-2 rounded-full ${
+              funnel.is_published ? "bg-emerald-500 animate-pulse" : "bg-red-500"
+            }`}
+          />
+          {funnel.is_published ? "Live" : "Draft"}
+        </span>
+      </div>
+
       <div className="space-y-4 mt-4">
         <div className="border border-border rounded-xl p-4 space-y-2.5">
           <div className="flex items-center gap-2"><Check size={16} className={funnel.title ? "text-emerald-500" : "text-muted-foreground"} /><span className="text-sm">{funnel.title ? "Title added" : "Add a title"}</span></div>
@@ -1206,14 +1229,17 @@ const FunnelEditor = () => {
             </div>
           </div>
         )}
-        <div className="p-4 bg-muted/50 rounded-xl">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label className="font-semibold">{funnel.is_published ? "Published" : "Draft"}</Label>
+        <div className="rounded-xl p-4 bg-gradient-to-br from-emerald-500/10 via-primary/10 to-blue-500/10 border-2 border-emerald-500/30 shadow-[0_0_24px_-8px_rgba(0,200,150,0.45)]">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <Label className="font-semibold flex items-center gap-1.5">
+                <Rocket size={14} className="text-emerald-500" />
+                {funnel.is_published ? "Published" : "Make it live"}
+              </Label>
               <p className="text-xs text-muted-foreground mt-1">
                 {funnel.is_published
-                  ? "🟢 Your funnel is live! Anyone with the link can see it."
-                  : "🔴 Only you can see this funnel. Toggle to make it public."}
+                  ? "Your funnel is live — anyone with the link can see it."
+                  : "Turn this on to publish. Tip: clicking Save will publish automatically."}
               </p>
             </div>
             <Switch checked={funnel.is_published} onCheckedChange={(v) => update("is_published", v)} />
@@ -1313,7 +1339,7 @@ const FunnelEditor = () => {
       <Button
         variant="hero"
         size="sm"
-        onClick={() => saveMutation.mutate()}
+        onClick={() => { update("is_published", true); saveMutation.mutate({ publish: true }); }}
         disabled={saveMutation.isPending || !funnel.title}
         className="shrink-0"
       >
