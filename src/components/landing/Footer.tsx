@@ -4,9 +4,9 @@ import { Link } from "@/lib/router-compat";
 
 const links = {
   Product: [
-    { label: "Features", href: "/features" },
-    { label: "Pricing", href: "/pricing" },
-    { label: "FAQ", href: "/faq" },
+    { label: "Features", href: "/#features" },
+    { label: "Pricing", href: "/#pricing" },
+    { label: "FAQ", href: "/#faq" },
   ],
   "Use Cases": [
     { label: "Network Marketing", href: "/use-cases/network-marketing" },
