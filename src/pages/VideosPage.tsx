@@ -298,7 +298,7 @@ const VideosPage = () => {
               const goEdit = () => isReady && v._source === "own" && setDetailsVideo({ id: v.id });
               const goPreview = () => {
                 if (!isReady) return;
-                const url = `/v/${v.slug || v.id}`;
+                const url = `/v/${(v as any).slug || v.id}`;
                 if (typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches) {
                   window.open(url, "_blank", "noopener,noreferrer");
                 } else {
