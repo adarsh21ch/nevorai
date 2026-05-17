@@ -486,31 +486,7 @@ const PublicVideoPage = () => {
           )}
         </div>
 
-        {/* Action chips — icon+text on desktop, icon-only on mobile */}
-        <div className="flex flex-wrap gap-2 pt-1">
-          {video.allow_copy_link !== false && (
-            <button
-              onClick={handleCopyLink}
-              className="flex items-center gap-1.5 px-3 h-9 rounded-full bg-muted hover:bg-muted/80 text-sm font-medium transition-colors"
-              title="Copy link"
-              aria-label="Copy link"
-            >
-              {copied ? <Check size={14} /> : <Link2 size={14} />}
-              <span className="hidden sm:inline">
-                {copied ? "Copied" : "Copy link"}
-              </span>
-            </button>
-          )}
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-1.5 px-3 h-9 rounded-full bg-muted hover:bg-muted/80 text-sm font-medium transition-colors"
-            title="Share"
-            aria-label="Share"
-          >
-            <Share2 size={14} />
-            <span className="hidden sm:inline">Share</span>
-          </button>
-        </div>
+        {/* Copy/Share now live in the player overlay (bottom-right) */}
       </div>
 
       {/* Creator card */}
