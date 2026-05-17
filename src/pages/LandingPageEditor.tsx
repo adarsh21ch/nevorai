@@ -947,7 +947,7 @@ const LandingPageEditor = () => {
             <Eye size={14} className="mr-1.5" /> Preview
           </Button>
         )}
-        <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !form.title}>
+        <Button size="sm" onClick={() => { updateField("status", "published"); setTimeout(() => saveMutation.mutate(), 50); }} disabled={saveMutation.isPending || !form.title}>
           <Save size={14} className="mr-1.5" /> {saveMutation.isPending ? "Saving..." : "Save"}
         </Button>
       </div>
