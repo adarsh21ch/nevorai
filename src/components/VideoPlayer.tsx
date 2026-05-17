@@ -498,12 +498,12 @@ export function VideoPlayer({
         )}
         onMouseEnter={cancelHide}
       >
-        {/* Progress bar (hidden for live) */}
+        {/* Progress bar (hidden for live) — sits flush above the control bar */}
         {!live && (
           <div
             ref={progressRef}
             className={cn(
-              "relative w-full mb-1.5 group/seek py-2",
+              "relative w-full group/seek py-1.5 sm:py-2",
               allowSeek ? "cursor-pointer" : "cursor-default",
             )}
             onClick={(e) => {
@@ -530,13 +530,14 @@ export function VideoPlayer({
             <div
               className={cn(
                 "relative w-full rounded-full transition-[height] duration-150 bg-white/25",
+                // Mobile: 4px default, 6px active. Desktop: 3px default, 6px on hover. FS: 4px / 8px.
                 allowSeek
                   ? isFs
-                    ? "h-1 group-hover/seek:h-2"
-                    : "h-[3px] group-hover/seek:h-1.5"
+                    ? "h-1 group-hover/seek:h-2 group-active/seek:h-2"
+                    : "h-1 sm:h-[3px] group-hover/seek:h-1.5 group-active/seek:h-1.5"
                   : isFs
                     ? "h-1"
-                    : "h-[3px]",
+                    : "h-1 sm:h-[3px]",
               )}
             >
               <div
@@ -549,7 +550,12 @@ export function VideoPlayer({
               />
               {allowSeek && (
                 <div
-                  className="absolute top-1/2 -translate-y-1/2 w-2 h-2 bg-primary rounded-full -ml-1 opacity-0 group-hover/seek:opacity-100 transition-opacity"
+                  className={cn(
+                    "absolute top-1/2 -translate-y-1/2 bg-primary rounded-full",
+                    // Mobile: always-visible 12px scrubber. Desktop: 8px, hover-only.
+                    "w-3 h-3 -ml-1.5 sm:w-2 sm:h-2 sm:-ml-1",
+                    "opacity-100 sm:opacity-0 sm:group-hover/seek:opacity-100 transition-opacity",
+                  )}
                   style={{ left: `${progressPct}%` }}
                 />
               )}
