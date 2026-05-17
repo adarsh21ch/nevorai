@@ -86,6 +86,15 @@ export const HeroSection = () => {
             </a>
           </motion.div>
 
+          <motion.p
+            className="-mt-8 mb-14 text-xs text-white/50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.75 }}
+          >
+            No credit card. 1 GB free forever. Setup in 2 minutes.
+          </motion.p>
+
           <motion.div
             className="w-full"
             initial={{ opacity: 0, y: 12 }}
