@@ -65,6 +65,17 @@ const VideosPage = () => {
   const [view, setView] = useState<"grid" | "list">("list");
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
+
+  const openUploadFlow = () => uploadInputRef.current?.click();
+  const handleUploadPicked = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] || null;
+    e.target.value = "";
+    if (!f) return;
+    setPendingFile(f);
+    setUploadModalOpen(true);
+  };
   const [shareVideo, setShareVideo] = useState<{ id: string; title: string } | null>(null);
   const [renameVideo, setRenameVideo] = useState<{ id: string; title: string } | null>(null);
   const [detailsVideo, setDetailsVideo] = useState<{ id: string } | null>(null);
