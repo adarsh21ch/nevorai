@@ -117,7 +117,7 @@ export function EditorScrollLayout({ sections, children, rightPane, header }: Pr
       <div className="flex-1 flex gap-6 min-w-0">
         <div className="flex-1 max-w-2xl min-w-0">
           {/* Sticky group: header + (mobile-only) chip strip pin together at top */}
-          <div className="sticky top-0 z-30 -mx-3 sm:-mx-4 md:-mx-8 mb-3 bg-background/95 backdrop-blur">
+          <div className="sticky top-0 z-30 mb-3 bg-background/95 backdrop-blur">
             {header}
             <div className="lg:hidden px-3 sm:px-4 py-2 border-b border-border">
               <div className="flex gap-1.5 overflow-x-auto no-scrollbar scroll-smooth">
