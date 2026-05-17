@@ -16,6 +16,7 @@ import {
 import { useTheme } from "@/hooks/useTheme";
 import { Switch } from "@/components/ui/switch";
 import { Link } from "@/lib/router-compat";
+import { useRouter } from "@tanstack/react-router";
 import { usePlan } from "@/hooks/usePlan";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useTrialStatus } from "@/hooks/useTrialStatus";
