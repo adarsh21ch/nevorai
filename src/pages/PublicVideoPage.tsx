@@ -3,7 +3,13 @@ import { useParams } from "@/lib/router-compat";
 import { startVideoView, heartbeatVideoView } from "@/lib/videoTracking.functions";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import NFlowLogo from "@/components/brand/NFlowLogo";
+import { Logo } from "@/components/landing/Logo";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Video,
   AlertTriangle,
