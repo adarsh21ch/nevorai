@@ -519,19 +519,9 @@ export function VideoPlayer({
         onError={onError}
       />
 
-      {/* Mobile centered controls cluster (skip-back / play / skip-fwd) */}
+      {/* Mobile centered play button */}
       {isMobile && controlsVisible && (
-        <div className="absolute inset-0 flex items-center justify-center gap-6 pointer-events-none z-10">
-          {allowSeek && !live && (
-            <button
-              type="button"
-              onClick={() => skip(-10)}
-              aria-label="Skip back 10s"
-              className="pointer-events-auto h-12 w-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white active:scale-90 transition-transform"
-            >
-              <SkipIcon dir="back" />
-            </button>
-          )}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
           <button
             type="button"
             onClick={togglePlay}
@@ -540,16 +530,6 @@ export function VideoPlayer({
           >
             {playing ? <Pause size={32} fill="white" /> : <Play size={32} fill="white" className="ml-1" />}
           </button>
-          {allowSeek && !live && (
-            <button
-              type="button"
-              onClick={() => skip(10)}
-              aria-label="Skip forward 10s"
-              className="pointer-events-auto h-12 w-12 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white active:scale-90 transition-transform"
-            >
-              <SkipIcon dir="forward" />
-            </button>
-          )}
         </div>
       )}
 
