@@ -65,42 +65,22 @@ function DashboardPage() {
     if (!loading && !user) navigate("/auth");
   }, [loading, user]);
 
-  const { data: funnels = [] } = useQuery({
-    queryKey: ["my-funnels", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase.from("funnels").select("*").eq("owner_id", user!.id).order("created_at", { ascending: false });
-      return data || [];
+  // Fix D: single RPC replaces funnels + total-leads + active-live queries
+  const { data: summary } = useQuery({
+    queryKey: ["dashboard-summary", user?.id],
+    queryFn: async (): Promise<DashboardSummary> => {
+      const { data, error } = await (supabase as any).rpc("dashboard_summary", { p_user_id: user!.id });
+      if (error) throw error;
+      return (data as DashboardSummary) ?? { funnels: [], total_leads: 0, active_live_session: null };
     },
-    enabled: !!user,
+    enabled: !!user?.id,
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
 
-  const { data: leadCount = 0 } = useQuery({
-    queryKey: ["total-leads", user?.id],
-    queryFn: async () => {
-      const funnelIds = (funnels as any[]).map((f) => f.id);
-      if (!funnelIds.length) return 0;
-      const { count } = await (supabase as any).from("funnel_leads").select("*", { count: "exact", head: true }).in("funnel_id", funnelIds);
-      return count || 0;
-    },
-    enabled: (funnels as any[]).length > 0,
-  });
-
-  const { data: activeLive } = useQuery({
-    queryKey: ["active-live-session", user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      const { data } = await (supabase as any)
-        .from("live_sessions")
-        .select("id, title")
-        .eq("owner_id", user.id)
-        .eq("status", "live")
-        .limit(1)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!user,
-    refetchInterval: 30000,
-  });
+  const funnels = summary?.funnels ?? [];
+  const leadCount = summary?.total_leads ?? 0;
+  const activeLive = summary?.active_live_session ?? null;
 
   if (loading || !user) {
     return (
