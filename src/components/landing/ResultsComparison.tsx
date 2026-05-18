@@ -107,9 +107,7 @@ export const ResultsComparison = () => {
                         transition={{ type: "spring", stiffness: 400, damping: 32 }}
                         className={[
                           "absolute inset-0 rounded-full",
-                          key === "youtube"
-                            ? "bg-destructive/90 shadow-[0_6px_20px_-6px_hsl(var(--destructive)/0.6)]"
-                            : "bg-gradient-brand shadow-glow-brand-lg",
+                          key === "youtube" ? "pill-mono-active" : "pill-saffron-active",
                         ].join(" ")}
                       />
                     )}
@@ -125,12 +123,7 @@ export const ResultsComparison = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.5 }}
-            className={[
-              "rounded-2xl border p-4 md:p-8 backdrop-blur-md transition-colors duration-500",
-              isNev
-                ? "border-brand-emerald/30 bg-brand-emerald/[0.04]"
-                : "border-destructive/30 bg-destructive/[0.04]",
-            ].join(" ")}
+            className="compare-card-frame rounded-2xl p-4 md:p-8 backdrop-blur-md transition-colors duration-500"
           >
             <AnimatePresence mode="wait">
               <motion.div
@@ -143,7 +136,7 @@ export const ResultsComparison = () => {
                 <p
                   className={[
                     "text-[11px] font-bold uppercase tracking-widest mb-3",
-                    isNev ? "text-brand-emerald" : "text-destructive",
+                    isNev ? "text-saffron" : "",
                   ].join(" ")}
                 >
                   {isNev ? "✅ " : "❌ "}
@@ -169,8 +162,9 @@ export const ResultsComparison = () => {
                       <span
                         className={[
                           "mt-1.5 h-1.5 w-1.5 rounded-full shrink-0",
-                          isNev ? "bg-brand-emerald" : "bg-destructive",
+                          isNev ? "bg-saffron-soft" : "",
                         ].join(" ")}
+                        style={!isNev ? { background: "var(--text-tertiary)" } : undefined}
                       />
                       {b}
                     </li>

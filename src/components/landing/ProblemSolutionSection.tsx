@@ -18,22 +18,22 @@ interface Props {
 
 const toneStyles: Record<Tone, { bg: string; eyebrow: string; metric: string; ring: string }> = {
   problem: {
-    bg: "bg-hero-bg",
-    eyebrow: "text-destructive border-destructive/30 bg-destructive/10",
-    metric: "text-destructive",
-    ring: "ring-destructive/20",
+    bg: "",
+    eyebrow: "badge-pill",
+    metric: "text-saffron",
+    ring: "",
   },
   "solution-green": {
-    bg: "bg-[oklch(0.18_0.04_165_/_0.4)]",
-    eyebrow: "text-brand-emerald border-brand-emerald/30 bg-brand-emerald/10",
-    metric: "text-brand-emerald",
-    ring: "ring-brand-emerald/20",
+    bg: "",
+    eyebrow: "badge-pill",
+    metric: "text-saffron",
+    ring: "",
   },
   "solution-blue": {
-    bg: "bg-[oklch(0.20_0.06_240_/_0.4)]",
-    eyebrow: "text-brand-blue border-brand-blue/30 bg-brand-blue/10",
-    metric: "text-brand-blue",
-    ring: "ring-brand-blue/20",
+    bg: "",
+    eyebrow: "badge-pill",
+    metric: "text-saffron",
+    ring: "",
   },
 };
 
