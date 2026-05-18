@@ -184,8 +184,8 @@ export const DashboardLayout = ({ children, editorMode = false }: { children: Re
 
         <main className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
           {!editorMode && (
-            <div className="sticky top-0 z-40 border-b border-border bg-card/85 backdrop-blur-sm md:hidden">
-              <div className="flex items-center justify-between gap-3 px-3 py-2.5">
+            <div className="sticky top-0 z-40 border-b border-border bg-card/85 backdrop-blur-sm md:hidden" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+              <div className="flex items-center justify-between gap-3 px-3 py-1.5">
                 <div className="min-w-0 flex-1">
                   <Logo size="sm" showByline />
                 </div>
