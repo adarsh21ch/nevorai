@@ -136,7 +136,7 @@ export const ResultsComparison = () => {
                 <p
                   className={[
                     "text-[11px] font-bold uppercase tracking-widest mb-3",
-                    isNev ? "text-brand-emerald" : "text-destructive",
+                    isNev ? "text-saffron" : "",
                   ].join(" ")}
                 >
                   {isNev ? "✅ " : "❌ "}
@@ -162,9 +162,14 @@ export const ResultsComparison = () => {
                       <span
                         className={[
                           "mt-1.5 h-1.5 w-1.5 rounded-full shrink-0",
-                          isNev ? "bg-brand-emerald" : "bg-destructive",
+                          isNev ? "bg-saffron-soft" : "",
                         ].join(" ")}
+                        style={!isNev ? { background: "var(--text-tertiary)" } : undefined}
                       />
+                      {b}
+                    </li>
+                  ))}
+                </ul>
                       {b}
                     </li>
                   ))}
