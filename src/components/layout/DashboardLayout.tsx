@@ -46,6 +46,7 @@ export const DashboardLayout = ({ children, editorMode = false }: { children: Re
   const { signOut, user } = useAuth();
   const { isAdmin } = useAdmin();
   const [collapsed, setCollapsed] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   
   // theme toggle moved to Profile page
   const { isTrialExpired, trialDays } = useTrialStatus();
