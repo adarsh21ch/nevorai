@@ -12,6 +12,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Sun, Moon } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 // theme handled in ProfilePage
 import { useTrialStatus } from "@/hooks/useTrialStatus";
 import { TrialExpiredGate } from "@/components/TrialExpiredGate";
