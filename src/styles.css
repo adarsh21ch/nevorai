@@ -469,7 +469,7 @@ img, video, iframe { max-width: 100%; }
 }
 .badge-pill-cyan { background: rgba(45,212,191,0.08); border-color: rgba(45,212,191,0.20); color: #5EEAD4; }
 .badge-pill-red { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.20); color: #FCA5A5; }
-.badge-pill-saffron { background: rgba(249,115,22,0.08); border-color: rgba(249,115,22,0.22); color: #FDBA74; }
+.badge-pill-saffron { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.10); color: #D4D4D4; }
 .badge-pill::before { content: "●"; font-size: 8px; line-height: 1; opacity: 0.9; }
 
 @media (prefers-reduced-motion: reduce) {
