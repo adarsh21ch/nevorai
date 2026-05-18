@@ -461,16 +461,27 @@ const VideosPage = () => {
               };
               return (
                 <div key={v.id} className="rounded-xl border border-border bg-card overflow-hidden hover:border-primary/40 transition-colors">
-                  <div className="relative cursor-pointer group" onClick={openPreview}>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    className="relative cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary/60"
+                    onClick={openPreview}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openPreview(); } }}
+                  >
                     <VideoThumbnail thumbnailUrl={v.thumbnail_url} videoUrl={v.public_url} title={title} className="rounded-none" />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
-                      <Play size={36} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/15 group-hover:bg-black/40 transition-colors">
+                      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 shadow-lg ring-1 ring-black/10 transition-transform group-hover:scale-110 group-active:scale-95">
+                        <Play size={22} className="text-black translate-x-[1px]" fill="currentColor" />
+                      </span>
                     </div>
                     {formatDuration(v.duration_seconds) && (
-                      <span className="absolute bottom-1.5 right-1.5 bg-black/75 text-white text-[10px] font-medium px-1.5 py-0.5 rounded">{formatDuration(v.duration_seconds)}</span>
+                      <span className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-[10px] font-medium px-1.5 py-0.5 rounded">{formatDuration(v.duration_seconds)}</span>
                     )}
                   </div>
-                  <div className="p-3">
+                  <div
+                    className="p-3 cursor-pointer"
+                    onClick={() => v.status === "ready" && v._source === "own" && setDetailsVideo({ id: v.id })}
+                  >
                     <p className="text-sm font-medium truncate">{title}</p>
                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                       <VideoStatusBadge status={v.status} />
