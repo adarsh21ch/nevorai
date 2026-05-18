@@ -469,8 +469,9 @@ const FunnelEditor = () => {
   };
 
   const baseSteps = isMulti ? MULTI_STEPS : SINGLE_STEPS;
+  // Show Lead Capture step always so users can enable/configure it.
+  // Payment step is still gated by its own toggle (set elsewhere in the editor).
   const visibleSteps = baseSteps.filter((s) => {
-    if (s.label === "Lead Capture" && !leadForm.capture_enabled) return false;
     if (s.label === "Payment" && !funnel.payment_enabled) return false;
     return true;
   });
