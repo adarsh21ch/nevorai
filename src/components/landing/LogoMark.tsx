@@ -11,8 +11,8 @@ export const LogoMark = ({ className = "" }: { className?: string }) => (
     xmlns="http://www.w3.org/2000/svg"
     aria-hidden="true"
     className={className}
-    style={{ color: "var(--logo-color)" }}
   >
+
     {/* n stem (left vertical) */}
     <rect x="10" y="20" width="9" height="34" rx="2" fill="currentColor" />
     {/* n arch — curve from left stem up and over to right */}
