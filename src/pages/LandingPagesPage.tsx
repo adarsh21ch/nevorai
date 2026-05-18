@@ -27,7 +27,7 @@ const LandingPagesPage = ({ embedded = false }: { embedded?: boolean } = {}) => 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"upgrade" | "limit">("upgrade");
 
-  const { isFree, canCreateLandingPage, config, counts, tier } = usePlanLimits();
+  const { isFree, canCreateLandingPage, config, counts, tier, features } = usePlanLimits();
   const queryClient = useQueryClient();
 
   const { data: pages = [], isLoading, error, refetch } = useQuery({
@@ -45,6 +45,7 @@ const LandingPagesPage = ({ embedded = false }: { embedded?: boolean } = {}) => 
   });
 
   const handleCreate = () => {
+    if (!features.landingPages) { setModalType("upgrade"); setModalOpen(true); return; }
     if (isFree) { setModalType("upgrade"); setModalOpen(true); return; }
     if (!canCreateLandingPage) { setModalType("limit"); setModalOpen(true); return; }
     navigate({ to: "/landing-pages/create" });
