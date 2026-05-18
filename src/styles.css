@@ -871,13 +871,14 @@ section[id] {
   box-shadow: 0 4px 16px -4px rgba(0,0,0,0.12) !important;
 }
 .landing-page .pill-saffron-active {
-  background: var(--accent-cta) !important;
-  box-shadow: 0 6px 20px -6px var(--accent-cta-glow) !important;
+  background: var(--text-primary) !important;
+  color: var(--bg-base) !important;
+  box-shadow: 0 6px 20px -6px rgba(0,0,0,0.25) !important;
 }
-.landing-page .text-saffron { color: var(--accent-cta) !important; }
+.landing-page .text-saffron { color: var(--text-primary) !important; }
 .landing-page .bg-saffron-soft {
-  background: rgba(249,115,22,0.08) !important;
-  border-color: rgba(249,115,22,0.20) !important;
+  background: var(--bg-glass) !important;
+  border-color: var(--border-subtle-c) !important;
 }
 
 /* Comparison container — neutralize the colored card frame */
