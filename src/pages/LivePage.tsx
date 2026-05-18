@@ -208,7 +208,7 @@ const LivePage = ({ embedded = false }: { embedded?: boolean } = {}) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"upgrade" | "limit">("upgrade");
   const [videoPickerOpen, setVideoPickerOpen] = useState(false);
-  const { isFree, canCreateLive, config, counts, tier } = usePlanLimits() as any;
+  const { isFree, canCreateLive, config, counts, tier, features } = usePlanLimits() as any;
 
   const upd = <K extends keyof FormState>(key: K, val: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: val }));
@@ -401,6 +401,7 @@ const LivePage = ({ embedded = false }: { embedded?: boolean } = {}) => {
   });
 
   const startCreate = () => {
+    if (!features?.goLive) { setModalType("upgrade"); setModalOpen(true); return; }
     if (isFree) { setModalType("upgrade"); setModalOpen(true); return; }
     if (!canCreateLive) { setModalType("limit"); setModalOpen(true); return; }
     setEditingId(null);

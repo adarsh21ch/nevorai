@@ -232,7 +232,13 @@ const AdminSubscriptionsPage = () => {
 
   const profileMap = Object.fromEntries(profiles.map((p) => [p.id, p]));
 
+  const [tierFilter, setTierFilter] = useState<"all" | "paid" | "basic" | "pro">("paid");
+
   const filtered = subscriptions.filter((s) => {
+    // Tier filter
+    if (tierFilter === "paid" && (s.tier === "free" || !s.tier)) return false;
+    if (tierFilter === "basic" && s.tier !== "basic") return false;
+    if (tierFilter === "pro" && s.tier !== "pro") return false;
     if (!debouncedSearch) return true;
     const profile = profileMap[s.user_id];
     const q = debouncedSearch.toLowerCase();
@@ -468,9 +474,8 @@ const AdminSubscriptionsPage = () => {
         </div>
 
         <Tabs defaultValue="subscriptions">
-          <TabsList className="w-full grid grid-cols-4 sm:grid-cols-7 h-9">
+          <TabsList className="w-full grid grid-cols-3 sm:grid-cols-6 h-9">
             <TabsTrigger value="subscriptions" className="text-[10px] sm:text-sm">Subs</TabsTrigger>
-            <TabsTrigger value="plans" className="text-[10px] sm:text-sm">Plans</TabsTrigger>
             <TabsTrigger value="refunds" className="text-[10px] sm:text-sm">Refunds</TabsTrigger>
             <TabsTrigger value="gateway" className="text-[10px] sm:text-sm">Gateway</TabsTrigger>
             <TabsTrigger value="enterprise" className="text-[10px] sm:text-sm">Enterprise</TabsTrigger>
@@ -479,10 +484,25 @@ const AdminSubscriptionsPage = () => {
           </TabsList>
 
           <TabsContent value="subscriptions" className="space-y-3 pt-1">
-            <div className="relative w-full">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search user, plan..." className="pl-9 bg-muted border-border" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input placeholder="Search user, plan..." className="pl-9 bg-muted border-border" value={search} onChange={(e) => setSearch(e.target.value)} />
+              </div>
+              <div className="inline-flex rounded-lg border border-border bg-muted/30 p-0.5 text-xs">
+                {(["paid", "basic", "pro", "all"] as const).map((k) => (
+                  <button key={k} onClick={() => setTierFilter(k)}
+                    className={`px-3 py-1.5 rounded-md transition-colors capitalize ${
+                      tierFilter === k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                    }`}>
+                    {k === "paid" ? "Paid only" : k === "all" ? "All" : k}
+                  </button>
+                ))}
+              </div>
             </div>
+            <p className="text-[11px] text-muted-foreground">
+              Subscription records only. Use the <strong>Users</strong> tab to manage all accounts (including free signups).
+            </p>
 
             {/* Desktop table */}
             <div className="hidden sm:block glass-card overflow-hidden">
@@ -599,36 +619,6 @@ const AdminSubscriptionsPage = () => {
                 );
               })}
             </div>
-          </TabsContent>
-
-          <TabsContent value="plans" className="space-y-3 pt-1">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs text-muted-foreground">
-                Edit any field — changes save automatically. Choose a plan below to focus, or view all side-by-side.
-              </p>
-              <div className="inline-flex rounded-lg border border-border bg-muted/30 p-0.5 text-xs">
-                {(["all", "free", "basic", "pro"] as const).map((k) => (
-                  <button
-                    key={k}
-                    onClick={() => setPlanFilter(k)}
-                    className={`px-3 py-1 rounded-md transition-colors capitalize ${
-                      planFilter === k ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {k === "all" ? "All Plans" : k}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className={`grid gap-3 ${planFilter === "all" ? "grid-cols-1 md:grid-cols-2 xl:grid-cols-3" : "grid-cols-1"}`}>
-              {(planFilter === "all" || planFilter === "free") && renderPlanCard("free", freeConfig)}
-              {(planFilter === "all" || planFilter === "basic") && renderPlanCard("basic", basicConfig)}
-              {(planFilter === "all" || planFilter === "pro") && renderPlanCard("pro", proConfig)}
-            </div>
-            <p className="text-[11px] text-muted-foreground italic mt-2">
-              Enterprise plan is managed separately in the Enterprise tab.
-            </p>
-            <TrialSettingsStrip />
           </TabsContent>
 
           <TabsContent value="refunds" className="space-y-3 pt-1">
