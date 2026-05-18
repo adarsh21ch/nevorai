@@ -29,7 +29,7 @@ export const Logo = ({ size = "default", showByline = false, variant = "short", 
   const bylineColor =
     tone === "light" ? "rgba(255,255,255,0.7)" : tone === "dark" ? "rgba(0,0,0,0.6)" : "hsl(var(--muted-foreground))";
 
-  const imgCls = `${s.img} object-contain shrink-0`;
+  const imgCls = s.img;
 
   const renderMark = () => {
     if (tone === "light") {
