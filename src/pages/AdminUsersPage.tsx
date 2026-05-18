@@ -77,6 +77,7 @@ const AdminUsersPage = () => {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search, 200);
   const [editing, setEditing] = useState<any | null>(null);
+  const [planFilter, setPlanFilter] = useState<"all" | "free" | "basic" | "pro">("all");
 
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ["admin-all-profiles"],
@@ -121,9 +122,28 @@ const AdminUsersPage = () => {
     return m;
   }, [viewRows]);
 
-  const filtered = profiles.filter(
-    (p) => !debouncedSearch || p.full_name?.toLowerCase().includes(debouncedSearch.toLowerCase()) || p.email?.toLowerCase().includes(debouncedSearch.toLowerCase())
-  );
+  const tierOf = (p: any): string => {
+    const sub = subMap[p.id];
+    return sub?.tier || "free";
+  };
+
+  const filtered = profiles.filter((p) => {
+    if (planFilter !== "all" && tierOf(p) !== planFilter) return false;
+    if (!debouncedSearch) return true;
+    const q = debouncedSearch.toLowerCase();
+    return p.full_name?.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q);
+  });
+
+  const counts = useMemo(() => {
+    const c = { all: profiles.length, free: 0, basic: 0, pro: 0 };
+    for (const p of profiles) {
+      const t = tierOf(p);
+      if (t === "basic") c.basic++;
+      else if (t === "pro") c.pro++;
+      else c.free++;
+    }
+    return c;
+  }, [profiles, subMap]);
 
   const limitFor = (p: any) => {
     const sub = subMap[p.id];
