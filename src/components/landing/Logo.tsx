@@ -15,9 +15,9 @@ interface LogoProps {
 
 export const Logo = ({ size = "default", showByline = false, tone = "auto" }: LogoProps) => {
   const sizes = {
-    sm: { img: "h-7 w-7", text: "text-[17px]", byline: "text-[9px]", gap: "gap-2" },
-    default: { img: "h-8 w-8", text: "text-[22px]", byline: "text-[10px]", gap: "gap-2.5" },
-    lg: { img: "h-12 w-12", text: "text-[28px]", byline: "text-[11px]", gap: "gap-3" },
+    sm: { img: "h-9 w-9", text: "text-[18px]", byline: "text-[9px]", gap: "gap-1.5" },
+    default: { img: "h-11 w-11", text: "text-[24px]", byline: "text-[10px]", gap: "gap-1.5" },
+    lg: { img: "h-14 w-14", text: "text-[30px]", byline: "text-[11px]", gap: "gap-2" },
   };
   const s = sizes[size];
 
