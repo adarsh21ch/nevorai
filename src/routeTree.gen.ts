@@ -68,6 +68,7 @@ import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSupportRouteImport } from './routes/admin.support'
 import { Route as AdminSubscriptionsRouteImport } from './routes/admin.subscriptions'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminPlansRouteImport } from './routes/admin.plans'
 import { Route as AdminKycRouteImport } from './routes/admin.kyc'
 import { Route as LandingPagesIdIndexRouteImport } from './routes/landing-pages.$id.index'
 import { Route as FunnelsIdIndexRouteImport } from './routes/funnels.$id.index'
@@ -395,6 +396,11 @@ const AdminSettingsRoute = AdminSettingsRouteImport.update({
 } as any).lazy(() =>
   import('./routes/admin.settings.lazy').then((d) => d.Route),
 )
+const AdminPlansRoute = AdminPlansRouteImport.update({
+  id: '/admin/plans',
+  path: '/admin/plans',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() => import('./routes/admin.plans.lazy').then((d) => d.Route))
 const AdminKycRoute = AdminKycRouteImport.update({
   id: '/admin/kyc',
   path: '/admin/kyc',
@@ -502,6 +508,7 @@ export interface FileRoutesByFullPath {
   '/upgrade': typeof UpgradeRoute
   '/videos': typeof VideosRouteWithChildren
   '/admin/kyc': typeof AdminKycRoute
+  '/admin/plans': typeof AdminPlansRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/support': typeof AdminSupportRoute
@@ -574,6 +581,7 @@ export interface FileRoutesByTo {
   '/upgrade': typeof UpgradeRoute
   '/videos': typeof VideosRouteWithChildren
   '/admin/kyc': typeof AdminKycRoute
+  '/admin/plans': typeof AdminPlansRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/support': typeof AdminSupportRoute
@@ -645,6 +653,7 @@ export interface FileRoutesById {
   '/upgrade': typeof UpgradeRoute
   '/videos': typeof VideosRouteWithChildren
   '/admin/kyc': typeof AdminKycRoute
+  '/admin/plans': typeof AdminPlansRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/subscriptions': typeof AdminSubscriptionsRoute
   '/admin/support': typeof AdminSupportRoute
@@ -719,6 +728,7 @@ export interface FileRouteTypes {
     | '/upgrade'
     | '/videos'
     | '/admin/kyc'
+    | '/admin/plans'
     | '/admin/settings'
     | '/admin/subscriptions'
     | '/admin/support'
@@ -791,6 +801,7 @@ export interface FileRouteTypes {
     | '/upgrade'
     | '/videos'
     | '/admin/kyc'
+    | '/admin/plans'
     | '/admin/settings'
     | '/admin/subscriptions'
     | '/admin/support'
@@ -861,6 +872,7 @@ export interface FileRouteTypes {
     | '/upgrade'
     | '/videos'
     | '/admin/kyc'
+    | '/admin/plans'
     | '/admin/settings'
     | '/admin/subscriptions'
     | '/admin/support'
@@ -934,6 +946,7 @@ export interface RootRouteChildren {
   UpgradeRoute: typeof UpgradeRoute
   VideosRoute: typeof VideosRouteWithChildren
   AdminKycRoute: typeof AdminKycRoute
+  AdminPlansRoute: typeof AdminPlansRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminSubscriptionsRoute: typeof AdminSubscriptionsRoute
   AdminSupportRoute: typeof AdminSupportRoute
@@ -1377,6 +1390,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/plans': {
+      id: '/admin/plans'
+      path: '/admin/plans'
+      fullPath: '/admin/plans'
+      preLoaderRoute: typeof AdminPlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/kyc': {
       id: '/admin/kyc'
       path: '/admin/kyc'
@@ -1569,6 +1589,7 @@ const rootRouteChildren: RootRouteChildren = {
   UpgradeRoute: UpgradeRoute,
   VideosRoute: VideosRouteWithChildren,
   AdminKycRoute: AdminKycRoute,
+  AdminPlansRoute: AdminPlansRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminSubscriptionsRoute: AdminSubscriptionsRoute,
   AdminSupportRoute: AdminSupportRoute,
