@@ -1,10 +1,13 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users, Layers, Video, BarChart3, IndianRupee, Shield } from "lucide-react";
+import { Users, Layers, Video, BarChart3, IndianRupee, Shield, TrendingUp } from "lucide-react";
 import { MemberGatewayDashboardCard } from "@/components/admin/MemberGatewayDashboardCard";
 import { ViewsAnalyticsCard } from "@/components/admin/ViewsAnalyticsCard";
 import { formatCompact, formatINR, formatInt } from "@/lib/format";
+import { Link } from "@/lib/router-compat";
+import { useMemo } from "react";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 const AdminDashboard = () => {
   const { data: profiles = [] } = useQuery({
