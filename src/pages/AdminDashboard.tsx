@@ -54,8 +54,34 @@ const AdminDashboard = () => {
   const totalViews = funnels.reduce((a, f) => a + ((f as any).total_views || 0), 0);
   const totalLeads = funnels.reduce((a, f) => a + ((f as any).total_leads || 0), 0);
 
+  // 14-day signups series
+  const signupSeries = useMemo(() => {
+    const days = 14;
+    const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - (days - 1));
+    const map = new Map<string, number>();
+    for (let i = 0; i < days; i++) {
+      const d = new Date(start); d.setDate(start.getDate() + i);
+      map.set(d.toISOString().slice(0, 10), 0);
+    }
+    for (const p of profiles as any[]) {
+      if (!p.created_at) continue;
+      const k = new Date(p.created_at).toISOString().slice(0, 10);
+      if (map.has(k)) map.set(k, (map.get(k) || 0) + 1);
+    }
+    return Array.from(map.entries()).map(([k, v]) => ({
+      label: new Date(k).toLocaleDateString("en-IN", { day: "2-digit", month: "short" }),
+      signups: v,
+    }));
+  }, [profiles]);
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const todaySignups = (profiles as any[]).filter(
+    (p) => p.created_at && p.created_at.slice(0, 10) === todayKey,
+  ).length;
+
   const kpis = [
     { icon: Users, label: "Total Users", value: formatInt(profiles.length) },
+    { icon: TrendingUp, label: "Signups Today", value: formatInt(todaySignups) },
     { icon: Layers, label: "Total Funnels", value: formatInt(funnels.length) },
     { icon: Video, label: "Total Videos", value: formatInt(videos.length) },
     { icon: BarChart3, label: "Total Views", value: formatCompact(totalViews) },
@@ -86,6 +112,36 @@ const AdminDashboard = () => {
             </div>
           ))}
           <MemberGatewayDashboardCard />
+        </div>
+
+        <div className="glass-card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="text-sm font-semibold">Daily signups</h3>
+              <p className="text-[11px] text-muted-foreground">Last 14 days</p>
+            </div>
+            <Link to="/admin/revenue" className="text-[11px] font-semibold text-primary hover:underline">
+              View revenue →
+            </Link>
+          </div>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={signupSeries} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" interval={1} />
+                <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{
+                    background: "hsl(var(--background))",
+                    border: "1px solid hsl(var(--border))",
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                />
+                <Bar dataKey="signups" fill="hsl(var(--primary))" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
         <ViewsAnalyticsCard />
