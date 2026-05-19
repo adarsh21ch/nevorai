@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useMemo, useState } from "react";
-import { Search, AlertTriangle, Pencil, Check } from "lucide-react";
+import { Search, Pencil, Check } from "lucide-react";
 import { planDisplay } from "@/config/planDisplay";
 import { UserEditDrawer } from "@/components/admin/UserEditDrawer";
 import { AdminOverrideMenu, AdminUserOverrideBadge } from "@/components/admin/AdminOverrideMenu";
@@ -196,7 +196,6 @@ const AdminUsersPage = () => {
                   filtered.map((p: any) => {
                     const sub = subMap[p.id];
                     const used = viewsMap.get(p.id) || 0;
-                    const limit = limitFor(p);
                     return (
                       <tr key={p.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                         <td className="p-4">
@@ -250,7 +249,6 @@ const AdminUsersPage = () => {
             filtered.map((p: any) => {
               const sub = subMap[p.id];
               const used = viewsMap.get(p.id) || 0;
-              const limit = limitFor(p);
               return (
                 <div key={p.id} className="glass-card p-3 space-y-2">
                   <div className="flex items-center justify-between gap-2">
