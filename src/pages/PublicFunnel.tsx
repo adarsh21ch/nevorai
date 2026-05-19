@@ -870,6 +870,7 @@ const PublicFunnel = () => {
         name: s(leadForm.name), phone: leadForm.phone ? normalizePhone(leadForm.phone) : null,
         email: s(leadForm.email), city: s(leadForm.city),
         custom_value: s(leadForm.custom_value),
+        custom_field_values: customFieldValues,
         watch_progress_at_submit: watchSeconds,
         device_type: /Mobi/.test(navigator.userAgent) ? "mobile" : "desktop",
         user_agent: navigator.userAgent,
