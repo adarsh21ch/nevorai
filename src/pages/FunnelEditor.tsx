@@ -172,6 +172,7 @@ const FunnelEditor = () => {
     capture_enabled: false, capture_timing: "before_video",
     show_name: true, name_required: true, show_phone: true, phone_required: true,
     show_email: false, email_required: false, show_city: true, city_required: false,
+    show_state: false, state_required: false, show_whatsapp: false, whatsapp_required: false,
     custom_field_label: "", show_custom: false, custom_required: false,
     custom_fields: [] as CustomField[],
   });
@@ -252,6 +253,8 @@ const FunnelEditor = () => {
         show_phone: l.show_phone ?? true, phone_required: l.phone_required ?? true,
         show_email: l.show_email ?? false, email_required: l.email_required ?? false,
         show_city: l.show_city ?? true, city_required: l.city_required ?? false,
+        show_state: l.show_state ?? false, state_required: l.state_required ?? false,
+        show_whatsapp: l.show_whatsapp ?? false, whatsapp_required: l.whatsapp_required ?? false,
         custom_field_label: l.custom_field_label || "", show_custom: l.show_custom ?? false,
         custom_required: l.custom_required ?? false,
         custom_fields: Array.isArray(l.custom_fields) ? (l.custom_fields as CustomField[]) : [],
@@ -346,10 +349,16 @@ const FunnelEditor = () => {
       const desired = (funnel.slug && funnel.slug.trim()) ? generateSlug(funnel.slug) : generateSlug(funnel.title);
       payload.slug = await ensureUniqueSlug(desired, existingFunnelSlug);
       if (funnel.access_code_plain && funnel.access_code_plain.trim()) {
+        const codeUp = funnel.access_code_plain.trim().toUpperCase();
         const enc = new TextEncoder();
-        const buf = await crypto.subtle.digest("SHA-256", enc.encode(funnel.access_code_plain.trim().toUpperCase()));
+        const buf = await crypto.subtle.digest("SHA-256", enc.encode(codeUp));
         (payload as any).access_code_hash = Array.from(new Uint8Array(buf))
           .map((b) => b.toString(16).padStart(2, "0")).join("");
+        (payload as any).access_code_plain = codeUp;
+      } else if (funnel.visibility === "public") {
+        // Clear stored code when funnel is made public
+        (payload as any).access_code_hash = null;
+        (payload as any).access_code_plain = null;
       }
       let funnelId: string;
       if (isEdit) {
@@ -367,6 +376,8 @@ const FunnelEditor = () => {
         await supabase.from("funnel_steps").delete().eq("funnel_id", funnelId);
         const stepsPayload = await Promise.all(flowSteps.map(async (s, i) => {
           let accessCodeHash: string | null = s.access_code_hash || null;
+          let accessCodePlain: string | null = s.access_code_plain || (s as any)._access_code_raw || null;
+          if (accessCodePlain) accessCodePlain = String(accessCodePlain).trim().toUpperCase();
           if (s.access_code_enabled && (s as any)._access_code_raw) {
             const encoder = new TextEncoder();
             const buf = await crypto.subtle.digest("SHA-256", encoder.encode(String((s as any)._access_code_raw).trim().toUpperCase()));
@@ -393,6 +404,7 @@ const FunnelEditor = () => {
             video_topics_step: Array.isArray(s.video_topics_step) ? s.video_topics_step : [],
             access_code_enabled: !!s.access_code_enabled,
             access_code_hash: s.access_code_enabled ? accessCodeHash : null,
+            access_code_plain: s.access_code_enabled ? accessCodePlain : null,
             access_code_message: s.access_code_enabled ? (s.access_code_message ? sanitizeText(s.access_code_message) : null) : null,
             speaker_mode_step: s.speaker_mode_step || "inherit",
             speaker_name_custom: isStepOverride ? (s.speaker_name_custom ? sanitizeText(s.speaker_name_custom) : null) : null,
@@ -401,7 +413,7 @@ const FunnelEditor = () => {
             speaker_photo_url_custom: isStepOverride ? (s.speaker_photo_url_custom || null) : null,
           };
         }));
-        const { error: stepErr } = await supabase.from("funnel_steps").insert(stepsPayload);
+        const { error: stepErr } = await (supabase.from("funnel_steps") as any).insert(stepsPayload);
         if (stepErr) throw stepErr;
       }
       return funnelId;
@@ -872,6 +884,7 @@ const FunnelEditor = () => {
               {[
                 { key: "name", label: "Full Name" }, { key: "phone", label: "Phone Number" },
                 { key: "email", label: "Email Address" }, { key: "city", label: "City" },
+                { key: "state", label: "State" }, { key: "whatsapp", label: "WhatsApp Number" },
               ].map(({ key, label }) => (
                 <div key={key} className="flex items-center justify-between gap-4 p-3.5">
                   <span className="text-sm font-medium">{label}</span>

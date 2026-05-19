@@ -215,21 +215,21 @@ const LandingPageEditor = () => {
 
       if (payload.access_code_enabled && payload.access_code_plain) {
         try {
-          const enc = new TextEncoder().encode(
-            String(payload.access_code_plain).trim().toUpperCase(),
-          );
+          const codeUp = String(payload.access_code_plain).trim().toUpperCase();
+          const enc = new TextEncoder().encode(codeUp);
           const buf = await crypto.subtle.digest("SHA-256", enc);
           payload.access_code_hash = Array.from(new Uint8Array(buf))
             .map((b) => b.toString(16).padStart(2, "0"))
             .join("");
+          payload.access_code_plain = codeUp; // persist for owner display
         } catch {
           // noop
         }
       }
       if (!payload.access_code_enabled) {
         payload.access_code_hash = null;
+        payload.access_code_plain = null;
       }
-      delete payload.access_code_plain;
 
       if (Array.isArray(payload.faq_items) && payload.faq_items.length > 10) {
         payload.faq_items = payload.faq_items.slice(0, 10);
