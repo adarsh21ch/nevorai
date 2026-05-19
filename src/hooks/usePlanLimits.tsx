@@ -126,6 +126,7 @@ export const usePlanLimits = () => {
     videoTopics: config.feature_video_topics !== false,
     contactForm: config.feature_contact_form !== false,
     privacySettings: config.feature_privacy_settings !== false,
+    customFormFields: config.feature_custom_form_fields === true,
   };
 
   return {
