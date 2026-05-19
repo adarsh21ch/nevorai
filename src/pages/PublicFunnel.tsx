@@ -1057,6 +1057,51 @@ const PublicFunnel = () => {
             {fieldErrEl("custom_value")}
           </div>
         )}
+        {(Array.isArray((formConfig as any)?.custom_fields) ? (formConfig as any).custom_fields : []).map((cf: any) => {
+          const k = `cf_${cf.id}`;
+          const val = customFieldValues[cf.id];
+          const setVal = (v: string | string[]) => {
+            setCustomFieldValues((p) => ({ ...p, [cf.id]: v }));
+            if (leadErrors[k]) setLeadErrors((p) => ({ ...p, [k]: null }));
+          };
+          const baseStyle = { background: tc.inputBg, borderColor: leadErrors[k] ? "#ef4444" : tc.inputBorder, color: tc.inputText };
+          let input: React.ReactNode;
+          if (cf.type === "long_text") {
+            input = <textarea maxLength={500} placeholder={cf.placeholder || ""} value={(val as string) || ""} onChange={(e) => setVal(e.target.value)} style={baseStyle} className="w-full min-h-[80px] rounded-xl border px-3 py-2 text-sm" />;
+          } else if (cf.type === "dropdown") {
+            input = (
+              <select value={(val as string) || ""} onChange={(e) => setVal(e.target.value)} style={baseStyle} className="w-full h-12 rounded-xl border px-3 text-sm">
+                <option value="">{cf.placeholder || "Select…"}</option>
+                {(cf.options || []).map((opt: string) => <option key={opt} value={opt}>{opt}</option>)}
+              </select>
+            );
+          } else if (cf.type === "multi_choice") {
+            const arr = Array.isArray(val) ? val : [];
+            input = (
+              <div className="space-y-1.5">
+                {(cf.options || []).map((opt: string) => {
+                  const checked = arr.includes(opt);
+                  return (
+                    <label key={opt} className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: tc.inputText }}>
+                      <input type="checkbox" checked={checked} onChange={() => setVal(checked ? arr.filter((x) => x !== opt) : [...arr, opt])} />
+                      {opt}
+                    </label>
+                  );
+                })}
+              </div>
+            );
+          } else {
+            const inputType = cf.type === "number" ? "number" : cf.type === "email" ? "email" : cf.type === "phone" ? "tel" : cf.type === "date" ? "date" : "text";
+            input = <Input type={inputType} placeholder={cf.placeholder || ""} value={(val as string) || ""} onChange={(e) => setVal(e.target.value)} style={baseStyle} className="h-12 rounded-xl" />;
+          }
+          return (
+            <div key={cf.id}>
+              <label className="text-xs font-medium mb-1 block" style={{ color: tc.textMuted }}>{cf.label}{cf.required && " *"}</label>
+              {input}
+              {leadErrors[k] && <p className="text-xs mt-1" style={{ color: "#ef4444" }}>{leadErrors[k]}</p>}
+            </div>
+          );
+        })}
         <Button
           type="submit"
           className="w-full h-14 text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl"
