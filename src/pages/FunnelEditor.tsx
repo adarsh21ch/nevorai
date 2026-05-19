@@ -413,7 +413,7 @@ const FunnelEditor = () => {
             speaker_photo_url_custom: isStepOverride ? (s.speaker_photo_url_custom || null) : null,
           };
         }));
-        const { error: stepErr } = await supabase.from("funnel_steps").insert(stepsPayload);
+        const { error: stepErr } = await (supabase.from("funnel_steps") as any).insert(stepsPayload);
         if (stepErr) throw stepErr;
       }
       return funnelId;
