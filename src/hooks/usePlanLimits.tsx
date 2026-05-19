@@ -38,6 +38,8 @@ export interface PlanConfig {
   daily_view_limit?: number;
   max_leads?: number;
   plan_badge_text?: string | null;
+  feature_custom_form_fields?: boolean;
+  max_custom_form_fields?: number;
 }
 
 const FREE_FALLBACK: PlanConfig = {
