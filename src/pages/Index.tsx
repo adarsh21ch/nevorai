@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Navigate } from "@/lib/router-compat";
+import { useRouter } from "@tanstack/react-router";
 
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
@@ -18,26 +18,30 @@ import { Footer } from "@/components/landing/Footer";
 import { brand } from "@/config/brand";
 
 /**
- * Detect when the app is launched as an installed PWA (Add to Home Screen).
- * In standalone / fullscreen / minimal-ui modes we treat the user as "in app"
- * and skip the marketing landing page — sending them straight to /dashboard
- * (which itself redirects to /auth if they aren't signed in).
+ * Detect installed-PWA launches (standalone / fullscreen / minimal-ui, plus
+ * iOS Safari's navigator.standalone). Runs only on the client.
  */
 const isStandalonePWA = (): boolean => {
   if (typeof window === "undefined") return false;
-  const mql = window.matchMedia?.("(display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui)");
-  // iOS Safari exposes navigator.standalone instead of the matchMedia query.
+  const mql = window.matchMedia?.(
+    "(display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui)"
+  );
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const iosStandalone = (window.navigator as any).standalone === true;
   return !!(mql?.matches || iosStandalone);
 };
 
 const Index = () => {
-  // Hard redirect installed-PWA launches away from the marketing site.
-  // Logged-out users will then land on /auth via ProtectedRoute.
-  if (isStandalonePWA()) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  const router = useRouter();
+
+  // Redirect installed-PWA launches AFTER hydration to avoid an SSR/CSR
+  // markup mismatch (server renders landing page; client used to return
+  // null via <Navigate />, which caused React error #418 → white screen).
+  useEffect(() => {
+    if (isStandalonePWA()) {
+      router.navigate({ to: "/dashboard", replace: true });
+    }
+  }, [router]);
 
   return (
     <div className="landing-page relative min-h-screen overflow-x-clip">

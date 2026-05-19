@@ -2,7 +2,7 @@
   "name": "Nevorai",
   "short_name": "Nevorai",
   "description": "Share business videos that get watched.",
-  "start_url": "/dashboard",
+  "start_url": "/auth",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
