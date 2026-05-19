@@ -710,15 +710,15 @@ const PublicFunnel = () => {
 
   const tc = {
     bg: isDark ? "#09090b" : "#ffffff",
-    bgCard: isDark ? "#141419" : "#f8f9fa",
-    border: isDark ? "#27272a" : "#e5e7eb",
+    bgCard: isDark ? "#1a1a22" : "#ffffff",
+    border: isDark ? "#2a2a33" : "#e5e7eb",
     borderSubtle: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
     text: isDark ? "#ffffff" : "#0f172a",
     textMuted: isDark ? "#cbd5e1" : "#64748b",
     textDim: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.5)",
     textDimmer: isDark ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.3)",
-    inputBg: isDark ? "#09090b" : "#f1f5f9",
-    inputBorder: isDark ? "#27272a" : "#d1d5db",
+    inputBg: isDark ? "#0f0f14" : "#f8fafc",
+    inputBorder: isDark ? "#33333d" : "#d1d5db",
     inputText: isDark ? "#ffffff" : "#0f172a",
     placeholder: isDark ? "#64748b" : "#9ca3af",
     headerBg: isDark ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.8)",
@@ -728,6 +728,7 @@ const PublicFunnel = () => {
     footerText: isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.25)",
     footerBorder: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.06)",
   };
+
 
   const { data: bundle, isLoading } = useQuery({
     queryKey: ["public-funnel-bundle", slug],
