@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useMemo, useState } from "react";
-import { Search, AlertTriangle, Pencil, Check } from "lucide-react";
+import { Search, Pencil, Check } from "lucide-react";
 import { planDisplay } from "@/config/planDisplay";
 import { UserEditDrawer } from "@/components/admin/UserEditDrawer";
 import { AdminOverrideMenu, AdminUserOverrideBadge } from "@/components/admin/AdminOverrideMenu";
@@ -55,20 +55,12 @@ const monthStartIST = (() => {
   return first.toISOString().slice(0, 10);
 })();
 
-const ViewsCell = ({ used, limit }: { used: number; limit: number }) => {
-  const pct = limit === -1 ? 0 : Math.min(100, Math.round((used / Math.max(limit, 1)) * 100));
-  const color = pct >= 100 ? "bg-destructive" : pct >= 80 ? "bg-warning" : "bg-primary";
+const ViewsCell = ({ used }: { used: number }) => {
   return (
-    <div className="flex items-center gap-2 justify-end min-w-0">
-      {pct >= 80 && limit !== -1 && <AlertTriangle size={12} className={pct >= 100 ? "text-destructive" : "text-warning"} />}
-      <div className="flex flex-col items-end gap-1 min-w-0">
-        <span className="text-[11px] tabular-nums whitespace-nowrap">
-          {used.toLocaleString("en-IN")} / {limit === -1 ? "∞" : limit.toLocaleString("en-IN")}
-        </span>
-        <div className="h-1 w-20 bg-muted rounded-full overflow-hidden">
-          <div className={`h-full ${color}`} style={{ width: `${limit === -1 ? 0 : pct}%` }} />
-        </div>
-      </div>
+    <div className="flex items-center justify-end min-w-0">
+      <span className="text-sm tabular-nums font-medium whitespace-nowrap">
+        {used.toLocaleString("en-IN")}
+      </span>
     </div>
   );
 };
@@ -204,7 +196,6 @@ const AdminUsersPage = () => {
                   filtered.map((p: any) => {
                     const sub = subMap[p.id];
                     const used = viewsMap.get(p.id) || 0;
-                    const limit = limitFor(p);
                     return (
                       <tr key={p.id} className="border-b border-border hover:bg-muted/50 transition-colors">
                         <td className="p-4">
@@ -229,7 +220,7 @@ const AdminUsersPage = () => {
                           {p.created_at ? new Date(p.created_at).toLocaleDateString("en-IN") : "—"}
                         </td>
                         <td className="p-4">
-                          <ViewsCell used={used} limit={p.is_unlimited ? -1 : limit} />
+                          <ViewsCell used={used} />
                         </td>
                         <td className="p-4 text-right">
                           <div className="flex items-center justify-end gap-1">
@@ -258,7 +249,6 @@ const AdminUsersPage = () => {
             filtered.map((p: any) => {
               const sub = subMap[p.id];
               const used = viewsMap.get(p.id) || 0;
-              const limit = limitFor(p);
               return (
                 <div key={p.id} className="glass-card p-3 space-y-2">
                   <div className="flex items-center justify-between gap-2">
@@ -273,7 +263,7 @@ const AdminUsersPage = () => {
                   </div>
                   <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/40">
                     <span className="text-[10px] text-muted-foreground">Views</span>
-                    <ViewsCell used={used} limit={p.is_unlimited ? -1 : limit} />
+                    <ViewsCell used={used} />
                   </div>
                   <div className="flex items-center justify-between gap-2 pt-1">
                     <span className="text-[10px] text-muted-foreground">Verified</span>
