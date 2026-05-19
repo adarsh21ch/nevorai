@@ -253,6 +253,8 @@ const FunnelEditor = () => {
         show_phone: l.show_phone ?? true, phone_required: l.phone_required ?? true,
         show_email: l.show_email ?? false, email_required: l.email_required ?? false,
         show_city: l.show_city ?? true, city_required: l.city_required ?? false,
+        show_state: l.show_state ?? false, state_required: l.state_required ?? false,
+        show_whatsapp: l.show_whatsapp ?? false, whatsapp_required: l.whatsapp_required ?? false,
         custom_field_label: l.custom_field_label || "", show_custom: l.show_custom ?? false,
         custom_required: l.custom_required ?? false,
         custom_fields: Array.isArray(l.custom_fields) ? (l.custom_fields as CustomField[]) : [],
