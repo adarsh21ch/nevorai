@@ -38,6 +38,7 @@ interface FunnelLivePreviewProps {
     show_city: boolean;
     show_custom: boolean;
     custom_field_label: string;
+    custom_fields?: Array<{ id: string; label: string; type: string; required: boolean }>;
   };
   previewStepIndex?: number | null;
 }
