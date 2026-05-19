@@ -244,7 +244,7 @@ const FunnelEditor = () => {
 
   useEffect(() => {
     if (existingLeadForm) {
-      const l = existingLeadForm;
+      const l: any = existingLeadForm;
       setLeadForm({
         capture_enabled: l.capture_enabled ?? true, capture_timing: l.capture_timing || "before_video",
         show_name: l.show_name ?? true, name_required: l.name_required ?? true,
@@ -253,6 +253,7 @@ const FunnelEditor = () => {
         show_city: l.show_city ?? true, city_required: l.city_required ?? false,
         custom_field_label: l.custom_field_label || "", show_custom: l.show_custom ?? false,
         custom_required: l.custom_required ?? false,
+        custom_fields: Array.isArray(l.custom_fields) ? (l.custom_fields as CustomField[]) : [],
       });
     }
   }, [existingLeadForm]);
