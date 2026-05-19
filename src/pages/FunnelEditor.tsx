@@ -121,7 +121,8 @@ const FunnelEditor = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { canUseMultiStep } = usePlan();
-  const { features, planConfigs } = usePlanLimits();
+  const planLimits = usePlanLimits();
+  const { features, planConfigs } = planLimits;
   const queryClient = useQueryClient();
   // Phase 6 gate: starting a brand-new funnel without any uploaded videos = upload first.
   useVideoGate(!isEdit);
