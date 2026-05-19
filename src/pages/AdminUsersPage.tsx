@@ -55,20 +55,12 @@ const monthStartIST = (() => {
   return first.toISOString().slice(0, 10);
 })();
 
-const ViewsCell = ({ used, limit }: { used: number; limit: number }) => {
-  const pct = limit === -1 ? 0 : Math.min(100, Math.round((used / Math.max(limit, 1)) * 100));
-  const color = pct >= 100 ? "bg-destructive" : pct >= 80 ? "bg-warning" : "bg-primary";
+const ViewsCell = ({ used }: { used: number }) => {
   return (
-    <div className="flex items-center gap-2 justify-end min-w-0">
-      {pct >= 80 && limit !== -1 && <AlertTriangle size={12} className={pct >= 100 ? "text-destructive" : "text-warning"} />}
-      <div className="flex flex-col items-end gap-1 min-w-0">
-        <span className="text-[11px] tabular-nums whitespace-nowrap">
-          {used.toLocaleString("en-IN")} / {limit === -1 ? "∞" : limit.toLocaleString("en-IN")}
-        </span>
-        <div className="h-1 w-20 bg-muted rounded-full overflow-hidden">
-          <div className={`h-full ${color}`} style={{ width: `${limit === -1 ? 0 : pct}%` }} />
-        </div>
-      </div>
+    <div className="flex items-center justify-end min-w-0">
+      <span className="text-sm tabular-nums font-medium whitespace-nowrap">
+        {used.toLocaleString("en-IN")}
+      </span>
     </div>
   );
 };
