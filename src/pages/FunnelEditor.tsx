@@ -637,10 +637,10 @@ const FunnelEditor = () => {
         </div>
         {audioNoteEnabled && (
           <div className="space-y-4 mt-4">
-            <div className="border-2 border-dashed border-border rounded-xl p-6 text-center">
-              <Mic size={24} className="text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Upload audio (MP3/WAV, max 10MB)</p>
-            </div>
+            <AudioNoteRecorder
+              value={funnel.audio_note_url || ""}
+              onChange={(url) => update("audio_note_url", url)}
+            />
             <div className="p-4 bg-muted/50 rounded-xl">
               <Label className="font-semibold">When to Play</Label>
               <Select value={funnel.audio_note_timing} onValueChange={(v) => update("audio_note_timing", v)}>
