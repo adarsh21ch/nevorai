@@ -69,6 +69,7 @@ export const CodeGateScreen = ({ funnelId, funnelTitle, creatorName, onSuccess, 
 
       if (!fnError && data?.success) {
         localStorage.setItem(`nf_code_verified_${funnelId}`, JSON.stringify({ verified: true, verifiedAt: Date.now() }));
+        localStorage.removeItem(`nf_code_lock_${funnelId}`);
         localStorage.removeItem(`nf_code_attempts_${funnelId}`);
         onSuccess();
       } else {
