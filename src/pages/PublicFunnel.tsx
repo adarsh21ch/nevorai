@@ -900,6 +900,17 @@ const PublicFunnel = () => {
         user_agent: navigator.userAgent,
         ...captureAttribution("funnel", funnel!.id, funnel!.slug),
       });
+      // Lead alert (to creator) + confirmation (to prospect) via Resend.
+      import("@/lib/email").then(({ sendLeadEmails }) =>
+        sendLeadEmails({
+          funnelId: funnel!.id,
+          prospect: {
+            name: leadForm.name,
+            email: leadForm.email || null,
+            phone: leadForm.phone ? normalizePhone(leadForm.phone) : null,
+          },
+        }),
+      );
     },
     onSuccess: () => { setLeadSubmitted(true); toast.success("Thank you! Your details have been submitted."); },
     onError: () => toast.error("Something went wrong. Please try again."),

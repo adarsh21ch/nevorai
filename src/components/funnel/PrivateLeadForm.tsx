@@ -137,6 +137,14 @@ export const PrivateLeadForm = ({
 
       if (error) throw error;
 
+      // Lead alert (to creator) + confirmation (to prospect) via Resend.
+      import("@/lib/email").then(({ sendLeadEmails }) =>
+        sendLeadEmails({
+          funnelId,
+          prospect: { name: cleanName, email: cleanEmail, phone: cleanPhone },
+        }),
+      );
+
       localStorage.setItem(
         `nf_lead_${funnelId}`,
         JSON.stringify({ name: cleanName, phone: cleanPhone, submittedAt: Date.now() })
