@@ -184,6 +184,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         content_category: "authentication",
       });
       void trackCompleteRegistration(data.user.id, { email, phone });
+
+      // Welcome email via Resend — fire and forget.
+      const { sendWelcomeEmail } = await import("@/lib/email");
+      void sendWelcomeEmail(email, fullName || "there");
     }
     return { error };
   }, []);

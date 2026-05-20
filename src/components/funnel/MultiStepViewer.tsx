@@ -337,6 +337,17 @@ export const MultiStepViewer = ({
         user_agent: navigator.userAgent,
         ...captureAttribution("funnel", funnel.id, (funnel as any).slug),
       });
+      // Lead alert (to creator) + confirmation (to prospect) via Resend.
+      import("@/lib/email").then(({ sendLeadEmails }) =>
+        sendLeadEmails({
+          funnelId: funnel.id,
+          prospect: {
+            name: trimSmart(leadForm.name),
+            email: leadForm.email?.trim() || null,
+            phone: leadForm.phone ? normalizePhone(leadForm.phone) : null,
+          },
+        }),
+      );
       setLeadSubmitted(true);
       await completeStep(stepIndex);
       toast.success("Details submitted!");

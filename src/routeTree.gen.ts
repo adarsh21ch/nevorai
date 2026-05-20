@@ -82,6 +82,7 @@ import { Route as InsightsFunnelsIdRouteImport } from './routes/insights.funnels
 import { Route as FunnelsIdEditRouteImport } from './routes/funnels.$id.edit'
 import { Route as FSlugMemberRouteImport } from './routes/f.$slug.member'
 import { Route as ApiPublicPixelTrackRouteImport } from './routes/api/public/pixel/track'
+import { Route as ApiPublicEmailSendRouteImport } from './routes/api/public/email/send'
 
 const VideosRoute = VideosRouteImport.update({
   id: '/videos',
@@ -486,6 +487,11 @@ const ApiPublicPixelTrackRoute = ApiPublicPixelTrackRouteImport.update({
   path: '/api/public/pixel/track',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicEmailSendRoute = ApiPublicEmailSendRouteImport.update({
+  id: '/api/public/email/send',
+  path: '/api/public/email/send',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -560,6 +566,7 @@ export interface FileRoutesByFullPath {
   '/f/$slug/': typeof FSlugIndexRoute
   '/funnels/$id/': typeof FunnelsIdIndexRoute
   '/landing-pages/$id/': typeof LandingPagesIdIndexRoute
+  '/api/public/email/send': typeof ApiPublicEmailSendRoute
   '/api/public/pixel/track': typeof ApiPublicPixelTrackRoute
 }
 export interface FileRoutesByTo {
@@ -633,6 +640,7 @@ export interface FileRoutesByTo {
   '/f/$slug': typeof FSlugIndexRoute
   '/funnels/$id': typeof FunnelsIdIndexRoute
   '/landing-pages/$id': typeof LandingPagesIdIndexRoute
+  '/api/public/email/send': typeof ApiPublicEmailSendRoute
   '/api/public/pixel/track': typeof ApiPublicPixelTrackRoute
 }
 export interface FileRoutesById {
@@ -709,6 +717,7 @@ export interface FileRoutesById {
   '/f/$slug/': typeof FSlugIndexRoute
   '/funnels/$id/': typeof FunnelsIdIndexRoute
   '/landing-pages/$id/': typeof LandingPagesIdIndexRoute
+  '/api/public/email/send': typeof ApiPublicEmailSendRoute
   '/api/public/pixel/track': typeof ApiPublicPixelTrackRoute
 }
 export interface FileRouteTypes {
@@ -786,6 +795,7 @@ export interface FileRouteTypes {
     | '/f/$slug/'
     | '/funnels/$id/'
     | '/landing-pages/$id/'
+    | '/api/public/email/send'
     | '/api/public/pixel/track'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -859,6 +869,7 @@ export interface FileRouteTypes {
     | '/f/$slug'
     | '/funnels/$id'
     | '/landing-pages/$id'
+    | '/api/public/email/send'
     | '/api/public/pixel/track'
   id:
     | '__root__'
@@ -934,6 +945,7 @@ export interface FileRouteTypes {
     | '/f/$slug/'
     | '/funnels/$id/'
     | '/landing-pages/$id/'
+    | '/api/public/email/send'
     | '/api/public/pixel/track'
   fileRoutesById: FileRoutesById
 }
@@ -998,6 +1010,7 @@ export interface RootRouteChildren {
   LandingPagesIndexRoute: typeof LandingPagesIndexRoute
   FSlugMemberRoute: typeof FSlugMemberRoute
   FSlugIndexRoute: typeof FSlugIndexRoute
+  ApiPublicEmailSendRoute: typeof ApiPublicEmailSendRoute
   ApiPublicPixelTrackRoute: typeof ApiPublicPixelTrackRoute
 }
 
@@ -1514,6 +1527,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPixelTrackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/email/send': {
+      id: '/api/public/email/send'
+      path: '/api/public/email/send'
+      fullPath: '/api/public/email/send'
+      preLoaderRoute: typeof ApiPublicEmailSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1657,6 +1677,7 @@ const rootRouteChildren: RootRouteChildren = {
   LandingPagesIndexRoute: LandingPagesIndexRoute,
   FSlugMemberRoute: FSlugMemberRoute,
   FSlugIndexRoute: FSlugIndexRoute,
+  ApiPublicEmailSendRoute: ApiPublicEmailSendRoute,
   ApiPublicPixelTrackRoute: ApiPublicPixelTrackRoute,
 }
 export const routeTree = rootRouteImport
