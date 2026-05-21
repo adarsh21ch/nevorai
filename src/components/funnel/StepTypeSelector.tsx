@@ -86,5 +86,7 @@ export const StepTypeSelector = ({ open, onClose, onSelect }: StepTypeSelectorPr
 };
 
 export const getStepTypeMeta = (type: string) => {
-  return STEP_TYPES.find((t) => t.value === type) || STEP_TYPES[0];
+  return STEP_TYPES.find((t) => t.value === type)
+    || LEGACY_STEP_TYPES.find((t) => t.value === type)
+    || STEP_TYPES[0];
 };
