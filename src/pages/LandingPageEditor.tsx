@@ -264,6 +264,21 @@ const LandingPageEditor = () => {
       if (key === "title" && !slugEdited) {
         next.slug = generateSlug(value);
       }
+      // Structural rule: confirmation email requires a prospect email address.
+      // When the confirmation email toggle is ON, email field must be enabled
+      // AND required. We enforce this both when the toggle flips on, and when
+      // someone tries to disable / un-require the email field while it's on.
+      if (key === "send_confirmation_email" && value === true) {
+        next.field_email_enabled = true;
+        next.field_email_required = true;
+      }
+      if (
+        next.send_confirmation_email &&
+        (key === "field_email_enabled" || key === "field_email_required")
+      ) {
+        next.field_email_enabled = true;
+        next.field_email_required = true;
+      }
       return next;
     });
   };
