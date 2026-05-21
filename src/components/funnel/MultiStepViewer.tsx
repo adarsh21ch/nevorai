@@ -804,16 +804,27 @@ export const MultiStepViewer = ({
 
                   {activeStep.step_type === "manual_approval" && (
                     <div className="rounded-2xl p-8 text-center" style={{ background: sc.cardBg, border: `1px solid ${sc.cardBorder}` }}>
-                      {activeProgress?.status === "completed" || activeProgress?.manually_unlocked ? (
+                      {activeProgress?.status === "completed" || activeProgress?.manually_unlocked || activeProgress?.status === "unlocked" ? (
                         <>
                           <CheckCircle2 size={40} className="text-green-400 mx-auto mb-3" />
                           <h3 className="font-heading font-bold" style={{ color: sc.text }}>Step Unlocked</h3>
+                          <p style={{ fontSize: "14px", color: sc.textMuted }} className="mt-2">You can now continue to the next step.</p>
                         </>
                       ) : (
                         <>
                           <Lock size={40} style={{ color: sc.textDimmer }} className="mx-auto mb-3" />
                           <h3 className="font-heading font-bold" style={{ color: sc.text }}>Awaiting Approval</h3>
                           <p style={{ fontSize: "14px", color: sc.textMuted }} className="mt-2">{activeStep.description || "The creator will unlock this step for you after review."}</p>
+                          {activeStep.booking_url && (
+                            <Button
+                              className="mt-5 h-12 px-6 text-sm font-bold rounded-xl"
+                              style={{ background: "#25d366", color: "#fff" }}
+                              onClick={() => handleManualUnlockRequest(activeStep)}
+                            >
+                              <MessageCircle size={16} className="mr-2" />
+                              {activeStep.cta_text || "Request Unlock on WhatsApp"}
+                            </Button>
+                          )}
                         </>
                       )}
                     </div>
