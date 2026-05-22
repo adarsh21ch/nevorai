@@ -153,10 +153,6 @@ export const AcademyTab = () => {
 
   const handleUpload = async (file: File) => {
     if (!file) return;
-    if (file.size > 500 * 1024 * 1024) {
-      toast.error("Video must be under 500MB");
-      return;
-    }
     setUploading(true);
     try {
       const ext = file.name.split(".").pop() || "mp4";
