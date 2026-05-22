@@ -59,6 +59,7 @@ interface FormState {
   replay_delay_minutes: number;
   replay_expires_hours: number | null;
   replay_per_slot: boolean;
+  replay_allow_seek: boolean;
   is_published: boolean;
   max_attendees: number | null;
   access_type: string;
