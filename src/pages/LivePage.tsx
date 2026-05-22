@@ -562,11 +562,12 @@ const LivePage = ({ embedded = false }: { embedded?: boolean } = {}) => {
             { id: "live-section-replay", label: "Replay & Settings", num: 4, icon: Play, complete: form.is_published },
           ];
           const liveHeader = (
-            <div className="sticky top-0 z-30 bg-background/95 backdrop-blur -mx-3 sm:-mx-4 md:-mx-8 -mt-3 sm:-mt-4 md:-mt-8 px-3 sm:px-4 md:px-8 py-3 mb-4 border-b border-border flex items-center justify-between gap-2">
+            <div className="sticky top-0 z-30 bg-card -mx-3 sm:-mx-4 md:-mx-8 -mt-3 sm:-mt-4 md:-mt-8 px-4 sm:px-6 md:px-8 py-4 mb-4 border-b border-border flex items-center justify-between gap-3 rounded-t-2xl">
               <div className="min-w-0 flex-1">
-                <h2 className="text-lg font-heading font-bold truncate">{editingId ? "Edit Live Session" : "Create Live Session"}</h2>
+                <h2 className="text-lg font-heading font-bold truncate text-foreground">{editingId ? "Edit Live Session" : "Create Live Session"}</h2>
+                <p className="text-[11px] text-muted-foreground mt-0.5 hidden sm:block">Set up a video to play live at scheduled times.</p>
                 {isEditingLive && (
-                  <div className="mt-2 p-2.5 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-xs text-yellow-200">
+                  <div className="mt-2 p-2.5 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-xs text-yellow-600 dark:text-yellow-200">
                     ⚠ This session is currently <strong>live</strong>. Edits will only affect future scheduled slots.
                   </div>
                 )}
@@ -575,15 +576,16 @@ const LivePage = ({ embedded = false }: { embedded?: boolean } = {}) => {
                 <Button size="sm" disabled={!finalCanSubmit || saveMutation.isPending} onClick={() => saveMutation.mutate()}>
                   {saveMutation.isPending ? "Saving..." : editingId ? "Save Changes" : "Schedule Session"}
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => { setCreating(false); setEditingId(null); }}>
+                <Button variant="ghost" size="icon" onClick={() => { setCreating(false); setEditingId(null); }} className="text-muted-foreground hover:text-foreground">
                   <X size={18} />
                 </Button>
               </div>
             </div>
           );
           return (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm overflow-y-auto">
-            <div className="min-h-screen px-4 py-6 max-w-5xl mx-auto">
+          <div className="fixed inset-0 z-50 bg-background/70 dark:bg-black/70 backdrop-blur-md overflow-y-auto p-3 sm:p-6">
+            <div className="min-h-full max-w-5xl mx-auto bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
+              <div className="px-3 sm:px-4 md:px-8 py-3 sm:py-4 md:py-8">
               <EditorScrollLayout sections={liveEditorSections} header={liveHeader}>
               <EditorSectionBlock id="live-section-delivery">
 
