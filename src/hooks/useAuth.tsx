@@ -4,15 +4,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 
-// Run a callback when the browser is idle; falls back to a short timeout.
-const runIdle = (cb: () => void, timeout = 200) => {
-  if (typeof window === "undefined") return;
-  const ric = (window as any).requestIdleCallback as
-    | ((cb: () => void, opts?: { timeout: number }) => number)
-    | undefined;
-  if (ric) ric(cb, { timeout: 1500 });
-  else window.setTimeout(cb, timeout);
-};
+
+
 
 // (proactive route preload removed — defaultPreload: "intent" handles this on hover/focus.)
 
