@@ -97,6 +97,7 @@ const emptyForm = (): FormState => ({
   replay_delay_minutes: 0,
   replay_expires_hours: null,
   replay_per_slot: true,
+  replay_allow_seek: true,
   is_published: true,
   max_attendees: null,
   access_type: "public",
