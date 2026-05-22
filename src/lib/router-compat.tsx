@@ -89,9 +89,38 @@ export const useNavigate = () => {
   };
 };
 
+const normalizeSearch = (search: unknown): string => {
+  if (!search) return "";
+  if (typeof search === "string") {
+    if (!search) return "";
+    return search.startsWith("?") ? search : `?${search}`;
+  }
+
+  const params = new URLSearchParams();
+
+  Object.entries(search as Record<string, unknown>).forEach(([key, value]) => {
+    if (value == null || value === "") return;
+    if (Array.isArray(value)) {
+      value.forEach((entry) => {
+        if (entry != null && entry !== "") params.append(key, String(entry));
+      });
+      return;
+    }
+    params.set(key, String(value));
+  });
+
+  const query = params.toString();
+  return query ? `?${query}` : "";
+};
+
 export const useLocation = () => {
   const loc = useTLocation();
-  return { pathname: loc.pathname, search: loc.search, hash: loc.hash, state: undefined };
+  return {
+    pathname: loc.pathname,
+    search: normalizeSearch(loc.search),
+    hash: loc.hash,
+    state: undefined,
+  };
 };
 
 export const useParams = <T extends Record<string, string> = Record<string, string>>() => {
