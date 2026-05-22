@@ -605,10 +605,32 @@ export const AcademyTab = () => {
           <Loader2 className="mx-auto mb-2 animate-spin" /> Loading tutorials…
         </div>
       ) : (
-        byCategory.map((cat) => (
+        byCategory.map((cat, cIdx) => (
           <div key={cat.value} className="glass-card p-3 sm:p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">{cat.label}</h3>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  disabled={cIdx === 0 || reorderCategoryMutation.isPending}
+                  onClick={() => reorderCategoryMutation.mutate({ category: cat.value, dir: "up" })}
+                  aria-label="Move category up"
+                >
+                  <ArrowUp size={14} />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  disabled={cIdx === byCategory.length - 1 || reorderCategoryMutation.isPending}
+                  onClick={() => reorderCategoryMutation.mutate({ category: cat.value, dir: "down" })}
+                  aria-label="Move category down"
+                >
+                  <ArrowDown size={14} />
+                </Button>
+                <h3 className="text-sm font-semibold ml-1">{cat.label}</h3>
+              </div>
               <span className="text-[10px] text-muted-foreground">{cat.items.length} videos</span>
             </div>
             {cat.items.length === 0 ? (
