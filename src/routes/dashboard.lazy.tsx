@@ -27,8 +27,6 @@ type DashboardSummary = {
   total_leads: number;
   active_live_session: { id: string; title: string } | null;
 };
-import { useMonthlyViews } from "@/hooks/useMonthlyViews";
-import { useDailyViews } from "@/hooks/useDailyViews";
 import { GettingStartedChecklist } from "@/components/dashboard/GettingStartedChecklist";
 import { WatchingNowStrip } from "@/components/dashboard/WatchingNowStrip";
 
