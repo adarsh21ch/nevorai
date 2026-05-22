@@ -24,6 +24,7 @@ import { computeSessionSlots, currentLiveSlot, nextSlot as nextSlotFn, sessionDu
 import { VideoPickerModal } from "@/components/VideoPickerModal";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { EditorScrollLayout, EditorSectionBlock, type EditorSection } from "@/components/editor/EditorScrollLayout";
+import { CustomFieldsBuilder, type CustomField } from "@/components/funnel/CustomFieldsBuilder";
 
 import { generateUniqueSuffixedSlug } from "@/lib/slugSuffix";
 
