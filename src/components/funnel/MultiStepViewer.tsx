@@ -587,19 +587,19 @@ export const MultiStepViewer = ({
         </div>
       </div>
       {hasContact && (
-        <div className="shrink-0 px-3 py-3" style={{ borderTop: `1px solid ${sc.border}`, background: sc.bg }}>
-          <p className="text-[10px] font-bold uppercase tracking-[0.1em] mb-2.5 px-1" style={{ color: sc.textDim }}>Contact Creator</p>
-          <div className="space-y-2">
+        <div className="shrink-0 px-3 pt-2.5 pb-3" style={{ borderTop: `1px solid ${sc.border}`, background: sc.bg }}>
+          <p className="text-[10px] font-bold uppercase tracking-[0.1em] mb-2 px-1" style={{ color: sc.textDim }}>Contact Creator</p>
+          <div className="space-y-1.5">
             {waOn && (
               <button onClick={() => window.open(`https://wa.me/${funnel.contact_whatsapp?.replace(/\D/g, "")}`)}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all hover:opacity-90"
-                style={{ background: "rgba(37,211,102,0.15)", color: "#25d366", border: "1px solid rgba(37,211,102,0.2)" }}>
-                <MessageCircle size={15} /> WhatsApp
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all hover:opacity-90"
+                style={{ background: "rgba(37,211,102,0.15)", color: "#25d366", border: "1px solid rgba(37,211,102,0.25)" }}>
+                <WhatsAppIcon size={16} /> WhatsApp
               </button>
             )}
             {phoneOn && (
               <button onClick={() => window.open(`tel:${funnel.contact_phone}`)}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all hover:opacity-90"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all hover:opacity-90"
                 style={{ background: sc.itemIconBg, color: sc.text, border: `1px solid ${sc.border}` }}>
                 <PhoneIcon size={15} /> Call
               </button>
@@ -610,7 +610,7 @@ export const MultiStepViewer = ({
                 const url = v.startsWith("http") ? v : `https://instagram.com/${v.replace(/^@/, "")}`;
                 window.open(url, "_blank");
               }}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all hover:opacity-90"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all hover:opacity-90"
                 style={{ background: "linear-gradient(135deg, rgba(225,48,108,0.15), rgba(253,29,29,0.15))", color: "#e1306c", border: "1px solid rgba(225,48,108,0.25)" }}>
                 <Instagram size={15} /> Instagram
               </button>
@@ -620,6 +620,46 @@ export const MultiStepViewer = ({
       )}
     </div>
   );
+
+  const MobileContactBar = () => {
+    if (!hasContact) return null;
+    return (
+      <div
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex gap-2 px-3 py-2.5"
+        style={{
+          background: sc.bg,
+          borderTop: `1px solid ${sc.border}`,
+          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
+        }}
+      >
+        {waOn && (
+          <button onClick={() => window.open(`https://wa.me/${funnel.contact_whatsapp?.replace(/\D/g, "")}`)}
+            className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl text-[12px] font-semibold"
+            style={{ background: "rgba(37,211,102,0.15)", color: "#25d366", border: "1px solid rgba(37,211,102,0.25)" }}>
+            <WhatsAppIcon size={16} /> WhatsApp
+          </button>
+        )}
+        {phoneOn && (
+          <button onClick={() => window.open(`tel:${funnel.contact_phone}`)}
+            className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl text-[12px] font-semibold"
+            style={{ background: sc.itemIconBg, color: sc.text, border: `1px solid ${sc.border}` }}>
+            <PhoneIcon size={15} /> Call
+          </button>
+        )}
+        {igOn && (
+          <button onClick={() => {
+            const v = funnel.contact_instagram!.trim();
+            const url = v.startsWith("http") ? v : `https://instagram.com/${v.replace(/^@/, "")}`;
+            window.open(url, "_blank");
+          }}
+            className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2.5 rounded-xl text-[12px] font-semibold"
+            style={{ background: "linear-gradient(135deg, rgba(225,48,108,0.15), rgba(253,29,29,0.15))", color: "#e1306c", border: "1px solid rgba(225,48,108,0.25)" }}>
+            <Instagram size={15} /> Instagram
+          </button>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="flex min-h-[calc(100vh-52px)]">
