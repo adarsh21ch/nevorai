@@ -265,13 +265,48 @@ const PublicLivePage = () => {
     if (submitting) return;
     const session = stateData.session as any;
     const fe: Record<string, string | null> = {};
-    if (session?.show_name !== false) fe.name = validateRequired(form.name, "Name");
-    if (session?.show_phone !== false) fe.phone = validatePhone(form.phone);
-    if (session?.show_email !== false) fe.email = (form.email ? validateEmail(form.email) : null);
-    if (session?.show_city) fe.city = validateRequired(form.city, "City");
+
+    // Standard fields — show + required toggles
+    if (session?.show_name !== false) {
+      fe.name = session?.name_required !== false ? validateRequired(form.name, "Name") : (form.name ? null : null);
+    }
+    if (session?.show_phone !== false) {
+      if (session?.phone_required !== false || form.phone) fe.phone = validatePhone(form.phone);
+    }
+    if (session?.show_email !== false) {
+      if (session?.email_required === true) fe.email = validateEmail(form.email);
+      else if (form.email) fe.email = validateEmail(form.email);
+    }
+    if (session?.show_city) {
+      if (session?.city_required === true) fe.city = validateRequired(form.city, "City");
+    }
+
+    // Custom fields
+    const cfs: any[] = Array.isArray(session?.custom_fields) ? session.custom_fields : [];
+    const cfValues: Record<string, any> = {};
+    for (const cf of cfs) {
+      const raw = customValues[cf.id];
+      const val = Array.isArray(raw) ? raw : (raw == null ? "" : String(raw));
+      if (cf.required) {
+        if (Array.isArray(val) ? val.length === 0 : !String(val).trim()) {
+          fe[`cf_${cf.id}`] = `${cf.label} is required`;
+        }
+      }
+      if (cf.type === "email" && val && !Array.isArray(val)) {
+        const ev = validateEmail(String(val));
+        if (ev) fe[`cf_${cf.id}`] = ev;
+      }
+      if (cf.type === "phone" && val && !Array.isArray(val)) {
+        const pv = validatePhone(String(val));
+        if (pv) fe[`cf_${cf.id}`] = pv;
+      }
+      cfValues[cf.id] = Array.isArray(val) ? val : (val === "" ? null : val);
+    }
+
     setFormErrors(fe);
     if (Object.values(fe).some(Boolean)) {
-      scrollToFirstError(fe, formRefs.current, ["name", "phone", "email", "city"]);
+      const order = ["name", "phone", "email", "city", ...cfs.map((c) => `cf_${c.id}`)];
+      scrollToFirstError(fe, formRefs.current, order);
       return;
     }
     setSubmitting(true);
@@ -281,9 +316,10 @@ const PublicLivePage = () => {
       phone: form.phone ? normalizePhone(form.phone) : null,
       email: form.email ? form.email.trim() : null,
       city: trimSmart(form.city) || null,
+      custom_field_values: cfValues as any,
       status: "registered",
       payment_status: stateData.session.access_type === "paid" ? "pending" : "none",
-    });
+    } as any);
     setSubmitting(false);
     if (error) { toast.error("Registration failed"); return; }
     setRegistered(true);
