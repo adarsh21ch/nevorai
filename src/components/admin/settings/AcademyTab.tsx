@@ -120,13 +120,55 @@ export const AcademyTab = () => {
     },
   });
 
+  const { data: categoryOrder = [] } = useQuery({
+    queryKey: ["academy-category-order"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("academy_category_order")
+        .select("category, order_index")
+        .order("order_index", { ascending: true });
+      return (data || []) as { category: string; order_index: number }[];
+    },
+  });
+
+  const orderedCategoryValues = useMemo(() => {
+    const map = new Map(categoryOrder.map((c) => [c.category, c.order_index]));
+    return [...CATEGORIES].sort((a, b) => {
+      const ai = map.get(a.value) ?? 999;
+      const bi = map.get(b.value) ?? 999;
+      return ai - bi;
+    });
+  }, [categoryOrder]);
+
   const byCategory = useMemo(
-    () => CATEGORIES.map((c) => ({
+    () => orderedCategoryValues.map((c) => ({
       ...c,
       items: tutorials.filter((t) => t.category === c.value).sort((a, b) => a.order_index - b.order_index),
     })),
-    [tutorials],
+    [tutorials, orderedCategoryValues],
   );
+
+  const reorderCategoryMutation = useMutation({
+    mutationFn: async ({ category, dir }: { category: string; dir: "up" | "down" }) => {
+      const list = orderedCategoryValues;
+      const idx = list.findIndex((c) => c.value === category);
+      const swap = dir === "up" ? idx - 1 : idx + 1;
+      if (swap < 0 || swap >= list.length) return;
+      const a = list[idx];
+      const b = list[swap];
+      const aOrder = (categoryOrder.find((c) => c.category === a.value)?.order_index) ?? (idx + 1);
+      const bOrder = (categoryOrder.find((c) => c.category === b.value)?.order_index) ?? (swap + 1);
+      await (supabase as any).from("academy_category_order").upsert([
+        { category: a.value, order_index: bOrder, updated_at: new Date().toISOString() },
+        { category: b.value, order_index: aOrder, updated_at: new Date().toISOString() },
+      ], { onConflict: "category" });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["academy-category-order"] });
+      qc.invalidateQueries({ queryKey: ["academy-category-order-public"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Reorder failed"),
+  });
 
   const resetForm = () => {
     setForm(emptyForm);
@@ -563,10 +605,32 @@ export const AcademyTab = () => {
           <Loader2 className="mx-auto mb-2 animate-spin" /> Loading tutorials…
         </div>
       ) : (
-        byCategory.map((cat) => (
+        byCategory.map((cat, cIdx) => (
           <div key={cat.value} className="glass-card p-3 sm:p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">{cat.label}</h3>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  disabled={cIdx === 0 || reorderCategoryMutation.isPending}
+                  onClick={() => reorderCategoryMutation.mutate({ category: cat.value, dir: "up" })}
+                  aria-label="Move category up"
+                >
+                  <ArrowUp size={14} />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  disabled={cIdx === byCategory.length - 1 || reorderCategoryMutation.isPending}
+                  onClick={() => reorderCategoryMutation.mutate({ category: cat.value, dir: "down" })}
+                  aria-label="Move category down"
+                >
+                  <ArrowDown size={14} />
+                </Button>
+                <h3 className="text-sm font-semibold ml-1">{cat.label}</h3>
+              </div>
               <span className="text-[10px] text-muted-foreground">{cat.items.length} videos</span>
             </div>
             {cat.items.length === 0 ? (
