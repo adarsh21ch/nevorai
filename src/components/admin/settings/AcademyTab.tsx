@@ -120,13 +120,55 @@ export const AcademyTab = () => {
     },
   });
 
+  const { data: categoryOrder = [] } = useQuery({
+    queryKey: ["academy-category-order"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("academy_category_order")
+        .select("category, order_index")
+        .order("order_index", { ascending: true });
+      return (data || []) as { category: string; order_index: number }[];
+    },
+  });
+
+  const orderedCategoryValues = useMemo(() => {
+    const map = new Map(categoryOrder.map((c) => [c.category, c.order_index]));
+    return [...CATEGORIES].sort((a, b) => {
+      const ai = map.get(a.value) ?? 999;
+      const bi = map.get(b.value) ?? 999;
+      return ai - bi;
+    });
+  }, [categoryOrder]);
+
   const byCategory = useMemo(
-    () => CATEGORIES.map((c) => ({
+    () => orderedCategoryValues.map((c) => ({
       ...c,
       items: tutorials.filter((t) => t.category === c.value).sort((a, b) => a.order_index - b.order_index),
     })),
-    [tutorials],
+    [tutorials, orderedCategoryValues],
   );
+
+  const reorderCategoryMutation = useMutation({
+    mutationFn: async ({ category, dir }: { category: string; dir: "up" | "down" }) => {
+      const list = orderedCategoryValues;
+      const idx = list.findIndex((c) => c.value === category);
+      const swap = dir === "up" ? idx - 1 : idx + 1;
+      if (swap < 0 || swap >= list.length) return;
+      const a = list[idx];
+      const b = list[swap];
+      const aOrder = (categoryOrder.find((c) => c.category === a.value)?.order_index) ?? (idx + 1);
+      const bOrder = (categoryOrder.find((c) => c.category === b.value)?.order_index) ?? (swap + 1);
+      await (supabase as any).from("academy_category_order").upsert([
+        { category: a.value, order_index: bOrder, updated_at: new Date().toISOString() },
+        { category: b.value, order_index: aOrder, updated_at: new Date().toISOString() },
+      ], { onConflict: "category" });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["academy-category-order"] });
+      qc.invalidateQueries({ queryKey: ["academy-category-order-public"] });
+    },
+    onError: (e: any) => toast.error(e.message || "Reorder failed"),
+  });
 
   const resetForm = () => {
     setForm(emptyForm);
