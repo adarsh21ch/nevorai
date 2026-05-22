@@ -504,9 +504,11 @@ export const MultiStepViewer = ({
     stepBarInactive: isDark ? "rgba(255,255,255,0.8)" : "rgba(0,0,0,0.6)",
   };
 
-  const waOn = funnel.contact_whatsapp_enabled && !!funnel.contact_whatsapp;
-  const phoneOn = funnel.contact_phone_enabled && !!funnel.contact_phone;
-  const igOn = funnel.contact_instagram_enabled && !!funnel.contact_instagram;
+  // Tolerant of older rows where the *_enabled columns may not yet exist:
+  // fall back to "value is set" so contact buttons still render.
+  const waOn = (funnel.contact_whatsapp_enabled ?? !!funnel.contact_whatsapp) && !!funnel.contact_whatsapp;
+  const phoneOn = (funnel.contact_phone_enabled ?? !!funnel.contact_phone) && !!funnel.contact_phone;
+  const igOn = (funnel.contact_instagram_enabled ?? !!funnel.contact_instagram) && !!funnel.contact_instagram;
   const hasContact = funnel.show_contact_buttons && (waOn || phoneOn || igOn);
 
   const JourneySidebar = () => (
