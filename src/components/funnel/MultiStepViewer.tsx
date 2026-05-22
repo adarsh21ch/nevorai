@@ -534,14 +534,13 @@ export const MultiStepViewer = ({
               <button key={step.id} onClick={() => !isLocked && setActiveStepIndex(idx)} disabled={isLocked}
                 className="w-full flex items-start gap-3 text-left transition-all"
                 style={{
-                  padding: "10px 12px", borderRadius: "12px",
-                  border: isCompleted ? "1px solid rgba(249,115,22,0.25)" : isActive ? "1px solid rgba(249,115,22,0.3)" : "1px solid transparent",
-                  borderLeft: isCompleted || isActive ? "3px solid #F97316" : "3px solid transparent",
-                  background: isCompleted ? "rgba(249,115,22,0.1)" : isActive ? "rgba(249,115,22,0.08)" : isLocked ? "transparent" : sc.itemBg,
+                  padding: "10px 12px", borderRadius: "8px",
+                  borderLeft: isActive || isCompleted ? "2px solid #F97316" : "2px solid transparent",
+                  background: isActive ? sc.itemBg : "transparent",
                   cursor: isLocked ? "not-allowed" : "pointer", opacity: isLocked ? 0.55 : 1,
                 }}>
                 <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-                  style={{ background: isCompleted ? "rgba(249,115,22,0.2)" : isActive ? "rgba(249,115,22,0.15)" : sc.itemIconBg }}>
+                  style={{ background: isCompleted ? "rgba(249,115,22,0.18)" : isActive ? "rgba(249,115,22,0.12)" : sc.itemIconBg }}>
                   {isCompleted ? <Check size={13} className="text-[#F97316]" /> :
                    isLocked ? <Lock size={11} style={{ color: sc.iconLocked }} /> :
                    <Icon size={13} className={isActive ? "text-[#F97316]" : ""} style={!isActive ? { color: sc.iconDim } : {}} />}
