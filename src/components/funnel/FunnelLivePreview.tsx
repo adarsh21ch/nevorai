@@ -58,6 +58,18 @@ export const FunnelLivePreview = ({ funnel, selectedVideo, flowSteps, leadForm, 
   const hiddenCount = Math.max(0, activeSteps.length - maxVisibleSteps);
   const visibleSteps = activeSteps.slice(0, maxVisibleSteps);
 
+  const scope = funnel.video_topics_scope || "global";
+  let topicsEnabled = false;
+  let topicsList: string[] = [];
+  if (scope === "per_step" && activeStep) {
+    topicsEnabled = !!activeStep.video_topics_step_enabled;
+    topicsList = Array.isArray(activeStep.video_topics_step) ? activeStep.video_topics_step : [];
+  } else {
+    topicsEnabled = !!funnel.video_topics_enabled;
+    topicsList = Array.isArray(funnel.video_topics) ? funnel.video_topics : [];
+  }
+  const cleanedTopics = topicsList.filter((t) => typeof t === "string" && t.trim() !== "");
+
   const previewUrl = funnel.slug && typeof window !== "undefined" ? `${window.location.origin}/f/${funnel.slug}` : null;
 
   return (
