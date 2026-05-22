@@ -108,6 +108,8 @@ const emptyForm = (): FormState => ({
   max_attendees: null,
   access_type: "public",
   show_name: true, show_phone: true, show_email: true, show_city: false,
+  name_required: true, phone_required: true, email_required: false, city_required: false,
+  custom_fields: [],
   show_viewer_count: true,
   payment_amount: 0, upi_id: "", payment_instructions: "",
 });
