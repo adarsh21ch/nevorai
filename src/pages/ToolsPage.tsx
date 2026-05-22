@@ -1,30 +1,38 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { GitBranch, Layout, Radio } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { useNavigate } from "@/lib/router-compat";
+import { useLocation, useNavigate } from "@/lib/router-compat";
 import FunnelsPage from "@/pages/FunnelsPage";
 import LandingPagesPage from "@/pages/LandingPagesPage";
 import LivePage from "@/pages/LivePage";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 
-const getInitialTab = (): string => {
-  if (typeof window === "undefined") return "funnels";
-  const m = window.location.search.match(/[?&]tab=([^&]+)/);
+const parseTab = (search: string): string => {
+  const m = search.match(/[?&]tab=([^&]+)/);
   return m?.[1] || "funnels";
 };
 
 const ToolsPage = () => {
   useDocumentTitle("Tools");
   const navigate = useNavigate();
+  const location = useLocation();
   const { features } = usePlanLimits();
   const TOOL_TABS = useMemo(() => [
     { key: "funnels", label: "Funnels", icon: GitBranch, Component: FunnelsPage },
     ...(features.landingPages ? [{ key: "landing-pages", label: "Landing Pages", icon: Layout, Component: LandingPagesPage }] : []),
     ...(features.goLive ? [{ key: "live", label: "Live", icon: Radio, Component: LivePage }] : []),
   ], [features.landingPages, features.goLive]);
-  const [activeTab, setActiveTab] = useState<string>(getInitialTab);
+  const [activeTab, setActiveTab] = useState<string>(() =>
+    typeof window === "undefined" ? "funnels" : parseTab(window.location.search)
+  );
+
+  // Keep tab in sync with URL ?tab= so sidebar Link clicks switch instantly.
+  useEffect(() => {
+    const next = parseTab(location.search || "");
+    setActiveTab((prev) => (prev === next ? prev : next));
+  }, [location.search]);
 
   const handleTabChange = (key: string) => {
     setActiveTab(key);
