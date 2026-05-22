@@ -138,6 +138,10 @@ export const MultiStepViewer = ({
   const [paymentProof, setPaymentProof] = useState({ upi_transaction_id: "", amount: 0 });
   const [loading, setLoading] = useState(true);
   const sessionId = useRef(getSessionId(funnel.id));
+  // SSR returns "" for sessionId; populate on the client before any progress load.
+  if (typeof window !== "undefined" && !sessionId.current) {
+    sessionId.current = getSessionId(funnel.id);
+  }
   const progressSaveTimer = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const [stepCodeUnlocked, setStepCodeUnlocked] = useState<Record<string, boolean>>({});
   // Hydrate from localStorage AFTER mount to avoid SSR/CSR hydration mismatch (React #418).
