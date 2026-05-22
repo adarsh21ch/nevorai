@@ -4,7 +4,11 @@ import { supabase, supabaseProjectUrl, supabasePublishableKey } from "@/integrat
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
+
+// SSR-safe layout effect: synchronously applies pre-paint changes on the client
+// (prevents theme-flash) and silently no-ops during server render.
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 import { toast } from "sonner";
 import {
   Play, Pause, MessageCircle, Phone as PhoneIcon, Lock, Check,
