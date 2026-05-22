@@ -14,11 +14,8 @@ const runIdle = (cb: () => void, timeout = 200) => {
   else window.setTimeout(cb, timeout);
 };
 
-// Primary tabs whose JS chunks we preload after login so first-tap is instant.
-const PRELOAD_ROUTES = [
-  "/dashboard", "/videos", "/insights", "/funnels", "/landing-pages",
-  "/live", "/tools", "/profile", "/billing", "/payments", "/notifications",
-] as const;
+// (proactive route preload removed — defaultPreload: "intent" handles this on hover/focus.)
+
 
 interface Profile {
   id: string;
