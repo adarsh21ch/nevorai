@@ -750,22 +750,45 @@ const LivePage = ({ embedded = false }: { embedded?: boolean } = {}) => {
                   </div>
 
                   {form.access_type === "lead_gated" && (
-                    <div className="space-y-2 p-3 bg-muted/40 rounded-xl border border-border">
+                    <div className="space-y-3 p-3 bg-muted/40 rounded-xl border border-border">
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Registration Form</p>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-2">
                         {[
-                          { key: "show_name", label: "Name" },
-                          { key: "show_phone", label: "Phone" },
-                          { key: "show_email", label: "Email" },
-                          { key: "show_city", label: "City" },
-                        ].map((f) => (
-                          <div key={f.key} className="flex items-center justify-between">
-                            <Label className="text-xs">{f.label}</Label>
-                            <Switch checked={(form as any)[f.key]} onCheckedChange={(v) => upd(f.key as any, v as any)} />
-                          </div>
-                        ))}
+                          { key: "name", label: "Name" },
+                          { key: "phone", label: "Phone" },
+                          { key: "email", label: "Email" },
+                          { key: "city", label: "City" },
+                        ].map((f) => {
+                          const showKey = `show_${f.key}` as keyof FormState;
+                          const reqKey = `${f.key}_required` as keyof FormState;
+                          const shown = !!(form as any)[showKey];
+                          return (
+                            <div key={f.key} className="flex items-center justify-between gap-3 rounded-lg bg-background/60 border border-border px-3 py-2">
+                              <span className="text-xs font-medium">{f.label}</span>
+                              <div className="flex items-center gap-4">
+                                <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                                  Show
+                                  <Switch checked={shown} onCheckedChange={(v) => upd(showKey as any, v as any)} />
+                                </label>
+                                <label className={`flex items-center gap-1.5 text-[11px] ${shown ? "text-muted-foreground" : "text-muted-foreground/40"}`}>
+                                  Required
+                                  <Switch
+                                    checked={!!(form as any)[reqKey]}
+                                    disabled={!shown}
+                                    onCheckedChange={(v) => upd(reqKey as any, v as any)}
+                                  />
+                                </label>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                      <p className="text-[10px] text-muted-foreground pt-1">Custom registration fields are coming soon.</p>
+                      <CustomFieldsBuilder
+                        fields={form.custom_fields}
+                        onChange={(fields) => upd("custom_fields", fields as any)}
+                        enabled={(features as any)?.customFormFields === true}
+                        maxFields={(config as any)?.max_custom_form_fields ?? 0}
+                      />
                     </div>
                   )}
                 </div>
