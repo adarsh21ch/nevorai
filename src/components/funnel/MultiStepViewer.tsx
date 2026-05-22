@@ -943,6 +943,44 @@ export const MultiStepViewer = ({
                     );
                   })()}
 
+                  {(() => {
+                    const scope = (funnel as any).video_topics_scope || "global";
+                    let enabled = false;
+                    let topics: string[] = [];
+                    if (scope === "per_step" && activeStep) {
+                      enabled = !!activeStep.video_topics_step_enabled;
+                      topics = Array.isArray(activeStep.video_topics_step) ? activeStep.video_topics_step : [];
+                    } else {
+                      enabled = !!(funnel as any).video_topics_enabled;
+                      topics = Array.isArray((funnel as any).video_topics) ? (funnel as any).video_topics : [];
+                    }
+                    const cleaned = topics.filter((t) => typeof t === "string" && t.trim() !== "");
+                    if (!enabled || cleaned.length === 0) return null;
+                    return (
+                      <div className="mt-4 p-4 sm:p-5 rounded-2xl" style={{ background: sc.itemBg, border: `1px solid ${sc.border}` }}>
+                        <h3 className="font-heading font-bold text-[14px] sm:text-[16px] mb-3" style={{ color: sc.text }}>
+                          What you'll learn in this session
+                        </h3>
+                        <div className="space-y-0">
+                          {cleaned.map((topic, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-start gap-2.5 py-2"
+                              style={{ borderBottom: idx < cleaned.length - 1 ? `1px solid ${sc.border}` : "none" }}
+                            >
+                              <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5" style={{ background: "rgba(249,115,22,0.12)" }}>
+                                <Check size={11} className="text-[#F97316]" />
+                              </div>
+                              <span className="text-[13px] sm:text-[14px] leading-relaxed" style={{ color: sc.text }}>{topic}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+
+
 
                   {nextStepUnlocked && (
                     <button onClick={() => setActiveStepIndex(activeStepIndex + 1)}
