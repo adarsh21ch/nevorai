@@ -1,4 +1,4 @@
-import { Play, Lock, Eye, ExternalLink, Share2 } from "lucide-react";
+import { Play, Lock, Eye, ExternalLink, Share2, Check } from "lucide-react";
 
 interface PreviewStep {
   title: string;
@@ -11,6 +11,8 @@ interface PreviewStep {
   timer_cta_text?: string;
   timer_cta_style?: string;
   access_code_enabled?: boolean;
+  video_topics_step_enabled?: boolean;
+  video_topics_step?: string[] | null;
 }
 
 interface FunnelLivePreviewProps {
@@ -27,6 +29,9 @@ interface FunnelLivePreviewProps {
     contact_phone: string;
     payment_enabled: boolean;
     required_fields: { email: boolean; city: boolean; state: boolean; whatsapp: boolean };
+    video_topics_enabled?: boolean;
+    video_topics?: string[];
+    video_topics_scope?: "global" | "per_step";
   };
   selectedVideo: { title: string; url: string | null; thumbnail?: string | null } | null;
   flowSteps: PreviewStep[];
@@ -52,6 +57,18 @@ export const FunnelLivePreview = ({ funnel, selectedVideo, flowSteps, leadForm, 
   const maxVisibleSteps = 5;
   const hiddenCount = Math.max(0, activeSteps.length - maxVisibleSteps);
   const visibleSteps = activeSteps.slice(0, maxVisibleSteps);
+
+  const scope = funnel.video_topics_scope || "global";
+  let topicsEnabled = false;
+  let topicsList: string[] = [];
+  if (scope === "per_step" && activeStep) {
+    topicsEnabled = !!activeStep.video_topics_step_enabled;
+    topicsList = Array.isArray(activeStep.video_topics_step) ? activeStep.video_topics_step : [];
+  } else {
+    topicsEnabled = !!funnel.video_topics_enabled;
+    topicsList = Array.isArray(funnel.video_topics) ? funnel.video_topics : [];
+  }
+  const cleanedTopics = topicsList.filter((t) => typeof t === "string" && t.trim() !== "");
 
   const previewUrl = funnel.slug && typeof window !== "undefined" ? `${window.location.origin}/f/${funnel.slug}` : null;
 
@@ -137,6 +154,20 @@ export const FunnelLivePreview = ({ funnel, selectedVideo, flowSteps, leadForm, 
               <div className="h-6 rounded bg-muted border border-border px-2 flex items-center text-[9px] text-muted-foreground">Full Name</div>
               <div className="h-6 rounded bg-muted border border-border px-2 flex items-center text-[9px] text-muted-foreground">Phone</div>
               {funnel.required_fields.email && <div className="h-6 rounded bg-muted border border-border px-2 flex items-center text-[9px] text-muted-foreground">Email</div>}
+            </div>
+          )}
+          {topicsEnabled && cleanedTopics.length > 0 && (
+            <div className="space-y-1 pt-1.5 border-t border-border">
+              <p className="text-[8px] font-bold text-muted-foreground uppercase tracking-wider mb-1">What you'll learn</p>
+              {cleanedTopics.slice(0, 5).map((topic, idx) => (
+                <div key={idx} className="flex items-start gap-1.5 py-0.5">
+                  <div className="w-3 h-3 rounded-full flex items-center justify-center shrink-0 mt-[1px]" style={{ background: "rgba(249,115,22,0.15)" }}>
+                    <Check size={7} className="text-[#F97316]" />
+                  </div>
+                  <span className="text-[9px] leading-snug text-foreground truncate">{topic}</span>
+                </div>
+              ))}
+              {cleanedTopics.length > 5 && <p className="text-[8px] text-muted-foreground pl-4.5">+{cleanedTopics.length - 5} more</p>}
             </div>
           )}
           {funnel.cta_enabled && !isMulti && (
