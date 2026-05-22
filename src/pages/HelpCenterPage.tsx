@@ -69,6 +69,17 @@ export default function HelpCenterPage() {
     },
   });
 
+  const { data: categoryOrder = [] } = useQuery({
+    queryKey: ["academy-category-order-public"],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("academy_category_order")
+        .select("category, order_index")
+        .order("order_index", { ascending: true });
+      return (data || []) as { category: string; order_index: number }[];
+    },
+  });
+
   const completedSet = useMemo(() => new Set(completions), [completions]);
 
   const toggleComplete = useMutation({
@@ -109,8 +120,13 @@ export default function HelpCenterPage() {
       if (!map.has(t.category)) map.set(t.category, []);
       map.get(t.category)!.push(t);
     }
-    return Array.from(map.entries());
-  }, [filtered]);
+    const orderMap = new Map(categoryOrder.map((c) => [c.category, c.order_index]));
+    return Array.from(map.entries()).sort(([a], [b]) => {
+      const ai = orderMap.get(a) ?? 999;
+      const bi = orderMap.get(b) ?? 999;
+      return ai - bi;
+    });
+  }, [filtered, categoryOrder]);
 
   const progress = tutorials.length === 0
     ? 0
