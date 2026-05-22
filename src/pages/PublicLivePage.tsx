@@ -60,6 +60,11 @@ interface StateResponse {
     show_phone?: boolean;
     show_email?: boolean;
     show_city?: boolean;
+    name_required?: boolean;
+    phone_required?: boolean;
+    email_required?: boolean;
+    city_required?: boolean;
+    custom_fields?: Array<{ id: string; label: string; type: string; required?: boolean; placeholder?: string | null; options?: string[] | null }>;
     show_viewer_count?: boolean;
     duration_minutes?: number;
   };
