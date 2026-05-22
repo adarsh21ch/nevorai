@@ -931,6 +931,7 @@ const PublicFunnel = () => {
     },
     onSuccess: (_data, vars) => {
       setLeadSubmitted(true);
+      try { if (funnel?.id) localStorage.setItem(`nf_lead_${funnel.id}`, "true"); } catch {}
       const hasEmail = !!(vars as any)?.email;
       toast.success(
         hasEmail
