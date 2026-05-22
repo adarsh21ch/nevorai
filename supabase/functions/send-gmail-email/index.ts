@@ -13,6 +13,16 @@ function base64url(str: string): string {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 
+function encodeMimeHeader(value: string): string {
+  const needsEncoding = /[^\x20-\x7E]/.test(value)
+  if (!needsEncoding) return value
+
+  const utf8Bytes = new TextEncoder().encode(value)
+  let binary = ''
+  for (const byte of utf8Bytes) binary += String.fromCharCode(byte)
+  return `=?UTF-8?B?${btoa(binary)}?=`
+}
+
 function parseJwtClaims(token: string): Record<string, unknown> | null {
   const parts = token.split('.')
   if (parts.length < 2) return null
@@ -316,11 +326,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const fromName = sender_name || 'nFlow'
     const fromEmail = tokenRow.gmail_email
     const mimeMessage = [
-      `From: ${fromName} <${fromEmail}>`,
+      `From: ${encodeMimeHeader(fromName)} <${fromEmail}>`,
       `To: ${to}`,
-      `Subject: ${subject}`,
+      `Subject: ${encodeMimeHeader(subject)}`,
       'MIME-Version: 1.0',
       'Content-Type: text/html; charset=UTF-8',
+      'Content-Transfer-Encoding: 8bit',
       '',
       html,
     ].join('\r\n')
