@@ -5,6 +5,7 @@ import {
   LayoutDashboard, Layers, Video, IndianRupee, BarChart2,
   User, Bell, LogOut, ChevronLeft, ChevronRight, Shield,
   Radio, FileText, Crown, HelpCircle, Home, Wrench, Activity,
+  GitBranch, Layout,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
