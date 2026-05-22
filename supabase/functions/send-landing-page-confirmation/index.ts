@@ -4,6 +4,15 @@ const corsHeaders = {
 };
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
+
 function parseJwtClaims(token: string): Record<string, unknown> | null {
   const parts = token.split('.')
   if (parts.length < 2) return null
@@ -130,18 +139,26 @@ Deno.serve(async (req) => {
     console.log('[plan-gate] ALLOWED for plan', planName)
 
     // Use sender_display_name from landing page settings; fall back to platform name
-    const senderDisplayName = (page as any).sender_display_name || 'nFlow'
-    const isPlatformSender = senderDisplayName === 'nFlow'
-    const trustBadgeText = isPlatformSender ? 'Verified by nFlow' : 'Sent via nFlow'
+    const senderDisplayName = ((page as any).sender_display_name || 'Nevorai').trim() || 'Nevorai'
+    const isPlatformSender = senderDisplayName === 'Nevorai' || senderDisplayName === 'nFlow'
+    const trustBadgeText = isPlatformSender ? 'Verified by Nevorai' : 'Sent via Nevorai'
     const trustBadgeIcon = isPlatformSender
       ? '&#10003;'  // checkmark
       : '&#9656;'   // arrow
 
-    let emailBody = (page.email_body || '').replace(/\{\{name\}\}/g, reg.name || 'there')
-      .replace(/\{\{email\}\}/g, reg.email || '')
-      .replace(/\{\{phone\}\}/g, reg.phone || '')
+    const safeName = reg.name || 'there'
+    const safeEmail = reg.email || ''
+    const safePhone = reg.phone || ''
+    const emailHeading = escapeHtml(page.email_heading || 'You are registered!')
+    const emailFooter = page.email_footer_text ? escapeHtml(page.email_footer_text) : ''
 
-    let subject = (page.email_subject || 'Registration Confirmed').replace(/\{\{name\}\}/g, reg.name || 'there')
+    let emailBody = escapeHtml(page.email_body || '')
+      .replace(/\{\{name\}\}/g, escapeHtml(safeName))
+      .replace(/\{\{email\}\}/g, escapeHtml(safeEmail))
+      .replace(/\{\{phone\}\}/g, escapeHtml(safePhone))
+
+    let subject = String(page.email_subject || 'Registration Confirmed')
+      .replace(/\{\{name\}\}/g, safeName)
 
     const html = `
 <!DOCTYPE html>
@@ -150,11 +167,11 @@ Deno.serve(async (req) => {
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #ffffff; color: #1a1a1a; padding: 40px 20px;">
   <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 32px; border: 1px solid #e5e5e5;">
     <div style="text-align: center; margin-bottom: 24px;">
-      <h1 style="color: #22c55e; font-size: 20px; margin: 0;">nFlow</h1>
+      <h1 style="color: #22c55e; font-size: 20px; margin: 0;">Nevorai</h1>
     </div>
-    <h2 style="font-size: 22px; margin: 0 0 16px; color: #1a1a1a;">${page.email_heading || 'You are registered!'}</h2>
+    <h2 style="font-size: 22px; margin: 0 0 16px; color: #1a1a1a;">${emailHeading}</h2>
     <div style="font-size: 15px; line-height: 1.7; color: #555555; white-space: pre-line;">${emailBody}</div>
-    ${page.email_footer_text ? `<div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e5e5; font-size: 13px; color: #999999;">${page.email_footer_text}</div>` : ''}
+    ${emailFooter ? `<div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e5e5; font-size: 13px; color: #999999; white-space: pre-line;">${emailFooter}</div>` : ''}
     <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid #f0f0f0; text-align: center;">
       <span style="display: inline-block; font-size: 11px; color: #b0b0b0; letter-spacing: 0.5px; font-weight: 500;">
         <span style="display: inline-block; width: 16px; height: 16px; line-height: 16px; text-align: center; background: #f5f5f5; border-radius: 50%; font-size: 9px; color: #22c55e; margin-right: 5px; vertical-align: middle;">${trustBadgeIcon}</span>
