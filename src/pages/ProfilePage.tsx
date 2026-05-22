@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import {
   Crown, CreditCard, FileCheck, IndianRupee,
   Bell, Settings, Download, ChevronRight, ChevronDown, Pencil,
-  Sun, Moon, HelpCircle, LogOut, Shield, Infinity as InfinityIcon,
+  Sun, Moon, HelpCircle, LogOut, Shield, Infinity as InfinityIcon, GraduationCap,
 } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 import { Switch } from "@/components/ui/switch";
