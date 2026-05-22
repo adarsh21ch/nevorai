@@ -220,7 +220,8 @@ const ProfilePage = () => {
         {/* NEVORAI ACADEMY HIGHLIGHT */}
         <Link
           to="/help"
-          className="group block rounded-xl border border-primary/30 bg-gradient-to-br from-primary/10 via-card to-card p-4 transition-all hover:border-primary/60 hover:shadow-md"
+          className="group block rounded-xl border border-primary/40 bg-gradient-to-br from-primary/15 via-card to-card p-4 transition-all hover:border-primary/70 hover:shadow-lg"
+          style={{ boxShadow: "0 6px 24px -10px color-mix(in oklab, var(--accent-saffron) 55%, transparent), 0 0 0 1px color-mix(in oklab, var(--accent-saffron) 25%, transparent)" }}
         >
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
