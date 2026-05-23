@@ -597,6 +597,15 @@ const VideosPage = () => {
           />
         )}
 
+        <UpgradeModal
+          open={skipUpgradeOpen}
+          onClose={() => setSkipUpgradeOpen(false)}
+          type="upgrade"
+          tier={tier}
+        />
+
+
+
         <AlertDialog open={!!deleteVideo} onOpenChange={(o) => !o && setDeleteVideo(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
