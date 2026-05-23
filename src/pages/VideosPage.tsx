@@ -15,6 +15,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { VideoLinkModal } from "@/components/VideoLinkModal";
+import { YouTubeLinkModal } from "@/components/YouTubeLinkModal";
 import { VideoUploadModal } from "@/components/VideoUploadModal";
 import { VideoShareModal } from "@/components/VideoShareModal";
 import { VideoRenameModal } from "@/components/VideoRenameModal";
