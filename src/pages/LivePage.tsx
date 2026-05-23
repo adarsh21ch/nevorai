@@ -260,6 +260,10 @@ const LivePage = ({ embedded = false }: { embedded?: boolean } = {}) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessions]);
 
+  // Pull the user's library directly — sessions can now play any uploaded
+  // video without first being attached to a funnel. We still load funnels in
+  // case we need to derive metadata for legacy sessions, but the picker is
+  // no longer gated on funnel membership.
   const { data: funnels = [] } = useQuery({
     queryKey: ["live-funnel-options", user?.id],
     queryFn: async () => {
@@ -275,34 +279,32 @@ const LivePage = ({ embedded = false }: { embedded?: boolean } = {}) => {
     enabled: !!user?.id && creating,
   });
 
+  // Hydrate the selected video's metadata (title / thumbnail / duration)
+  // straight from video_assets so the live editor stays decoupled from funnels.
+  const [selectedVideo, setSelectedVideo] = useState<{ id: string; title: string; thumbnail_url: string | null; duration_seconds: number | null } | null>(null);
+
   useEffect(() => {
+    let cancelled = false;
     const run = async () => {
-      if (!form.funnel_id) return;
-      const f = funnels.find((x: any) => x.id === form.funnel_id);
-      if (!f) return;
-      if (!f.video_asset_id) {
-        upd("video_asset_id", null);
-        upd("video_duration_seconds", null);
-        return;
-      }
+      if (!form.video_asset_id) { setSelectedVideo(null); return; }
       const { data: video } = await supabase
         .from("video_assets")
-        .select("id, duration_seconds")
-        .eq("id", f.video_asset_id)
+        .select("id, title, thumbnail_url, duration_seconds")
+        .eq("id", form.video_asset_id)
         .maybeSingle();
+      if (cancelled) return;
       if (video) {
-        upd("video_asset_id", video.id);
-        upd("video_duration_seconds", video.duration_seconds || null);
+        setSelectedVideo(video as any);
+        if (!form.video_duration_seconds && video.duration_seconds) {
+          upd("video_duration_seconds", video.duration_seconds);
+        }
       }
     };
     run();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.funnel_id]);
+  }, [form.video_asset_id]);
 
-  const selectedFunnel = useMemo(
-    () => funnels.find((f: any) => f.id === form.funnel_id),
-    [funnels, form.funnel_id]
-  );
 
   const editingSession = useMemo(
     () => editingId ? sessions.find((s: any) => s.id === editingId) : null,
@@ -374,7 +376,7 @@ const LivePage = ({ embedded = false }: { embedded?: boolean } = {}) => {
         throw new Error("Paid sessions are coming soon. Please choose Public or Registration for now.");
       }
       if (form.session_type === "funnel_video") {
-        if (!form.funnel_id) throw new Error("Please select a video first");
+        if (!form.video_asset_id) throw new Error("Please select a video first");
         if (!form.scheduled_times.some(Boolean)) throw new Error("Please add at least one scheduled time");
       } else if (!form.meeting_url) {
         throw new Error("Please add a meeting URL");
@@ -516,7 +518,7 @@ const LivePage = ({ embedded = false }: { embedded?: boolean } = {}) => {
   const canNextFromStep1 = !!form.session_type;
   const canNextFromStep2 =
     form.session_type === "funnel_video"
-      ? !!form.title.trim() && !!form.funnel_id
+      ? !!form.title.trim() && !!form.video_asset_id
       : !!form.title.trim() && !!form.platform;
   const canNextFromStep3 =
     form.session_type === "funnel_video"
@@ -524,7 +526,7 @@ const LivePage = ({ embedded = false }: { embedded?: boolean } = {}) => {
       : !!form.meeting_url;
   const finalCanSubmit =
     form.session_type === "funnel_video"
-      ? !!form.title.trim() && !!form.funnel_id && form.scheduled_times.some(Boolean)
+      ? !!form.title.trim() && !!form.video_asset_id && form.scheduled_times.some(Boolean)
       : !!form.title.trim() && !!form.meeting_url;
 
   const content = (
@@ -572,7 +574,7 @@ const LivePage = ({ embedded = false }: { embedded?: boolean } = {}) => {
 
         {!authLoading && !isLoading && !error && creating && (() => {
           const liveEditorSections: EditorSection[] = [
-            { id: "live-section-delivery", label: "Delivery", num: 1, icon: Layers, complete: !!form.funnel_id || form.session_type === "external_link" },
+            { id: "live-section-delivery", label: "Delivery", num: 1, icon: Layers, complete: !!form.video_asset_id || form.session_type === "external_link" },
             { id: "live-section-details", label: "Details", num: 2, icon: Pencil, complete: !!form.title },
             { id: "live-section-schedule", label: "Schedule", num: 3, icon: Calendar, complete: !!form.scheduled_times[0] },
             { id: "live-section-replay", label: "Replay & Settings", num: 4, icon: Play, complete: form.is_published },
@@ -645,15 +647,15 @@ const LivePage = ({ embedded = false }: { embedded?: boolean } = {}) => {
                     <div>
                       <Label className="text-sm font-medium">Select Video *</Label>
                       <p className="text-[11px] text-muted-foreground mt-0.5 mb-2">Pick the recorded video you want to play live.</p>
-                      {selectedFunnel ? (
+                      {selectedVideo ? (
                         <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl border border-border">
-                          {selectedFunnel.thumbnail_url ? (
-                            <img src={selectedFunnel.thumbnail_url} alt="" className="w-20 h-14 rounded object-cover shrink-0" />
+                          {selectedVideo.thumbnail_url ? (
+                            <img src={selectedVideo.thumbnail_url} alt="" className="w-20 h-14 rounded object-cover shrink-0" />
                           ) : (
                             <div className="w-20 h-14 rounded bg-muted flex items-center justify-center shrink-0"><Video size={18} className="text-muted-foreground" /></div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold truncate">{selectedFunnel.title}</p>
+                            <p className="text-sm font-semibold truncate">{selectedVideo.title}</p>
                             <p className="text-xs text-muted-foreground">Duration: {formatDuration(form.video_duration_seconds)}</p>
                           </div>
                           <Button type="button" variant="outline" size="sm" onClick={() => setVideoPickerOpen(true)}>
@@ -679,18 +681,17 @@ const LivePage = ({ embedded = false }: { embedded?: boolean } = {}) => {
                         open={videoPickerOpen}
                         onClose={() => setVideoPickerOpen(false)}
                         onSelect={(videoId, title) => {
+                          // Any uploaded video works — no funnel attachment required.
+                          // If the chosen video happens to also belong to a funnel,
+                          // link the funnel too so legacy speaker/CTA metadata still flows.
                           const match = (funnels as any[]).find((f) => f.video_asset_id === videoId);
-                          if (match) {
-                            upd("funnel_id", match.id);
-                            toast.success(`Selected "${title}"`);
-                          } else {
-                            toast.error(`"${title}" isn't attached to a funnel yet. Create a funnel with this video first.`, {
-                              action: { label: "Create funnel", onClick: () => navigate("/funnels") },
-                            });
-                          }
+                          upd("video_asset_id", videoId);
+                          upd("funnel_id", match ? match.id : null);
+                          toast.success(`Selected "${title}"`);
                           setVideoPickerOpen(false);
                         }}
                       />
+
                     </div>
                   ) : (
                     <div className="grid sm:grid-cols-2 gap-3">

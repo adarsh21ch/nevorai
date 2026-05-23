@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Settings, Info, FastForward, Calendar, Lock } from "lucide-react";
+import { Loader2, Settings, Info, FastForward, Calendar, Lock, Copy } from "lucide-react";
 import { sanitizeText } from "@/lib/sanitize";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
@@ -29,6 +29,7 @@ export const VideoDetailsModal = ({ open, onClose, videoId, onSuccess }: Props) 
   const [description, setDescription] = useState("");
   const [allowSeek, setAllowSeek] = useState(true);
   const [showUploadDate, setShowUploadDate] = useState(true);
+  const [allowCopyLink, setAllowCopyLink] = useState(false);
   const [hydrating, setHydrating] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showSkipInfo, setShowSkipInfo] = useState(false);
@@ -47,6 +48,7 @@ export const VideoDetailsModal = ({ open, onClose, videoId, onSuccess }: Props) 
       setDescription(data?.description || "");
       setAllowSeek(data?.allow_seek !== false);
       setShowUploadDate(data?.show_upload_date !== false);
+      setAllowCopyLink(data?.allow_copy_link === true);
       setHydrating(false);
     })();
   }, [open, videoId]);
@@ -64,6 +66,7 @@ export const VideoDetailsModal = ({ open, onClose, videoId, onSuccess }: Props) 
         description: description.trim() || null,
         allow_seek: allowSeek,
         show_upload_date: showUploadDate,
+        allow_copy_link: allowCopyLink,
       };
       let { error } = await (supabase as any)
         .from("video_assets")
@@ -214,6 +217,29 @@ export const VideoDetailsModal = ({ open, onClose, videoId, onSuccess }: Props) 
                 />
               </div>
             </div>
+
+            {/* Allow others to reuse this video via Nevorai Link */}
+            <div className="rounded-lg bg-muted/40 border border-border p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <Copy size={13} className="text-primary shrink-0" />
+                    <Label className="text-sm font-medium cursor-pointer" htmlFor="allow-copy-link">
+                      Allow others to reuse this video
+                    </Label>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                    Public viewers see a "Copy Nevorai Link" button so they can add this video to their own gallery. Daily view limits still apply.
+                  </p>
+                </div>
+                <Switch
+                  id="allow-copy-link"
+                  checked={allowCopyLink}
+                  onCheckedChange={setAllowCopyLink}
+                />
+              </div>
+            </div>
+
 
             <div className="flex gap-2 pt-2">
               <Button variant="outline" onClick={onClose} className="flex-1" disabled={saving}>
