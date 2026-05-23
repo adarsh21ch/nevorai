@@ -228,14 +228,49 @@ const VideosPage = () => {
     <DashboardLayout>
       <div className="space-y-6 w-full max-w-full overflow-x-hidden box-border">
         {/* Header */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-baseline gap-3 min-w-0">
             <h1 className="text-xl sm:text-2xl font-heading font-bold">My Videos</h1>
             <StorageUsageInline />
           </div>
-          <Button variant="hero" size="sm" onClick={openUploadFlow} className="flex items-center gap-1.5">
-            <Upload size={14} /> Upload Video
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="hero" size="sm" onClick={openUploadFlow} className="flex items-center gap-1.5">
+              <Upload size={14} /> Upload Video
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-1.5">
+                  <Link2 size={14} /> Add Video
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => setLinkModalOpen(true)} className="gap-2 cursor-pointer">
+                  <Link2 size={14} className="text-primary" />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">Nevorai video link</span>
+                    <span className="text-[11px] text-muted-foreground">Paste a Nevorai share link</span>
+                  </div>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (!features.youtubeImport) {
+                      setYoutubeUpgradeOpen(true);
+                      return;
+                    }
+                    setYoutubeModalOpen(true);
+                  }}
+                  className="gap-2 cursor-pointer"
+                >
+                  <YoutubeIcon size={14} className="text-[#FF0000]" />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">YouTube video</span>
+                    <span className="text-[11px] text-muted-foreground">Embed any YouTube link</span>
+                  </div>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <input
             ref={uploadInputRef}
             type="file"
@@ -245,26 +280,6 @@ const VideosPage = () => {
           />
         </div>
 
-        <div className="-mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <button
-            onClick={() => setLinkModalOpen(true)}
-            className="flex items-center gap-1.5 text-xs text-primary font-medium hover:underline"
-          >
-            <Link2 size={12} /> Add via Nevorai Link
-          </button>
-          <button
-            onClick={() => {
-              if (!features.youtubeImport) {
-                setYoutubeUpgradeOpen(true);
-                return;
-              }
-              setYoutubeModalOpen(true);
-            }}
-            className="flex items-center gap-1.5 text-xs font-medium text-[#FF0000] hover:underline"
-          >
-            <YoutubeIcon size={13} /> Add YouTube Video
-          </button>
-        </div>
 
 
         {/* Search */}
