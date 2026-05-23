@@ -137,7 +137,7 @@ const WIZARD_STEPS = [
 const LandingPageEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const isEdit = !!id;
   // Phase 7 gate: must have at least one uploaded video before creating a new landing page.
@@ -1025,6 +1025,16 @@ const LandingPageEditor = () => {
       </div>
     </div>
   ) : undefined;
+
+  if (authLoading || !user) {
+    return (
+      <DashboardLayout editorMode>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout editorMode>
