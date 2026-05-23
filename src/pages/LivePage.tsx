@@ -376,7 +376,7 @@ const LivePage = ({ embedded = false }: { embedded?: boolean } = {}) => {
         throw new Error("Paid sessions are coming soon. Please choose Public or Registration for now.");
       }
       if (form.session_type === "funnel_video") {
-        if (!form.funnel_id) throw new Error("Please select a video first");
+        if (!form.video_asset_id) throw new Error("Please select a video first");
         if (!form.scheduled_times.some(Boolean)) throw new Error("Please add at least one scheduled time");
       } else if (!form.meeting_url) {
         throw new Error("Please add a meeting URL");
