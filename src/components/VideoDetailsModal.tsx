@@ -66,6 +66,7 @@ export const VideoDetailsModal = ({ open, onClose, videoId, onSuccess }: Props) 
         description: description.trim() || null,
         allow_seek: allowSeek,
         show_upload_date: showUploadDate,
+        allow_copy_link: allowCopyLink,
       };
       let { error } = await (supabase as any)
         .from("video_assets")
