@@ -33,3 +33,9 @@ verify_jwt = false
 
 [functions.razorpay-portal]
 verify_jwt = true
+
+[functions.whatsapp-webhook]
+verify_jwt = false
+
+[functions.whatsapp-send-text]
+verify_jwt = false

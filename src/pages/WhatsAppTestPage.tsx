@@ -6,13 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Send, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
-
-const DEFAULT_ENDPOINT =
-  (typeof window !== "undefined" && localStorage.getItem("wa_backend_url")) ||
-  "http://localhost:3000/send-message";
+import { supabase } from "@/integrations/supabase/client";
 
 const WhatsAppTestPage = () => {
-  const [endpoint, setEndpoint] = useState(DEFAULT_ENDPOINT);
   const [to, setTo] = useState("");
   const [message, setMessage] = useState("Hello from Nevorai");
   const [sending, setSending] = useState(false);
@@ -29,36 +25,26 @@ const WhatsAppTestPage = () => {
       toast.error("Message cannot be empty");
       return;
     }
-    if (!endpoint.trim()) {
-      toast.error("Backend URL is required");
-      return;
-    }
 
-    localStorage.setItem("wa_backend_url", endpoint);
     setSending(true);
     setLastResponse("");
 
     try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: cleaned, message: message.trim() }),
+      const { data, error } = await supabase.functions.invoke("whatsapp-send-text", {
+        body: { to: cleaned, message: message.trim() },
       });
-      const text = await res.text();
-      setLastResponse(`${res.status} ${res.statusText}\n\n${text}`);
-      if (res.ok) {
-        toast.success("Message sent");
+
+      if (error) {
+        setLastResponse(`Error: ${error.message}\n\n${JSON.stringify(data, null, 2)}`);
+        toast.error(error.message || "Failed to send");
       } else {
-        toast.error(`Failed: ${res.status}`);
+        setLastResponse(JSON.stringify(data, null, 2));
+        toast.success("Message sent");
       }
     } catch (err) {
       const msg = (err as Error).message;
       setLastResponse(`Network error: ${msg}`);
-      toast.error(
-        msg.includes("Failed to fetch")
-          ? "Cannot reach backend. localhost only works when this app runs on the same machine."
-          : msg,
-      );
+      toast.error(msg);
     } finally {
       setSending(false);
     }
@@ -74,7 +60,7 @@ const WhatsAppTestPage = () => {
           <div>
             <h1 className="text-2xl font-semibold">Send WhatsApp Message</h1>
             <p className="text-sm text-muted-foreground">
-              Test your Node.js + Meta WhatsApp backend.
+              Sends a free-form text message via the Supabase WhatsApp backend.
             </p>
           </div>
         </div>
@@ -83,24 +69,11 @@ const WhatsAppTestPage = () => {
           <CardHeader>
             <CardTitle>Compose</CardTitle>
             <CardDescription>
-              POST to your backend with <code className="text-xs">{`{ to, message }`}</code>.
+              Uses the <code className="text-xs">whatsapp-send-text</code> edge function. Make sure WhatsApp is configured in <code className="text-xs">/admin/whatsapp</code>.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSend} className="space-y-4">
-              <div>
-                <Label htmlFor="endpoint">Backend URL</Label>
-                <Input
-                  id="endpoint"
-                  value={endpoint}
-                  onChange={(e) => setEndpoint(e.target.value)}
-                  placeholder="http://localhost:3000/send-message"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Use ngrok or a deployed URL when testing from a hosted site.
-                </p>
-              </div>
-
               <div>
                 <Label htmlFor="to">Recipient (with country code)</Label>
                 <Input
