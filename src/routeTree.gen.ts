@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WhatsappTestRouteImport } from './routes/whatsapp-test'
 import { Route as VideosRouteImport } from './routes/videos'
 import { Route as UpgradeRouteImport } from './routes/upgrade'
 import { Route as ToolsRouteImport } from './routes/tools'
@@ -84,6 +85,11 @@ import { Route as FSlugMemberRouteImport } from './routes/f.$slug.member'
 import { Route as ApiPublicPixelTrackRouteImport } from './routes/api/public/pixel/track'
 import { Route as ApiPublicEmailSendRouteImport } from './routes/api/public/email/send'
 
+const WhatsappTestRoute = WhatsappTestRouteImport.update({
+  id: '/whatsapp-test',
+  path: '/whatsapp-test',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() => import('./routes/whatsapp-test.lazy').then((d) => d.Route))
 const VideosRoute = VideosRouteImport.update({
   id: '/videos',
   path: '/videos',
@@ -525,6 +531,7 @@ export interface FileRoutesByFullPath {
   '/tools': typeof ToolsRoute
   '/upgrade': typeof UpgradeRoute
   '/videos': typeof VideosRouteWithChildren
+  '/whatsapp-test': typeof WhatsappTestRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/plans': typeof AdminPlansRoute
   '/admin/revenue': typeof AdminRevenueRoute
@@ -601,6 +608,7 @@ export interface FileRoutesByTo {
   '/tools': typeof ToolsRoute
   '/upgrade': typeof UpgradeRoute
   '/videos': typeof VideosRouteWithChildren
+  '/whatsapp-test': typeof WhatsappTestRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/plans': typeof AdminPlansRoute
   '/admin/revenue': typeof AdminRevenueRoute
@@ -676,6 +684,7 @@ export interface FileRoutesById {
   '/tools': typeof ToolsRoute
   '/upgrade': typeof UpgradeRoute
   '/videos': typeof VideosRouteWithChildren
+  '/whatsapp-test': typeof WhatsappTestRoute
   '/admin/kyc': typeof AdminKycRoute
   '/admin/plans': typeof AdminPlansRoute
   '/admin/revenue': typeof AdminRevenueRoute
@@ -754,6 +763,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/upgrade'
     | '/videos'
+    | '/whatsapp-test'
     | '/admin/kyc'
     | '/admin/plans'
     | '/admin/revenue'
@@ -830,6 +840,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/upgrade'
     | '/videos'
+    | '/whatsapp-test'
     | '/admin/kyc'
     | '/admin/plans'
     | '/admin/revenue'
@@ -904,6 +915,7 @@ export interface FileRouteTypes {
     | '/tools'
     | '/upgrade'
     | '/videos'
+    | '/whatsapp-test'
     | '/admin/kyc'
     | '/admin/plans'
     | '/admin/revenue'
@@ -981,6 +993,7 @@ export interface RootRouteChildren {
   ToolsRoute: typeof ToolsRoute
   UpgradeRoute: typeof UpgradeRoute
   VideosRoute: typeof VideosRouteWithChildren
+  WhatsappTestRoute: typeof WhatsappTestRoute
   AdminKycRoute: typeof AdminKycRoute
   AdminPlansRoute: typeof AdminPlansRoute
   AdminRevenueRoute: typeof AdminRevenueRoute
@@ -1016,6 +1029,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/whatsapp-test': {
+      id: '/whatsapp-test'
+      path: '/whatsapp-test'
+      fullPath: '/whatsapp-test'
+      preLoaderRoute: typeof WhatsappTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/videos': {
       id: '/videos'
       path: '/videos'
@@ -1648,6 +1668,7 @@ const rootRouteChildren: RootRouteChildren = {
   ToolsRoute: ToolsRoute,
   UpgradeRoute: UpgradeRoute,
   VideosRoute: VideosRouteWithChildren,
+  WhatsappTestRoute: WhatsappTestRoute,
   AdminKycRoute: AdminKycRoute,
   AdminPlansRoute: AdminPlansRoute,
   AdminRevenueRoute: AdminRevenueRoute,
@@ -1683,3 +1704,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
