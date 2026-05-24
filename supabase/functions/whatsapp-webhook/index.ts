@@ -1,4 +1,4 @@
-// Meta WhatsApp Cloud API webhook for Nevorai. (deploy v6 — Phase 2 privacy fix: Gemini cannot leak account info to unverified users)
+// Meta WhatsApp Cloud API webhook for Nevorai. (deploy v7 — Phase 3: lead capture + CRM pipeline)
 //   GET  → token verification handshake
 //   POST → inbound message → user lookup → verification check → personalized reply or Gemini AI → send → log
 //
@@ -159,6 +159,277 @@ const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 function extractEmail(text: string): string | null {
   const m = text.match(EMAIL_REGEX);
   return m ? m[0].toLowerCase() : null;
+}
+
+// ─── Phase 3: lead capture helpers ───────────────────────────────
+interface Lead {
+  id: string;
+  phone_number: string;
+  name: string | null;
+  email: string | null;
+  business_type: string | null;
+  interest: string | null;
+  status: string;
+  score: string;
+  message_count: number;
+  asked_name_at: string | null;
+  asked_business_at: string | null;
+  asked_interest_at: string | null;
+  admin_notified_at: string | null;
+}
+
+async function ensureLead(supabase: SupabaseClient, phone: string): Promise<Lead | null> {
+  const { data: existing } = await supabase
+    .from("whatsapp_leads")
+    .select("*")
+    .eq("phone_number", phone)
+    .maybeSingle();
+
+  if (existing) return existing as Lead;
+
+  const { data: created } = await supabase
+    .from("whatsapp_leads")
+    .insert({ phone_number: phone, status: "new", score: "cold", source: "whatsapp" })
+    .select("*")
+    .single();
+  return (created || null) as Lead | null;
+}
+
+function extractName(text: string): string | null {
+  // Common patterns: "my name is X", "i am X", "i'm X", "this is X", or just "X"
+  const patterns = [
+    /(?:my name is|i am|i'm|this is|name is|naam hai|main hu|main hoon)\s+([a-zA-Z][a-zA-Z\s.'-]{1,40}?)(?:[.,!?]|$)/i,
+    /^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)$/, // Just a name like "Rahul Sharma"
+  ];
+  for (const p of patterns) {
+    const m = text.match(p);
+    if (m && m[1]) {
+      const cleaned = m[1].trim().replace(/\s+/g, " ");
+      // Reject super short / numeric / containing typical non-name words
+      if (cleaned.length < 2 || cleaned.length > 50) continue;
+      if (/^(yes|no|ok|hi|hello|maybe|sure|thanks|nahi|haan)$/i.test(cleaned)) continue;
+      return cleaned;
+    }
+  }
+  return null;
+}
+
+function extractBusinessType(text: string): string | null {
+  const t = text.toLowerCase();
+  // Common business patterns
+  const businessKeywords = [
+    "coach", "coaching", "consultant", "agency", "freelancer", "creator",
+    "agent", "insurance agent", "real estate", "realtor", "doctor", "dentist",
+    "teacher", "trainer", "tutor", "lawyer", "ca", "chartered accountant",
+    "yoga", "fitness", "gym", "nutritionist", "dietician",
+    "restaurant", "cafe", "shop", "store", "retail", "ecommerce", "e-commerce",
+    "salon", "spa", "beauty", "makeup artist",
+    "photographer", "videographer", "designer", "developer",
+    "mlm", "network marketing", "direct selling", "distributor", "flp",
+    "marketing", "sales", "saas", "startup", "business",
+  ];
+  for (const kw of businessKeywords) {
+    if (new RegExp(`\\b${escapeRegex(kw)}\\b`, "i").test(t)) {
+      return kw;
+    }
+  }
+  // Pattern: "I am a/an X" or "I run a X" or "I do X" or "my business is X"
+  const m = t.match(/(?:i am (?:a|an)|i run (?:a|an)?|i do|my business is|i have (?:a|an)|i sell)\s+([a-z][a-z\s-]{2,40}?)(?:[.,!?]|$)/i);
+  if (m && m[1]) {
+    return m[1].trim().slice(0, 60);
+  }
+  return null;
+}
+
+function extractInterest(text: string): "nevorai" | "nevorai_call" | "both" | null {
+  const t = text.toLowerCase();
+  const wantsCall = /\b(nevorai call|nevoraicall|calling|crm|follow.?up|lead tracking|call app)\b/i.test(t);
+  const wantsApp = /\b(video funnel|funnel|landing page|nevorai app|lead capture|video platform)\b/i.test(t);
+  if (wantsCall && wantsApp) return "both";
+  if (wantsCall) return "nevorai_call";
+  if (wantsApp) return "nevorai";
+  return null;
+}
+
+function computeLeadScore(lead: Lead): "hot" | "warm" | "cold" {
+  let pts = 0;
+  if (lead.name) pts += 1;
+  if (lead.email) pts += 2;
+  if (lead.business_type) pts += 1;
+  if (lead.interest) pts += 2;
+  if (lead.message_count >= 5) pts += 1;
+  if (lead.message_count >= 10) pts += 1;
+  // Status signals
+  if (lead.status === "demo_booked") pts += 3;
+  if (lead.status === "qualified") pts += 2;
+  if (pts >= 6) return "hot";
+  if (pts >= 3) return "warm";
+  return "cold";
+}
+
+interface LeadUpdateResult {
+  lead: Lead;
+  addToReply: string | null; // Optional natural prompt to append to bot reply
+  becameHot: boolean;
+}
+
+async function updateLeadFromMessage(
+  supabase: SupabaseClient,
+  lead: Lead,
+  userText: string,
+): Promise<LeadUpdateResult> {
+  const updates: Partial<Lead> & Record<string, unknown> = {
+    message_count: lead.message_count + 1,
+    last_message_at: new Date().toISOString(),
+  };
+
+  // Extract info from message
+  if (!lead.name) {
+    const n = extractName(userText);
+    if (n) updates.name = n;
+  }
+  if (!lead.email) {
+    const e = extractEmail(userText);
+    if (e) updates.email = e;
+  }
+  if (!lead.business_type) {
+    const b = extractBusinessType(userText);
+    if (b) updates.business_type = b;
+  }
+  if (!lead.interest) {
+    const i = extractInterest(userText);
+    if (i) updates.interest = i;
+  }
+
+  const newMessageCount = lead.message_count + 1;
+  if (lead.status === "new" && newMessageCount >= 3) updates.status = "engaged";
+
+  // Apply updates first to get fresh values
+  const merged: Lead = { ...lead, ...updates } as Lead;
+  const newScore = computeLeadScore(merged);
+  if (newScore !== lead.score) updates.score = newScore;
+
+  // Qualification: has at least name + (business or interest)
+  const willHaveName = merged.name || updates.name;
+  const willHaveBusiness = merged.business_type || updates.business_type;
+  const willHaveInterest = merged.interest || updates.interest;
+  if (
+    (lead.status === "new" || lead.status === "engaged") &&
+    willHaveName &&
+    (willHaveBusiness || willHaveInterest)
+  ) {
+    updates.status = "qualified";
+  }
+
+  // Decide if bot should add a natural prompt to its reply
+  let addToReply: string | null = null;
+  const justGotName = !lead.name && updates.name;
+  const justGotBusiness = !lead.business_type && updates.business_type;
+  const newCountForAsks = newMessageCount;
+
+  if (
+    !merged.name &&
+    !updates.name &&
+    newCountForAsks >= 2 &&
+    !lead.asked_name_at
+  ) {
+    addToReply = `By the way, what's your name? I'd love to address you properly.`;
+    updates.asked_name_at = new Date().toISOString();
+  } else if (
+    (merged.name || updates.name) &&
+    !merged.business_type &&
+    !updates.business_type &&
+    newCountForAsks >= 3 &&
+    !lead.asked_business_at
+  ) {
+    const firstName = (updates.name || merged.name || "").toString().split(" ")[0];
+    addToReply = `Also${firstName ? `, ${firstName}` : ""}, what kind of business do you run? That helps me suggest the right tools.`;
+    updates.asked_business_at = new Date().toISOString();
+  } else if (
+    (merged.name || updates.name) &&
+    (merged.business_type || updates.business_type) &&
+    !merged.interest &&
+    !updates.interest &&
+    newCountForAsks >= 4 &&
+    !lead.asked_interest_at
+  ) {
+    addToReply = `Quick question — what interests you more: video funnels (Nevorai) or lead calling/follow-up (Nevorai Call)? Or both?`;
+    updates.asked_interest_at = new Date().toISOString();
+  }
+
+  const { data: updated } = await supabase
+    .from("whatsapp_leads")
+    .update(updates)
+    .eq("id", lead.id)
+    .select("*")
+    .single();
+
+  const finalLead = (updated || merged) as Lead;
+  const becameHot = lead.score !== "hot" && finalLead.score === "hot";
+
+  // Acknowledge captured info naturally
+  if (justGotName && !addToReply) {
+    const fn = (updates.name || "").toString().split(" ")[0];
+    addToReply = `Nice to meet you, ${fn}!`;
+  }
+  if (justGotBusiness && !addToReply) {
+    addToReply = `Got it — noted your business type.`;
+  }
+
+  return { lead: finalLead, addToReply, becameHot };
+}
+
+async function notifyAdminOfHotLead(
+  supabase: SupabaseClient,
+  settings: WhatsAppSettings,
+  lead: Lead,
+): Promise<void> {
+  // Find admin phone — for now, hardcode socialwiire's known phone OR look up first admin profile
+  const { data: adminProfile } = await supabase
+    .from("user_roles")
+    .select("user_id")
+    .eq("role", "admin")
+    .limit(1)
+    .maybeSingle();
+
+  let adminPhone: string | null = null;
+  if (adminProfile) {
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("phone, whatsapp_number")
+      .eq("id", (adminProfile as { user_id: string }).user_id)
+      .maybeSingle();
+    if (prof) {
+      adminPhone = (prof as { phone: string | null; whatsapp_number: string | null }).phone
+        || (prof as { phone: string | null; whatsapp_number: string | null }).whatsapp_number;
+    }
+  }
+
+  if (!adminPhone) return; // No admin phone configured — skip silently
+
+  const message = `🔥 NEW HOT LEAD on Nevorai WhatsApp
+
+Phone: +${lead.phone_number}
+Name: ${lead.name || "(not yet)"}
+Business: ${lead.business_type || "(not yet)"}
+Interest: ${lead.interest || "(not yet)"}
+Email: ${lead.email || "(not yet)"}
+Messages: ${lead.message_count}
+
+View in admin: ${NEVORAI_APP_LINK}/admin/whatsapp`;
+
+  if (settings.phone_number_id && settings.access_token) {
+    await sendWhatsAppText(
+      settings.phone_number_id,
+      settings.access_token,
+      adminPhone.replace(/\D/g, ""),
+      message,
+    );
+    await supabase
+      .from("whatsapp_leads")
+      .update({ admin_notified_at: new Date().toISOString() })
+      .eq("id", lead.id);
+  }
 }
 
 function formatDate(iso: string | null): string {
@@ -960,6 +1231,15 @@ Deno.serve(async (req) => {
 
     const userCtx: UserContext = { ...userCtxBase, isVerified };
 
+    // Phase 3: if unknown phone, track as lead
+    let leadUpdate: LeadUpdateResult | null = null;
+    if (!userCtx.isKnown) {
+      const lead = await ensureLead(supabase, from);
+      if (lead) {
+        leadUpdate = await updateLeadFromMessage(supabase, lead, userText);
+      }
+    }
+
     if (!settings || !settings.is_connected || !settings.phone_number_id || !settings.access_token) {
       console.error("WhatsApp settings not configured — cannot reply");
       await supabase.from("whatsapp_conversations").insert({
@@ -1024,12 +1304,24 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Phase 3: append natural lead-capture prompt if relevant
+    if (leadUpdate && leadUpdate.addToReply) {
+      replyText = `${replyText}\n\n${leadUpdate.addToReply}`;
+    }
+
     const sendResult = await sendWhatsAppText(
       settings.phone_number_id,
       settings.access_token,
       from,
       replyText,
     );
+
+    // Phase 3: notify admin if lead became hot (fire-and-forget)
+    if (leadUpdate && leadUpdate.becameHot && !leadUpdate.lead.admin_notified_at) {
+      notifyAdminOfHotLead(supabase, settings, leadUpdate.lead).catch((e) =>
+        console.error("Failed to notify admin of hot lead:", (e as Error).message),
+      );
+    }
 
     await supabase.from("whatsapp_conversations").insert({
       phone_number: from,
