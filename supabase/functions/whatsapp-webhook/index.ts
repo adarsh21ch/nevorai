@@ -1,12 +1,13 @@
-// Meta WhatsApp Cloud API webhook for Nevorai. (deploy v3 — Phase 1: intents + memory + user-aware)
+// Meta WhatsApp Cloud API webhook for Nevorai. (deploy v4 — Phase 2: personalized for paid users)
 //   GET  → token verification handshake
-//   POST → inbound message → user lookup → rule-based reply or Gemini AI (with memory) → send → log
+//   POST → inbound message → user lookup → verification check → personalized reply or Gemini AI → send → log
 //
-// Phase 1 features:
-//   - 30+ intents covering greetings, products, pricing, support, account, etc.
-//   - Phone-to-user lookup (profiles.phone or whatsapp_number)
-//   - Conversation memory (last 10 messages fed to Gemini for context-aware replies)
-//   - Branching Gemini prompt for known users vs unknown prospects
+// Phase 2 features (on top of Phase 1):
+//   - Email-based verification gate (user proves identity by sending registered email)
+//   - Persistent 30-day verification in whatsapp_verifications table
+//   - Personalized replies for verified users: real plan, real view counts, real expiry dates
+//   - Sensitive intents (my plan, my views, renew, upgrade) require verification first
+//   - Auto-detects email in messages and verifies if it matches the phone's registered user
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const BRAND_NAME = "Nevorai";
@@ -26,19 +27,38 @@ const corsHeaders = {
 };
 
 // ─── User context ────────────────────────────────────────────────
+interface SubscriptionInfo {
+  planKey: string;
+  tier: string;
+  status: string;
+  expiresAt: string | null;
+  billingType: string | null;
+}
+
+interface ViewsInfo {
+  daily_used?: number;
+  daily_limit?: number;
+  monthly_used?: number;
+  monthly_limit?: number;
+  view_limit_mode?: string;
+  [key: string]: unknown;
+}
+
 interface UserContext {
   isKnown: boolean;
+  isVerified: boolean;
   userId: string | null;
   name: string | null;
   email: string | null;
   plan: string | null;
+  subscription: SubscriptionInfo | null;
+  views: ViewsInfo | null;
 }
 
 async function lookupUserByPhone(
   supabase: SupabaseClient,
   phone: string,
 ): Promise<UserContext> {
-  // Normalize: try with and without country code prefix
   const cleaned = phone.replace(/\D/g, "");
   const withoutCountry = cleaned.length > 10 ? cleaned.slice(-10) : cleaned;
 
@@ -52,16 +72,112 @@ async function lookupUserByPhone(
     .maybeSingle();
 
   if (!data) {
-    return { isKnown: false, userId: null, name: null, email: null, plan: null };
+    return {
+      isKnown: false, isVerified: false, userId: null, name: null,
+      email: null, plan: null, subscription: null, views: null,
+    };
   }
 
   return {
     isKnown: true,
+    isVerified: false, // set later by checkVerification
     userId: data.id,
     name: data.full_name,
     email: data.email,
     plan: data.subscription_status || "free",
+    subscription: null,
+    views: null,
   };
+}
+
+// ─── Phase 2: verification + data fetch ──────────────────────────
+async function checkVerification(
+  supabase: SupabaseClient,
+  phone: string,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("whatsapp_verifications")
+    .select("expires_at")
+    .eq("phone_number", phone)
+    .gt("expires_at", new Date().toISOString())
+    .maybeSingle();
+  return !!data;
+}
+
+async function recordVerification(
+  supabase: SupabaseClient,
+  phone: string,
+  userId: string,
+): Promise<void> {
+  await supabase.from("whatsapp_verifications").upsert(
+    {
+      phone_number: phone,
+      user_id: userId,
+      verified_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      last_message_at: new Date().toISOString(),
+    },
+    { onConflict: "phone_number" },
+  );
+}
+
+async function fetchSubscription(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<SubscriptionInfo | null> {
+  const { data } = await supabase
+    .from("user_subscriptions")
+    .select("plan_key, tier, status, expires_at, billing_type")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!data) return null;
+  return {
+    planKey: data.plan_key,
+    tier: data.tier,
+    status: data.status,
+    expiresAt: data.expires_at,
+    billingType: data.billing_type,
+  };
+}
+
+async function fetchViews(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<ViewsInfo | null> {
+  const { data, error } = await supabase.rpc("get_user_monthly_views", {
+    _user_id: userId,
+  });
+  if (error || !data) return null;
+  return data as ViewsInfo;
+}
+
+const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+
+function extractEmail(text: string): string | null {
+  const m = text.match(EMAIL_REGEX);
+  return m ? m[0].toLowerCase() : null;
+}
+
+function formatDate(iso: string | null): string {
+  if (!iso) return "unknown";
+  try {
+    const d = new Date(iso);
+    return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  } catch {
+    return "unknown";
+  }
+}
+
+function cap(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function formatPlanDisplay(sub: SubscriptionInfo | null, fallbackPlan: string | null): string {
+  if (sub && sub.planKey) return cap(sub.planKey);
+  return cap(fallbackPlan || "free");
 }
 
 // ─── Intent system ───────────────────────────────────────────────
@@ -449,6 +565,90 @@ function getRuleBasedReply(userMessage: string, ctx: UserContext): string | null
   return null;
 }
 
+// ─── Phase 2: sensitive intents (need verified user) ─────────────
+// Returns a reply string if the message matches a sensitive intent.
+// If the user is known but not verified, returns the "ask for email" prompt.
+// If the user is not known at all, returns null (let normal flow handle).
+type SensitiveIntent =
+  | "my_plan"
+  | "my_views"
+  | "renew"
+  | "upgrade"
+  | "my_account"
+  | "my_invoice";
+
+function detectSensitiveIntent(text: string): SensitiveIntent | null {
+  const t = normalizeText(text);
+  if (/(my plan|my subscription|what.?s my plan|which plan am i|current plan)/i.test(t)) return "my_plan";
+  if (/(my views|views left|view limit|how many views.*(left|remaining|used))/i.test(t)) return "my_views";
+  if (/(renew (my|now|plan)|renew now|extend my plan|renew subscription)/i.test(t)) return "renew";
+  if (/(upgrade me|upgrade now|upgrade my plan|move me to pro|go pro)/i.test(t)) return "upgrade";
+  if (/(my account|account details|account status|account info)/i.test(t)) return "my_account";
+  if (/(my invoice|latest invoice|my receipt|my bill)/i.test(t)) return "my_invoice";
+  return null;
+}
+
+function askForEmail(ctx: UserContext): string {
+  const firstName = ctx.name?.split(" ")[0] || "there";
+  return `Hi ${firstName}! Before I share your account details, please reply with the email you used to sign up so I can confirm it's you.`;
+}
+
+function buildPersonalizedReply(intent: SensitiveIntent, ctx: UserContext): string {
+  const firstName = ctx.name?.split(" ")[0] || "there";
+  const planName = formatPlanDisplay(ctx.subscription, ctx.plan);
+  const expiry = formatDate(ctx.subscription?.expiresAt || null);
+
+  switch (intent) {
+    case "my_plan":
+    case "my_account": {
+      const lines = [
+        `Hi ${firstName}, here's your account:`,
+        ``,
+        `Plan: ${planName}`,
+      ];
+      if (ctx.subscription?.tier) lines.push(`Tier: ${ctx.subscription.tier}`);
+      if (ctx.subscription?.status) lines.push(`Status: ${cap(ctx.subscription.status)}`);
+      if (ctx.subscription?.expiresAt) lines.push(`Expires: ${expiry}`);
+      lines.push(``, `Manage at ${NEVORAI_APP_LINK}/billing`);
+      return lines.join("\n");
+    }
+
+    case "my_views": {
+      if (!ctx.views) {
+        return `I couldn't fetch your view stats right now. Please check ${NEVORAI_APP_LINK}/dashboard for live numbers.`;
+      }
+      const dailyUsed = ctx.views.daily_used ?? 0;
+      const dailyLimit = ctx.views.daily_limit ?? "—";
+      const monthlyUsed = ctx.views.monthly_used ?? 0;
+      const monthlyLimit = ctx.views.monthly_limit ?? "—";
+      return `Hi ${firstName}, your views:
+
+Today: ${dailyUsed} / ${dailyLimit === -1 ? "unlimited" : dailyLimit}
+This month: ${monthlyUsed} / ${monthlyLimit === -1 ? "unlimited" : monthlyLimit}
+
+Need more views? Top up at ${NEVORAI_APP_LINK}/billing`;
+    }
+
+    case "renew": {
+      return `Renew your ${planName} plan here: ${NEVORAI_APP_LINK}/billing
+
+Your plan ${ctx.subscription?.expiresAt ? `expires on ${expiry}` : "is on auto-renew"}. Need help? Just reply here.`;
+    }
+
+    case "upgrade": {
+      return `You can upgrade anytime at ${NEVORAI_APP_LINK}/upgrade.
+
+We use fair prorated pricing — you only pay the difference for the days remaining in your current cycle.`;
+    }
+
+    case "my_invoice": {
+      return `Your invoices are at ${NEVORAI_APP_LINK}/billing.
+
+Need a GST/tax invoice? Just reply with your company name and GSTIN and our team will email it.`;
+    }
+  }
+}
+
 // ─── Conversation memory ─────────────────────────────────────────
 interface ChatTurn {
   role: "user" | "assistant";
@@ -711,12 +911,15 @@ Deno.serve(async (req) => {
       raw_payload: payload,
     });
 
-    // Lookup user + history in parallel
-    const [userCtx, history, settings] = await Promise.all([
+    // Lookup user + history + settings + verification in parallel
+    const [userCtxBase, history, settings, isVerified] = await Promise.all([
       lookupUserByPhone(supabase, from),
       getRecentHistory(supabase, from, CONVERSATION_HISTORY_LIMIT),
       loadSettings(supabase),
+      checkVerification(supabase, from),
     ]);
+
+    const userCtx: UserContext = { ...userCtxBase, isVerified };
 
     if (!settings || !settings.is_connected || !settings.phone_number_id || !settings.access_token) {
       console.error("WhatsApp settings not configured — cannot reply");
@@ -731,20 +934,55 @@ Deno.serve(async (req) => {
       return respond();
     }
 
-    // Decide reply: rule-based first, Gemini fallback
-    const ruleReply = getRuleBasedReply(userText, userCtx);
+    // Phase 2: Detect email in message — if matches known user's email, mark verified
     let replyText: string;
-    let replyMethod: "rule_based" | "ai";
+    let replyMethod: "rule_based" | "ai" | "verification" | "personalized";
     let aiModel: string | null = null;
 
-    if (ruleReply) {
-      replyText = ruleReply;
-      replyMethod = "rule_based";
+    const possibleEmail = extractEmail(userText);
+    if (
+      userCtx.isKnown &&
+      !userCtx.isVerified &&
+      possibleEmail &&
+      userCtx.email &&
+      possibleEmail === userCtx.email.toLowerCase()
+    ) {
+      // Verify them
+      await recordVerification(supabase, from, userCtx.userId!);
+      userCtx.isVerified = true;
+      const firstName = userCtx.name?.split(" ")[0] || "there";
+      replyText = `Verified ✓ Thanks ${firstName}! You can now ask me about your plan, views, renewal, or upgrade. What would you like to know?`;
+      replyMethod = "verification";
     } else {
-      const ai = await askGemini(userText, userCtx, history);
-      replyText = ai.reply;
-      replyMethod = "ai";
-      aiModel = ai.model;
+      // Sensitive intents need verification
+      const sensitive = userCtx.isKnown ? detectSensitiveIntent(userText) : null;
+
+      if (sensitive && !userCtx.isVerified) {
+        replyText = askForEmail(userCtx);
+        replyMethod = "verification";
+      } else if (sensitive && userCtx.isVerified && userCtx.userId) {
+        // Fetch fresh subscription + views data
+        const [subscription, views] = await Promise.all([
+          fetchSubscription(supabase, userCtx.userId),
+          fetchViews(supabase, userCtx.userId),
+        ]);
+        userCtx.subscription = subscription;
+        userCtx.views = views;
+        replyText = buildPersonalizedReply(sensitive, userCtx);
+        replyMethod = "personalized";
+      } else {
+        // Normal flow: rule-based → Gemini fallback
+        const ruleReply = getRuleBasedReply(userText, userCtx);
+        if (ruleReply) {
+          replyText = ruleReply;
+          replyMethod = "rule_based";
+        } else {
+          const ai = await askGemini(userText, userCtx, history);
+          replyText = ai.reply;
+          replyMethod = "ai";
+          aiModel = ai.model;
+        }
+      }
     }
 
     const sendResult = await sendWhatsAppText(
