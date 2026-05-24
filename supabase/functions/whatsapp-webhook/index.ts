@@ -1,9 +1,12 @@
-// Meta WhatsApp Cloud API webhook. (deploy v2)
+// Meta WhatsApp Cloud API webhook for Nevorai. (deploy v3 — Phase 1: intents + memory + user-aware)
 //   GET  → token verification handshake
-//   POST → inbound message → rule-based reply → Gemini fallback → send → log
+//   POST → inbound message → user lookup → rule-based reply or Gemini AI (with memory) → send → log
 //
-// Reads phone_number_id, access_token, verify_token from whatsapp_settings.
-// Stores every inbound + outbound message in whatsapp_conversations.
+// Phase 1 features:
+//   - 30+ intents covering greetings, products, pricing, support, account, etc.
+//   - Phone-to-user lookup (profiles.phone or whatsapp_number)
+//   - Conversation memory (last 10 messages fed to Gemini for context-aware replies)
+//   - Branching Gemini prompt for known users vs unknown prospects
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const BRAND_NAME = "Nevorai";
@@ -12,12 +15,56 @@ const NEVORAI_CALL_LINK = "https://call.nevorai.com";
 const NEVORAI_BASIC_PRICE = "₹149/month";
 const NEVORAI_PRO_PRICE = "₹1,499/month";
 const NEVORAI_TRIAL_TEXT = "Free trial is available for new users.";
+const SUPPORT_EMAIL = "teamnevorai@gmail.com";
+const SUPPORT_WHATSAPP = "https://wa.me/919329040508";
+
+const CONVERSATION_HISTORY_LIMIT = 10;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// ─── User context ────────────────────────────────────────────────
+interface UserContext {
+  isKnown: boolean;
+  userId: string | null;
+  name: string | null;
+  email: string | null;
+  plan: string | null;
+}
+
+async function lookupUserByPhone(
+  supabase: SupabaseClient,
+  phone: string,
+): Promise<UserContext> {
+  // Normalize: try with and without country code prefix
+  const cleaned = phone.replace(/\D/g, "");
+  const withoutCountry = cleaned.length > 10 ? cleaned.slice(-10) : cleaned;
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, full_name, email, subscription_status, phone, whatsapp_number")
+    .or(
+      `phone.eq.${cleaned},phone.eq.${withoutCountry},whatsapp_number.eq.${cleaned},whatsapp_number.eq.${withoutCountry}`,
+    )
+    .limit(1)
+    .maybeSingle();
+
+  if (!data) {
+    return { isKnown: false, userId: null, name: null, email: null, plan: null };
+  }
+
+  return {
+    isKnown: true,
+    userId: data.id,
+    name: data.full_name,
+    email: data.email,
+    plan: data.subscription_status || "free",
+  };
+}
+
+// ─── Intent system ───────────────────────────────────────────────
 function normalizeText(message: string): string {
   return message.toLowerCase().trim();
 }
@@ -26,18 +73,40 @@ function includesAny(text: string, keywords: string[]): boolean {
   return keywords.some((k) => text.includes(k));
 }
 
-function getRuleBasedReply(userMessage: string): string | null {
-  const text = normalizeText(userMessage);
+interface Intent {
+  match: (text: string) => boolean;
+  reply: (ctx: UserContext) => string;
+}
 
-  if (includesAny(text, ["hi", "hello", "hii", "hey", "namaste"])) {
-    return `Hi! Welcome to ${BRAND_NAME}. How can I help you today?`;
-  }
+const INTENTS: Intent[] = [
+  // ── Greetings ─────────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["hi", "hello", "hii", "hey", "namaste", "hola", "good morning", "good evening", "good afternoon"]),
+    reply: (ctx) => ctx.isKnown && ctx.name
+      ? `Hi ${ctx.name.split(" ")[0]}! Welcome back to ${BRAND_NAME}. How can I help you today?`
+      : `Hi! Welcome to ${BRAND_NAME}. How can I help you today?`,
+  },
 
-  if (includesAny(text, [
-    "what is nevorai", "about nevorai", "tell me about nevorai",
-    "what is neverai", "about neverai", "tell me about neverai",
-  ])) {
-    return `${BRAND_NAME} has two main products:
+  // ── Thanks ────────────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["thanks", "thank you", "thx", "ty", "shukriya", "dhanyawad"]),
+    reply: () => `You're welcome! Let me know if you need anything else.`,
+  },
+
+  // ── Goodbye ───────────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["bye", "goodbye", "see you", "see ya", "alvida"]),
+    reply: () => `Goodbye! Reach out anytime you have questions about ${BRAND_NAME}.`,
+  },
+
+  // ── About Nevorai ─────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, [
+      "what is nevorai", "about nevorai", "tell me about nevorai",
+      "what is neverai", "about neverai", "tell me about neverai",
+      "what do you do", "what does nevorai do",
+    ]),
+    reply: () => `${BRAND_NAME} has two main products:
 
 1. ${BRAND_NAME}
 A video funnel and lead capture platform for creators, entrepreneurs, and business owners.
@@ -45,123 +114,350 @@ A video funnel and lead capture platform for creators, entrepreneurs, and busine
 2. ${BRAND_NAME} Call
 A calling, lead tracking, follow-up, and team management platform.
 
-You can visit: ${NEVORAI_APP_LINK}`;
-  }
+Visit: ${NEVORAI_APP_LINK}`,
+  },
 
-  if (includesAny(text, [
-    "nevorai call", "neverai call", "call app", "calling app",
-    "call tracking", "follow up", "follow-up", "team tracking", "lead calling",
-  ])) {
-    return `${BRAND_NAME} Call helps you upload leads, call them directly, tag leads, track follow-ups, manage team calling data, and use an AI assistant to understand your lead data.
+  // ── Nevorai Call ──────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, [
+      "nevorai call", "neverai call", "call app", "calling app",
+      "call tracking", "follow up", "follow-up", "team tracking", "lead calling",
+    ]),
+    reply: () => `${BRAND_NAME} Call helps you upload leads, call them directly, tag leads, track follow-ups, manage team calling data, and use an AI assistant to understand lead data.
 
-Visit: ${NEVORAI_CALL_LINK}`;
-  }
+Visit: ${NEVORAI_CALL_LINK}`,
+  },
 
-  if (includesAny(text, [
-    "nevorai app", "neverai app", "video funnel", "funnel",
-    "landing page", "forms", "lead capture", "video platform",
-    "recorded live", "live session", "youtube", "prospect",
-  ])) {
-    return `${BRAND_NAME} helps creators, entrepreneurs, and business owners share focused video presentations with prospects.
+  // ── Nevorai App / Video funnel ────────────────────────────────
+  {
+    match: (t) => includesAny(t, [
+      "nevorai app", "neverai app", "video funnel", "funnel",
+      "landing page", "forms", "lead capture", "video platform",
+      "recorded live", "live session", "youtube", "prospect",
+    ]),
+    reply: () => `${BRAND_NAME} helps creators, entrepreneurs, and business owners share focused video presentations with prospects.
 
 It supports video funnels, landing pages, forms, lead capture, multi-step funnels, and recorded-live sessions.
 
-Visit: ${NEVORAI_APP_LINK}`;
-  }
+Visit: ${NEVORAI_APP_LINK}`,
+  },
 
-  if (includesAny(text, [
-    "product", "products", "service", "services", "features", "what do you offer",
-  ])) {
-    return `${BRAND_NAME} offers:
+  // ── Products / features ───────────────────────────────────────
+  {
+    match: (t) => includesAny(t, [
+      "product", "products", "service", "services", "features", "what do you offer", "feature list",
+    ]),
+    reply: () => `${BRAND_NAME} offers:
 
 1. Video funnels and lead capture
 2. Landing pages and forms
 3. Recorded-live sessions
 4. WhatsApp automation
 5. Lead calling and follow-up tracking
-6. Team tracking and AI lead assistant`;
-  }
+6. Team tracking and AI lead assistant`,
+  },
 
-  if (includesAny(text, [
-    "price", "pricing", "cost", "plan", "plans", "subscription", "charges", "fees",
-  ])) {
-    return `${BRAND_NAME} pricing:
+  // ── Pricing ───────────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, [
+      "price", "pricing", "cost", "plan", "plans", "subscription", "charges", "fees", "how much",
+    ]),
+    reply: () => `${BRAND_NAME} pricing:
 
 Basic: ${NEVORAI_BASIC_PRICE}
 Pro: ${NEVORAI_PRO_PRICE}
 
 ${NEVORAI_TRIAL_TEXT}
 
-Please tell me which product you are interested in: ${BRAND_NAME} or ${BRAND_NAME} Call?`;
-  }
+Which product are you interested in: ${BRAND_NAME} or ${BRAND_NAME} Call?`,
+  },
 
-  if (includesAny(text, [
-    "demo", "book demo", "meeting", "call me", "talk to team", "contact team",
-  ])) {
-    return `Sure, we can arrange a demo. Please share your name, business type, and preferred time.`;
-  }
+  // ── Free trial ────────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["free trial", "trial", "try free", "free version", "try it"]),
+    reply: () => `Yes! ${BRAND_NAME} offers a free trial for new users. Sign up at ${NEVORAI_APP_LINK} and you can explore the platform before subscribing.`,
+  },
 
-  if (includesAny(text, [
-    "support", "issue", "problem", "not working", "error", "help", "stuck",
-  ])) {
-    return `Sure, please describe the issue you are facing. If possible, share a screenshot or short details, and our team will help you shortly.`;
-  }
+  // ── Compare plans ─────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["compare plan", "basic vs pro", "difference between", "which plan", "best plan"]),
+    reply: () => `Quick comparison:
 
-  if (includesAny(text, [
-    "link", "website", "app link", "login", "signup", "sign up",
-  ])) {
-    return `${BRAND_NAME} links:
+Basic (${NEVORAI_BASIC_PRICE}): For getting started with video funnels and lead capture. Lower view limits.
+
+Pro (${NEVORAI_PRO_PRICE}): For growing businesses. Higher view limits, more funnels, advanced analytics, and priority support.
+
+Visit ${NEVORAI_APP_LINK}/pricing for full details.`,
+  },
+
+  // ── Payment / Razorpay ────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["payment", "razorpay", "pay now", "checkout", "buy", "purchase"]),
+    reply: (ctx) => ctx.isKnown
+      ? `You can manage your subscription at ${NEVORAI_APP_LINK}/billing. If you face payment issues, share the details and our team will help.`
+      : `Sign up first at ${NEVORAI_APP_LINK}, then choose a plan and pay securely via Razorpay (UPI, cards, net banking).`,
+  },
+
+  // ── Invoice / receipt ─────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["invoice", "receipt", "bill", "billing history", "tax receipt"]),
+    reply: (ctx) => ctx.isKnown
+      ? `You can download invoices from ${NEVORAI_APP_LINK}/billing. If you need one emailed, share your order date and we'll arrange it.`
+      : `Once you're a paying user, all invoices are available at ${NEVORAI_APP_LINK}/billing.`,
+  },
+
+  // ── Refund ────────────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["refund", "money back", "return", "want refund"]),
+    reply: () => `Sure, refund requests are handled case-by-case. Please share your registered email and the reason, and our team will respond within 24 hours.`,
+  },
+
+  // ── Cancel / unsubscribe ──────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["cancel", "unsubscribe", "stop subscription", "end plan", "deactivate account"]),
+    reply: (ctx) => ctx.isKnown
+      ? `You can cancel your subscription from ${NEVORAI_APP_LINK}/billing. Need help? Just share your registered email.`
+      : `If you're a paying user, go to ${NEVORAI_APP_LINK}/billing to cancel anytime.`,
+  },
+
+  // ── Renewal ───────────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["renew", "extend plan", "subscription expired", "expire", "expiring"]),
+    reply: () => `You can renew your plan anytime at ${NEVORAI_APP_LINK}/billing. Need help with renewal? Share your registered email.`,
+  },
+
+  // ── Upgrade ───────────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["upgrade", "move to pro", "switch plan", "change plan"]),
+    reply: () => `You can upgrade anytime from ${NEVORAI_APP_LINK}/upgrade. We use fair prorated pricing — you only pay the difference for the remaining days.`,
+  },
+
+  // ── Demo ──────────────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, [
+      "demo", "book demo", "meeting", "call me", "talk to team", "contact team", "schedule call", "book a call",
+    ]),
+    reply: () => `Sure, we can arrange a demo. Please share:
+1. Your name
+2. Business type
+3. Preferred time
+
+Our team will reach out to confirm.`,
+  },
+
+  // ── Talk to human ─────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["talk to human", "real person", "human agent", "speak to someone", "live agent", "team member"]),
+    reply: () => `Sure, our team will reach out shortly. Meanwhile, you can also contact us at ${SUPPORT_EMAIL} or via WhatsApp at ${SUPPORT_WHATSAPP}.`,
+  },
+
+  // ── Support / issues ──────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, [
+      "support", "issue", "problem", "not working", "error", "help", "stuck", "bug", "broken", "crash",
+    ]),
+    reply: () => `Sure, please describe the issue you are facing. If possible, share a screenshot or a short video, and our team will help you shortly.`,
+  },
+
+  // ── Login / signup issues ─────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["login", "log in", "can't login", "cant login", "sign in", "signin"]),
+    reply: () => `Sign in at ${NEVORAI_APP_LINK}/auth. If you can't log in, share the email you used and what error you see — we'll help fix it.`,
+  },
+
+  {
+    match: (t) => includesAny(t, ["signup", "sign up", "create account", "register"]),
+    reply: () => `Create your free account at ${NEVORAI_APP_LINK}/auth. Takes under a minute. You get a free trial right after signup.`,
+  },
+
+  {
+    match: (t) => includesAny(t, ["forgot password", "reset password", "password reset", "can't remember password"]),
+    reply: () => `Reset your password at ${NEVORAI_APP_LINK}/auth — click "Forgot password" and follow the email instructions.`,
+  },
+
+  // ── Account info ──────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["my account", "my plan", "my subscription", "account info", "account status"]),
+    reply: (ctx) => ctx.isKnown
+      ? `Hi ${ctx.name?.split(" ")[0] || "there"}, you can see your full account details at ${NEVORAI_APP_LINK}/profile. (Detailed info via WhatsApp is coming soon.)`
+      : `It looks like you're not signed up yet. Create your account at ${NEVORAI_APP_LINK}/auth to get started.`,
+  },
+
+  // ── Views / limits ────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["views", "view limit", "daily views", "monthly views", "how many views"]),
+    reply: (ctx) => ctx.isKnown
+      ? `You can see your daily and monthly view usage at ${NEVORAI_APP_LINK}/dashboard. Need a top-up? Visit ${NEVORAI_APP_LINK}/billing.`
+      : `${BRAND_NAME} has tiered view limits depending on your plan. Visit ${NEVORAI_APP_LINK}/pricing for details.`,
+  },
+
+  // ── Storage ───────────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["storage", "storage limit", "space full", "video upload size"]),
+    reply: () => `Storage limits depend on your plan. Basic includes a smaller quota; Pro gives you much more. Check ${NEVORAI_APP_LINK}/pricing for current limits.`,
+  },
+
+  // ── Upload help ───────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["upload video", "how to upload", "video not uploading", "upload fail"]),
+    reply: () => `To upload: go to ${NEVORAI_APP_LINK}/videos → click "Upload". If upload fails, share the file format, size, and the error message — our team will help.`,
+  },
+
+  // ── Funnel creation help ──────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["create funnel", "how to make funnel", "funnel builder", "build funnel"]),
+    reply: () => `Create your first funnel at ${NEVORAI_APP_LINK}/funnels/create. It's a step-by-step builder — add video, add lead form, share the link. Takes a few minutes.`,
+  },
+
+  // ── Landing page help ─────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["create landing", "how to make landing page", "landing builder"]),
+    reply: () => `You can create landing pages at ${NEVORAI_APP_LINK}/landing-pages/create. Easy drag-and-drop. Available on Pro plan.`,
+  },
+
+  // ── WhatsApp automation ───────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["whatsapp automation", "auto whatsapp", "whatsapp message automation"]),
+    reply: () => `${BRAND_NAME} supports automated WhatsApp messages for events like new leads, trial expiry, payment failures, and more. Configure in your admin settings once you're a paid user.`,
+  },
+
+  // ── Affiliate / referral ──────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["affiliate", "referral", "partner", "earn money", "commission"]),
+    reply: () => `Our affiliate/partner program is in the works. Share your name and email and we'll add you to the waitlist.`,
+  },
+
+  // ── Hindi / language ──────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["hindi", "language", "vernacular", "regional"]),
+    reply: () => `${BRAND_NAME} app is in English for now. Hindi support is on our roadmap. You can chat with our team in Hindi via WhatsApp anytime.`,
+  },
+
+  // ── Contact info ──────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["email", "mail id", "contact email", "your email"]),
+    reply: () => `You can email us at ${SUPPORT_EMAIL} — we usually reply within a few hours.`,
+  },
+
+  {
+    match: (t) => includesAny(t, ["phone", "call you", "phone number", "contact number"]),
+    reply: () => `Our team is reachable on WhatsApp at ${SUPPORT_WHATSAPP}. Send a message and someone will respond shortly.`,
+  },
+
+  {
+    match: (t) => includesAny(t, ["location", "address", "office", "where are you", "based in"]),
+    reply: () => `${BRAND_NAME} is based in India 🇮🇳. We serve creators and businesses across India and globally.`,
+  },
+
+  // ── Links ─────────────────────────────────────────────────────
+  {
+    match: (t) => includesAny(t, ["link", "website", "app link", "url"]),
+    reply: () => `${BRAND_NAME} links:
 
 Main platform: ${NEVORAI_APP_LINK}
-${BRAND_NAME} Call: ${NEVORAI_CALL_LINK}`;
-  }
+${BRAND_NAME} Call: ${NEVORAI_CALL_LINK}`,
+  },
+];
 
+function getRuleBasedReply(userMessage: string, ctx: UserContext): string | null {
+  const text = normalizeText(userMessage);
+  for (const intent of INTENTS) {
+    if (intent.match(text)) return intent.reply(ctx);
+  }
   return null;
 }
 
-function buildGeminiPrompt(userMessage: string): string {
+// ─── Conversation memory ─────────────────────────────────────────
+interface ChatTurn {
+  role: "user" | "assistant";
+  text: string;
+}
+
+async function getRecentHistory(
+  supabase: SupabaseClient,
+  phone: string,
+  limit: number,
+): Promise<ChatTurn[]> {
+  const { data } = await supabase
+    .from("whatsapp_conversations")
+    .select("direction, message_body, created_at")
+    .eq("phone_number", phone)
+    .not("message_body", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (!data) return [];
+  return data
+    .reverse()
+    .map((row) => ({
+      role: row.direction === "inbound" ? ("user" as const) : ("assistant" as const),
+      text: row.message_body as string,
+    }));
+}
+
+// ─── Gemini AI ───────────────────────────────────────────────────
+function buildGeminiPrompt(
+  userMessage: string,
+  ctx: UserContext,
+  history: ChatTurn[],
+): string {
+  const userBlock = ctx.isKnown
+    ? `You are speaking with an existing ${BRAND_NAME} user. Be warm and helpful.
+User name: ${ctx.name || "Unknown"}
+Plan status: ${ctx.plan || "unknown"}
+Treat them as a customer who already trusts the product. Avoid pitching from scratch. Focus on helping them with their question or directing them to the right page.`
+    : `You are speaking with someone who is NOT yet a ${BRAND_NAME} user (a prospect). Be welcoming, explain things simply, and guide them toward signing up if relevant. Do not assume they know ${BRAND_NAME} already.`;
+
+  const historyBlock = history.length === 0
+    ? "(No prior messages in this chat.)"
+    : history
+        .map((h) => `${h.role === "user" ? "User" : "Assistant"}: ${h.text}`)
+        .join("\n");
+
   return `You are ${BRAND_NAME}'s WhatsApp assistant.
 
-Your job:
-Help users understand ${BRAND_NAME} in simple English and collect useful details for the team.
+${userBlock}
 
-Language style:
+Language and style:
 - Use simple English.
-- Keep replies short.
-- Use 2 to 5 short lines maximum.
-- Do not use technical or heavy words.
-- Do not sound robotic.
-- Do not introduce yourself again and again.
+- Keep replies short — 2 to 5 short lines.
+- Do not use heavy or technical words.
+- Do not introduce yourself again every reply.
 - Do not mention network marketing.
-- Use words like creators, entrepreneurs, business owners, prospects, leads, and teams.
+- Use words like creators, entrepreneurs, business owners, prospects, leads, teams.
 
 Truth rules:
 - Do not invent features, prices, offers, discounts, guarantees, clients, or timelines.
-- Do not promise anything that is not written below.
 - If unsure, say the team will guide them.
-- If user asks pricing, use only the pricing written below.
-- If user asks for demo, ask for name, business type, and preferred time.
-- If user has an issue, ask them to share details or screenshot.
+- Pricing — use only what is written below.
+- Demo — ask for name, business type, preferred time.
+- Issues — ask user to share details or a screenshot.
 
 Product 1: ${BRAND_NAME}
-${BRAND_NAME} is a video funnel and lead capture platform for creators, entrepreneurs, and business owners.
-It helps users share focused video presentations with prospects.
-It supports: video funnels, landing pages, forms, lead capture, multi-step funnels, recorded-live sessions.
-
-Product 1 link: ${NEVORAI_APP_LINK}
+A video funnel and lead capture platform for creators, entrepreneurs, and business owners.
+It helps users share focused video presentations with prospects and capture leads.
+Includes: video funnels, landing pages, forms, lead capture, multi-step funnels, recorded-live sessions.
+Link: ${NEVORAI_APP_LINK}
 
 Product 2: ${BRAND_NAME} Call
-${BRAND_NAME} Call helps users upload leads, call leads directly, tag leads, track follow-ups, see calling data, manage team data, and use an AI assistant to understand lead data.
-
-Product 2 link: ${NEVORAI_CALL_LINK}
+Helps users upload leads, call them directly, tag leads, track follow-ups, see calling data, manage team data, and use an AI assistant to understand lead data.
+Link: ${NEVORAI_CALL_LINK}
 
 Pricing:
 Basic: ${NEVORAI_BASIC_PRICE}
 Pro: ${NEVORAI_PRO_PRICE}
 Trial: ${NEVORAI_TRIAL_TEXT}
 
-Now reply to this user message:
-${userMessage}`;
+Support:
+Email: ${SUPPORT_EMAIL}
+WhatsApp team: ${SUPPORT_WHATSAPP}
+
+Recent conversation so far:
+${historyBlock}
+
+Now reply to the latest user message:
+User: ${userMessage}
+Assistant:`;
 }
 
 interface GeminiResult {
@@ -170,7 +466,11 @@ interface GeminiResult {
   fallback: boolean;
 }
 
-async function askGemini(userMessage: string): Promise<GeminiResult> {
+async function askGemini(
+  userMessage: string,
+  ctx: UserContext,
+  history: ChatTurn[],
+): Promise<GeminiResult> {
   const apiKey = Deno.env.get("GEMINI_API_KEY");
   if (!apiKey) {
     return {
@@ -180,6 +480,7 @@ async function askGemini(userMessage: string): Promise<GeminiResult> {
     };
   }
 
+  const prompt = buildGeminiPrompt(userMessage, ctx, history);
   const models = ["gemini-2.5-flash-lite", "gemini-1.5-flash"];
 
   for (const model of models) {
@@ -190,20 +491,19 @@ async function askGemini(userMessage: string): Promise<GeminiResult> {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: buildGeminiPrompt(userMessage) }] }],
+            contents: [{ parts: [{ text: prompt }] }],
           }),
         },
       );
 
       const result = await response.json();
-      console.log(`Gemini response from ${model}:`, JSON.stringify(result).slice(0, 500));
+      console.log(`Gemini response from ${model}:`, JSON.stringify(result).slice(0, 400));
 
       if (!result.error) {
         const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) return { reply: text, model, fallback: false };
+        if (text) return { reply: text.trim(), model, fallback: false };
       }
 
-      // 503/429 → try next model. Other errors → give up.
       if (result.error && ![503, 429].includes(result.error.code)) {
         break;
       }
@@ -219,6 +519,7 @@ async function askGemini(userMessage: string): Promise<GeminiResult> {
   };
 }
 
+// ─── WhatsApp send ───────────────────────────────────────────────
 interface WhatsAppSettings {
   phone_number_id: string | null;
   access_token: string | null;
@@ -268,6 +569,7 @@ async function sendWhatsAppText(
   }
 }
 
+// ─── Main handler ────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -293,7 +595,6 @@ Deno.serve(async (req) => {
     return new Response("Forbidden", { status: 403 });
   }
 
-  // ── POST: incoming WhatsApp message ──
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
   }
@@ -305,14 +606,11 @@ Deno.serve(async (req) => {
     return new Response("Invalid JSON", { status: 400 });
   }
 
-  // Acknowledge fast — Meta retries if we take >20s
   const respond = () => new Response("EVENT_RECEIVED", { status: 200, headers: corsHeaders });
 
   try {
     const message = payload?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-    if (!message || message.type !== "text") {
-      return respond();
-    }
+    if (!message || message.type !== "text") return respond();
 
     const from: string = message.from;
     const userText: string = message.text?.body || "";
@@ -331,7 +629,13 @@ Deno.serve(async (req) => {
       raw_payload: payload,
     });
 
-    const settings = await loadSettings(supabase);
+    // Lookup user + history in parallel
+    const [userCtx, history, settings] = await Promise.all([
+      lookupUserByPhone(supabase, from),
+      getRecentHistory(supabase, from, CONVERSATION_HISTORY_LIMIT),
+      loadSettings(supabase),
+    ]);
+
     if (!settings || !settings.is_connected || !settings.phone_number_id || !settings.access_token) {
       console.error("WhatsApp settings not configured — cannot reply");
       await supabase.from("whatsapp_conversations").insert({
@@ -345,8 +649,8 @@ Deno.serve(async (req) => {
       return respond();
     }
 
-    // Decide reply
-    const ruleReply = getRuleBasedReply(userText);
+    // Decide reply: rule-based first, Gemini fallback
+    const ruleReply = getRuleBasedReply(userText, userCtx);
     let replyText: string;
     let replyMethod: "rule_based" | "ai";
     let aiModel: string | null = null;
@@ -355,7 +659,7 @@ Deno.serve(async (req) => {
       replyText = ruleReply;
       replyMethod = "rule_based";
     } else {
-      const ai = await askGemini(userText);
+      const ai = await askGemini(userText, userCtx, history);
       replyText = ai.reply;
       replyMethod = "ai";
       aiModel = ai.model;
@@ -368,7 +672,6 @@ Deno.serve(async (req) => {
       replyText,
     );
 
-    // Log outbound
     await supabase.from("whatsapp_conversations").insert({
       phone_number: from,
       direction: "outbound",
