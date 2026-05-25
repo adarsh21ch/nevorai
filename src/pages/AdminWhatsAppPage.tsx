@@ -18,6 +18,8 @@ import { WhatsAppHelpArticlesTab } from "@/components/admin/WhatsAppHelpArticles
 import { WhatsAppTemplatesTab } from "@/components/admin/WhatsAppTemplatesTab";
 import { WhatsAppAutomationsTab } from "@/components/admin/WhatsAppAutomationsTab";
 import { WhatsAppCampaignsTab } from "@/components/admin/WhatsAppCampaignsTab";
+import { AutomationsTab } from "@/components/admin/whatsapp/AutomationsTab";
+import { BroadcastsTab } from "@/components/admin/whatsapp/BroadcastsTab";
 
 const AUTOMATIONS: { id: string; label: string; description: string }[] = [
   { id: "welcome_signup", label: "Welcome on signup", description: "Sent right after a user signs up." },
@@ -172,6 +174,8 @@ const AdminWhatsAppPage = () => {
               <TabsTrigger value="help">Help Articles</TabsTrigger>
               <TabsTrigger value="credentials">Credentials</TabsTrigger>
               <TabsTrigger value="logs">Logs</TabsTrigger>
+              <TabsTrigger value="crm-automations">CRM Automations</TabsTrigger>
+              <TabsTrigger value="broadcasts">Broadcasts</TabsTrigger>
             </TabsList>
           </div>
 
@@ -328,6 +332,13 @@ const AdminWhatsAppPage = () => {
                 </Table>
               </CardContent>
             </Card>
+          </TabsContent>
+          <TabsContent value="crm-automations" className="space-y-4 mt-4">
+            <AutomationsTab />
+          </TabsContent>
+
+          <TabsContent value="broadcasts" className="space-y-4 mt-4">
+            <BroadcastsTab />
           </TabsContent>
         </Tabs>
       </div>
