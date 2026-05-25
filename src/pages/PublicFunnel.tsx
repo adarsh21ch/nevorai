@@ -1349,7 +1349,28 @@ const PublicFunnel = () => {
                   allowSeek={funnel.allow_seek !== false && (videoAsset as any)?.allow_seek !== false}
                   allowSpeed={funnel.allow_speed_change !== false && (videoAsset as any)?.allow_playback_speed !== false}
                   autoplay={true}
-                  onTimeUpdate={(ct, dur) => { setWatchSeconds(Math.floor(ct)); setVideoDuration(dur); }}
+                  onTimeUpdate={(ct, dur) => {
+                    setWatchSeconds(Math.floor(ct));
+                    setVideoDuration(dur);
+                    if (!funnel?.id || !dur || !isFinite(dur)) return;
+                    const pct = (ct / dur) * 100;
+                    const fired = milestoneFiredRef.current;
+                    const check = (key: "progress_25" | "progress_50" | "progress_75" | "completed", at: number) => {
+                      if (pct >= at && !fired.has(key)) {
+                        fired.add(key);
+                        logFunnelEngagement({
+                          funnel_id: funnel.id,
+                          event_type: key,
+                          video_position_sec: Math.floor(ct),
+                          video_duration_sec: Math.floor(dur),
+                        });
+                      }
+                    };
+                    check("progress_25", 25);
+                    check("progress_50", 50);
+                    check("progress_75", 75);
+                    check("completed", 95);
+                  }}
                   onPlay={() => setVideoPlaying(true)}
                 />
               )}
