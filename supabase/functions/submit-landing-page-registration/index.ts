@@ -2,98 +2,115 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
     const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    )
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
 
-    const body = await req.json()
+    const body = await req.json();
     const {
-      landing_page_id, name, phone, email, age, city, state,
-      occupation, custom_1_value, custom_2_value, honeypot, user_agent, attribution,
-    } = body
+      landing_page_id,
+      name,
+      phone,
+      email,
+      age,
+      city,
+      state,
+      occupation,
+      custom_1_value,
+      custom_2_value,
+      honeypot,
+      user_agent,
+      attribution,
+    } = body;
 
     // Honeypot check — fake success
     if (honeypot) {
       return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     if (!landing_page_id) {
-      return new Response(JSON.stringify({ error: 'landing_page_id required' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return new Response(JSON.stringify({ error: "landing_page_id required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Fetch landing page
     const { data: page, error: pageErr } = await supabase
-      .from('landing_pages')
-      .select('*')
-      .eq('id', landing_page_id)
-      .eq('status', 'published')
-      .single()
+      .from("landing_pages")
+      .select("*")
+      .eq("id", landing_page_id)
+      .eq("status", "published")
+      .single();
 
     if (pageErr || !page) {
-      return new Response(JSON.stringify({ error: 'Landing page not found' }), {
-        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return new Response(JSON.stringify({ error: "Landing page not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Validate required fields
     if (page.field_email_enabled && page.field_email_required && !email) {
-      return new Response(JSON.stringify({ error: 'Email is required' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return new Response(JSON.stringify({ error: "Email is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
     if (page.field_name_enabled && page.field_name_required && !name) {
-      return new Response(JSON.stringify({ error: 'Name is required' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return new Response(JSON.stringify({ error: "Name is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
     if (page.field_phone_enabled && page.field_phone_required && !phone) {
-      return new Response(JSON.stringify({ error: 'Phone is required' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return new Response(JSON.stringify({ error: "Phone is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Email format validation
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return new Response(JSON.stringify({ error: 'Invalid email format' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return new Response(JSON.stringify({ error: "Invalid email format" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Rate limit: check recent submissions from same IP
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const { count } = await supabase
-      .from('landing_page_registrations')
-      .select('*', { count: 'exact', head: true })
-      .eq('landing_page_id', landing_page_id)
-      .eq('ip_address', ip)
-      .gte('submitted_at', oneHourAgo)
+      .from("landing_page_registrations")
+      .select("*", { count: "exact", head: true })
+      .eq("landing_page_id", landing_page_id)
+      .eq("ip_address", ip)
+      .gte("submitted_at", oneHourAgo);
 
     if ((count || 0) >= 5) {
       // Fake success to not reveal rate limiting
       return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const deviceType = user_agent && /Mobi/i.test(user_agent) ? 'mobile' : 'desktop'
+    const deviceType = user_agent && /Mobi/i.test(user_agent) ? "mobile" : "desktop";
 
     // Insert registration
     const { data: reg, error: insertErr } = await supabase
-      .from('landing_page_registrations')
+      .from("landing_page_registrations")
       .insert({
         landing_page_id,
         owner_id: page.owner_id,
@@ -109,7 +126,7 @@ Deno.serve(async (req) => {
         ip_address: ip,
         device_type: deviceType,
         user_agent: user_agent || null,
-        source_type: attribution?.source_type ?? 'landing_page',
+        source_type: attribution?.source_type ?? "landing_page",
         source_id: attribution?.source_id ?? landing_page_id,
         source_slug: attribution?.source_slug ?? null,
         referrer_url: attribution?.referrer_url ?? null,
@@ -118,39 +135,67 @@ Deno.serve(async (req) => {
         utm_campaign: attribution?.utm_campaign ?? null,
         captured_at: attribution?.captured_at ?? new Date().toISOString(),
       })
-      .select('id')
-      .single()
+      .select("id")
+      .single();
 
-    if (insertErr) throw insertErr
+    if (insertErr) throw insertErr;
 
     // Update count
-    await supabase.from('landing_pages').update({
-      total_registrations: (page.total_registrations || 0) + 1,
-    }).eq('id', landing_page_id)
+    await supabase
+      .from("landing_pages")
+      .update({
+        total_registrations: (page.total_registrations || 0) + 1,
+      })
+      .eq("id", landing_page_id);
 
     // Auto-enroll into matching WhatsApp automations
     if (page.owner_id && phone) {
       try {
-        const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-        const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
         const enrollRes = await fetch(`${supabaseUrl}/functions/v1/whatsapp-auto-enroll`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'apikey': serviceRoleKey,
+            "Content-Type": "application/json",
+            apikey: serviceRoleKey,
           },
           body: JSON.stringify({
             user_id: page.owner_id,
-            trigger_type: 'landing_page_submit',
+            trigger_type: "landing_page_submit",
             lead_phone: phone,
             trigger_data: { landing_page_id, registration_id: reg.id },
           }),
-        })
+        });
         if (!enrollRes.ok) {
-          console.error('Auto-enroll failed:', await enrollRes.text())
+          console.error("Auto-enroll failed:", await enrollRes.text());
         }
       } catch (e: any) {
-        console.error('Auto-enroll error:', e?.message)
+        console.error("Auto-enroll error:", e?.message);
+      }
+    }
+
+    // Notify the creator on WhatsApp about the new lead
+    if (page.owner_id) {
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        await fetch(`${supabaseUrl}/functions/v1/notify-creator-on-lead`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: serviceRoleKey,
+          },
+          body: JSON.stringify({
+            owner_id: page.owner_id,
+            lead_name: name || null,
+            lead_phone: phone || null,
+            lead_email: email || null,
+            landing_page_id,
+            landing_page_title: page.title || null,
+          }),
+        });
+      } catch (e: any) {
+        console.error("Creator notify error:", e?.message);
       }
     }
 
@@ -165,68 +210,75 @@ Deno.serve(async (req) => {
     } = {
       attempted: false,
       sent: false,
-      reason: page.send_confirmation_email === false
-        ? 'disabled_on_page'
-        : (!email ? 'no_email_provided' : ''),
+      reason:
+        page.send_confirmation_email === false
+          ? "disabled_on_page"
+          : !email
+            ? "no_email_provided"
+            : "",
       gmail_status: null,
       resolved_plan_name: null,
       timestamp: new Date().toISOString(),
-    }
+    };
 
     if (page.send_confirmation_email !== false && email) {
-      emailDelivery.attempted = true
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-      const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      emailDelivery.attempted = true;
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
       try {
         const emailRes = await fetch(`${supabaseUrl}/functions/v1/send-landing-page-confirmation`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'apikey': serviceRoleKey,
+            "Content-Type": "application/json",
+            apikey: serviceRoleKey,
           },
           body: JSON.stringify({
             registration_id: reg.id,
             landing_page_id,
           }),
-        })
-        const emailJson = await emailRes.json().catch(() => ({}))
-        emailDelivery.sent = !!emailJson?.sent
-        emailDelivery.gmail_status = emailRes.status
-        emailDelivery.resolved_plan_name = emailJson?.resolved_plan_name ?? null
+        });
+        const emailJson = await emailRes.json().catch(() => ({}));
+        emailDelivery.sent = !!emailJson?.sent;
+        emailDelivery.gmail_status = emailRes.status;
+        emailDelivery.resolved_plan_name = emailJson?.resolved_plan_name ?? null;
         if (!emailDelivery.sent) {
-          emailDelivery.reason = emailJson?.reason || emailJson?.error || `status_${emailRes.status}`
-          console.error('Confirmation email not sent:', emailDelivery.reason)
+          emailDelivery.reason =
+            emailJson?.reason || emailJson?.error || `status_${emailRes.status}`;
+          console.error("Confirmation email not sent:", emailDelivery.reason);
         } else {
-          emailDelivery.reason = 'ok'
+          emailDelivery.reason = "ok";
         }
       } catch (e: any) {
-        emailDelivery.reason = e?.message || 'fetch_failed'
-        console.error('Confirmation email request failed:', e)
+        emailDelivery.reason = e?.message || "fetch_failed";
+        console.error("Confirmation email request failed:", e);
       }
-      emailDelivery.timestamp = new Date().toISOString()
+      emailDelivery.timestamp = new Date().toISOString();
     }
 
     // Persist diagnostic to landing_page_registrations.email_send_log
     try {
       await supabase
-        .from('landing_page_registrations')
+        .from("landing_page_registrations")
         .update({ email_send_log: emailDelivery })
-        .eq('id', reg.id)
+        .eq("id", reg.id);
     } catch (e: any) {
-      console.error('Failed to persist email_send_log:', e?.message)
+      console.error("Failed to persist email_send_log:", e?.message);
     }
 
-
-    return new Response(JSON.stringify({
-      success: true,
-      registration_id: reg.id,
-      email_delivery: emailDelivery,
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return new Response(
+      JSON.stringify({
+        success: true,
+        registration_id: reg.id,
+        email_delivery: emailDelivery,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
-})
+});
