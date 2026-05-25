@@ -1,4 +1,4 @@
-// Meta WhatsApp Cloud API webhook for Nevorai. (deploy v10 — Phase 4 polish: searches Nevorai Academy for help videos)
+// Meta WhatsApp Cloud API webhook for Nevorai. (deploy v11 — Knowledge Base: structured step-by-step help articles + video together)
 //   GET  → token verification handshake
 //   POST → inbound message → user lookup → verification check → personalized reply or Gemini AI → send → log
 //
@@ -1298,6 +1298,92 @@ function detectMediaIntent(text: string): MediaIntent | null {
   return null;
 }
 
+// ─── Knowledge Base: search help articles by keywords ────────────
+interface HelpArticleHit {
+  title: string;
+  content: string;
+  media_key: string | null;
+  academy_tutorial_id: string | null;
+}
+
+async function searchHelpArticle(
+  supabase: SupabaseClient,
+  userText: string,
+): Promise<HelpArticleHit | null> {
+  const t = normalizeText(userText);
+  // Extract tokens for keyword overlap
+  const tokens = t
+    .split(/\s+/)
+    .filter((w) => w.length >= 3)
+    .filter((w) => !["please", "could", "would", "should", "where", "what", "how", "about", "this", "that", "with", "from", "have", "the", "and", "for", "you"].includes(w));
+  if (tokens.length === 0) return null;
+
+  // Get all published articles (small table — fine to scan in memory)
+  const { data: articles } = await supabase
+    .from("whatsapp_help_articles")
+    .select("title, content, keywords, media_key, academy_tutorial_id")
+    .eq("is_published", true);
+
+  if (!articles || articles.length === 0) return null;
+
+  // Score by keyword overlap (count of matching keywords + bonus for exact phrase)
+  let bestScore = 0;
+  let bestArticle: HelpArticleHit | null = null;
+  for (const a of articles as Array<{
+    title: string;
+    content: string;
+    keywords: string[];
+    media_key: string | null;
+    academy_tutorial_id: string | null;
+  }>) {
+    let score = 0;
+    const lowerKeywords = (a.keywords || []).map((k) => k.toLowerCase());
+    for (const tok of tokens) {
+      for (const kw of lowerKeywords) {
+        if (kw === tok) score += 3;
+        else if (kw.includes(tok) || tok.includes(kw)) score += 1;
+      }
+    }
+    // Bonus: title token match
+    const titleLower = a.title.toLowerCase();
+    for (const tok of tokens) {
+      if (titleLower.includes(tok)) score += 2;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestArticle = {
+        title: a.title,
+        content: a.content,
+        media_key: a.media_key,
+        academy_tutorial_id: a.academy_tutorial_id,
+      };
+    }
+  }
+
+  // Require at least 4 points to consider it a real match
+  return bestScore >= 4 ? bestArticle : null;
+}
+
+async function fetchAcademyTutorialAsMedia(
+  supabase: SupabaseClient,
+  tutorialId: string,
+): Promise<MediaRecord | null> {
+  const { data } = await supabase
+    .from("academy_tutorials")
+    .select("title, description, video_url")
+    .eq("id", tutorialId)
+    .maybeSingle();
+  if (!data) return null;
+  const t = data as { title: string; description: string | null; video_url: string };
+  return {
+    key: `academy_${tutorialId.slice(0, 8)}`,
+    type: "video",
+    url: t.video_url,
+    caption: t.description?.slice(0, 200) || t.title,
+    filename: null,
+  };
+}
+
 // Search Nevorai Academy for tutorials matching the question.
 // Returns the best matching tutorial as a temporary media record (not stored in whatsapp_media).
 async function searchAcademyByTopic(
@@ -1539,16 +1625,45 @@ Deno.serve(async (req) => {
         replyText = buildPersonalizedReply(sensitive, userCtx);
         replyMethod = "personalized";
       } else {
-        // Normal flow: rule-based → Gemini fallback
+        // Normal flow: rule-based → help articles → Gemini fallback
         const ruleReply = getRuleBasedReply(userText, userCtx);
         if (ruleReply) {
           replyText = ruleReply;
           replyMethod = "rule_based";
         } else {
-          const ai = await askGemini(userText, userCtx, history);
-          replyText = ai.reply;
-          replyMethod = "ai";
-          aiModel = ai.model;
+          // Knowledge base lookup
+          const article = await searchHelpArticle(supabase, userText);
+          if (article) {
+            replyText = `${article.title}\n\n${article.content}`;
+            replyMethod = "rule_based"; // structured step-by-step counts as rule-based
+            // If article has a linked academy tutorial, queue it as media to send alongside
+            if (article.academy_tutorial_id) {
+              const academyMedia = await fetchAcademyTutorialAsMedia(supabase, article.academy_tutorial_id);
+              if (academyMedia && settings.phone_number_id && settings.access_token) {
+                await sendWhatsAppMedia(
+                  settings.phone_number_id,
+                  settings.access_token,
+                  from,
+                  academyMedia,
+                );
+              }
+            } else if (article.media_key) {
+              const m = await fetchMedia(supabase, article.media_key);
+              if (m && settings.phone_number_id && settings.access_token) {
+                await sendWhatsAppMedia(
+                  settings.phone_number_id,
+                  settings.access_token,
+                  from,
+                  m,
+                );
+              }
+            }
+          } else {
+            const ai = await askGemini(userText, userCtx, history);
+            replyText = ai.reply;
+            replyMethod = "ai";
+            aiModel = ai.model;
+          }
         }
       }
     }
