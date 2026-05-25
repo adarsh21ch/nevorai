@@ -249,9 +249,10 @@ Deno.serve(async (req) => {
       confirmation_email_sent_at: new Date().toISOString(),
     }).eq('id', registration_id)
 
-    return new Response(JSON.stringify({ sent: true }), {
+    return new Response(JSON.stringify({ sent: true, resolved_plan_name: planName }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
+
   } catch (err: any) {
     console.error('Email error:', err)
     return new Response(JSON.stringify({ error: err.message }), {
