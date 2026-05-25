@@ -9,28 +9,30 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useState, useEffect, useCallback } from "react";
-import { Save, Star, Mail, CheckCircle2, XCircle, Loader2, AlertTriangle, Megaphone, Wrench, BadgeCheck, Image as ImageIcon, GraduationCap, MessageCircle, ExternalLink, CreditCard, Activity } from "lucide-react";
+import { Save, Star, Mail, CheckCircle2, XCircle, Loader2, AlertTriangle, Megaphone, Wrench, BadgeCheck, Image as ImageIcon, GraduationCap, MessageCircle, ExternalLink, CreditCard, Activity, Stethoscope } from "lucide-react";
 import { VerifiedBadgeToggle } from "@/components/admin/VerifiedBadgeToggle";
 import { LandingContentTab } from "@/components/admin/settings/LandingContentTab";
 import { AcademyTab } from "@/components/admin/settings/AcademyTab";
 import { PaymentsTab } from "@/components/admin/settings/PaymentsTab";
 import { MetaPixelTab } from "@/components/admin/settings/MetaPixelTab";
+import { FormDiagnosticsTab } from "@/components/admin/settings/FormDiagnosticsTab";
 import { Link } from "@/lib/router-compat";
 import { cn } from "@/lib/utils";
 
-type TabKey = "gmail" | "announcement" | "maintenance" | "verification" | "creator" | "landing" | "academy" | "whatsapp" | "payments" | "metapixel";
+type TabKey = "gmail" | "announcement" | "maintenance" | "verification" | "creator" | "landing" | "academy" | "whatsapp" | "payments" | "metapixel" | "form_diagnostics";
 
 const TABS: { key: TabKey; label: string; icon: typeof Mail }[] = [
-  { key: "gmail",        label: "Gmail",            icon: Mail },
-  { key: "academy",      label: "Nevorai Academy",  icon: GraduationCap },
-  { key: "announcement", label: "Announcement",     icon: Megaphone },
-  { key: "maintenance",  label: "Maintenance",      icon: Wrench },
-  { key: "verification", label: "Verification",     icon: BadgeCheck },
-  { key: "creator",      label: "Creator",          icon: Star },
-  { key: "landing",      label: "Landing pages",    icon: ImageIcon },
-  { key: "whatsapp",     label: "WhatsApp",         icon: MessageCircle },
-  { key: "payments",     label: "Payments",         icon: CreditCard },
-  { key: "metapixel",    label: "Meta Pixel",       icon: Activity },
+  { key: "gmail",            label: "Gmail",             icon: Mail },
+  { key: "academy",          label: "Nevorai Academy",   icon: GraduationCap },
+  { key: "announcement",     label: "Announcement",      icon: Megaphone },
+  { key: "maintenance",      label: "Maintenance",       icon: Wrench },
+  { key: "verification",     label: "Verification",      icon: BadgeCheck },
+  { key: "creator",          label: "Creator",           icon: Star },
+  { key: "landing",          label: "Landing pages",     icon: ImageIcon },
+  { key: "form_diagnostics", label: "Form Diagnostics",  icon: Stethoscope },
+  { key: "whatsapp",         label: "WhatsApp",          icon: MessageCircle },
+  { key: "payments",         label: "Payments",          icon: CreditCard },
+  { key: "metapixel",        label: "Meta Pixel",        icon: Activity },
 ];
 
 const AdminSettingsPage = () => {
@@ -495,6 +497,8 @@ const AdminSettingsPage = () => {
             {activeTab === "landing" && <LandingContentTab />}
 
             {activeTab === "academy" && <AcademyTab />}
+
+            {activeTab === "form_diagnostics" && <FormDiagnosticsTab />}
 
             {activeTab === "whatsapp" && (
               <div className="glass-card p-3 sm:p-6 space-y-3">
