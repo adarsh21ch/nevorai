@@ -74,11 +74,26 @@ async function fireAutomation(
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  // ── Security: optional shared-secret check ──
+  // Set CRON_SECRET in Supabase Edge Function secrets, then pass header
+  // 'x-cron-secret: <same value>' from cron-job.org. If CRON_SECRET is
+  // NOT set, this check is skipped (backwards compatible).
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  if (cronSecret) {
+    const provided = req.headers.get("x-cron-secret");
+    if (provided !== cronSecret) {
+      return new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  const summary: Record<string, { processed: number; sent: number; skipped: number }> = {};
+  const summary: Record<string, { processed: number; sent: number; skipped: number; error?: string }> = {};
 
   // Trigger map: RPC name → automation_id
   const triggers: Array<{ rpc: string; automationId: string }> = [
@@ -89,18 +104,30 @@ Deno.serve(async (req) => {
   ];
 
   for (const t of triggers) {
-    const { data: users, error } = await supabase.rpc(t.rpc);
-    if (error) {
-      console.error(`RPC ${t.rpc} failed:`, error.message);
-      continue;
-    }
-    const list = (users || []) as AutomationUser[];
-    summary[t.automationId] = { processed: list.length, sent: 0, skipped: 0 };
+    summary[t.automationId] = { processed: 0, sent: 0, skipped: 0 };
+    try {
+      const { data: users, error } = await supabase.rpc(t.rpc);
+      if (error) {
+        summary[t.automationId].error = error.message;
+        console.error(`RPC ${t.rpc} failed:`, error.message);
+        continue;
+      }
+      const list = (users || []) as AutomationUser[];
+      summary[t.automationId].processed = list.length;
 
-    for (const u of list) {
-      const result = await fireAutomation(supabase, serviceRoleKey, u, t.automationId);
-      if (result.sent) summary[t.automationId].sent++;
-      else summary[t.automationId].skipped++;
+      for (const u of list) {
+        try {
+          const result = await fireAutomation(supabase, serviceRoleKey, u, t.automationId);
+          if (result.sent) summary[t.automationId].sent++;
+          else summary[t.automationId].skipped++;
+        } catch (e) {
+          summary[t.automationId].skipped++;
+          console.error(`fireAutomation failed for ${u.user_id}:`, (e as Error).message);
+        }
+      }
+    } catch (e) {
+      summary[t.automationId].error = (e as Error).message;
+      console.error(`Trigger ${t.automationId} threw:`, (e as Error).message);
     }
   }
 
