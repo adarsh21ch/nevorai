@@ -109,6 +109,7 @@ function pickTierPrice(tierRow: any, interval: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  await ensureRazorpayCreds();
 
   // Public version probe — no auth required. Lets us confirm which build is live.
   const url = new URL(req.url);
