@@ -15,6 +15,10 @@ verify_jwt = false
 [functions.send-landing-page-confirmation]
 verify_jwt = false
 
+[functions.resend-landing-page-confirmation]
+verify_jwt = true
+
+
 [functions.verify-nevorai-member]
 verify_jwt = false
 
