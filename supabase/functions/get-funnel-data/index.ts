@@ -229,7 +229,7 @@ Deno.serve(async (req) => {
     promises.push(
       supabase
         .from("funnel_lead_form_config")
-        .select("capture_enabled, capture_timing, show_name, name_required, show_phone, phone_required, show_email, email_required, show_city, city_required, show_custom, custom_required, custom_field_label")
+        .select("capture_enabled, capture_timing, show_name, name_required, show_phone, phone_required, show_email, email_required, show_city, city_required, show_state, state_required, show_whatsapp, whatsapp_required, show_custom, custom_required, custom_field_label, custom_fields")
         .eq("funnel_id", funnel.id)
         .single()
         .then((r) => ({ key: "formConfig", data: r.data }))
