@@ -59,7 +59,7 @@ const RefundPolicyPage = () => {
                 <li>Email <a href="mailto:teamnevorai@gmail.com" className="text-primary hover:underline">teamnevorai@gmail.com</a> with subject line: "Refund Request — [your email]".</li>
                 <li>Include your registered email and payment date.</li>
                 <li>We will respond within 24 hours on business days.</li>
-                <li>Approved refunds are processed as add-on credits within 5–7 calendar days back to your original payment method.</li>
+                <li>Approved refunds are processed and credits within 5–7 calendar days back to your original payment method.</li>
               </ol>
             </section>
 
