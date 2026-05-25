@@ -710,7 +710,7 @@ const PublicFunnel = () => {
   const [watchSeconds, setWatchSeconds] = useState(0);
   const [, setVideoDuration] = useState(0);
   const [videoPlaying, setVideoPlaying] = useState(false);
-  const [leadForm, setLeadForm] = useState({ name: "", phone: "", email: "", city: "", custom_value: "", website: "" });
+  const [leadForm, setLeadForm] = useState({ name: "", phone: "", email: "", city: "", state: "", whatsapp: "", custom_value: "", website: "" });
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, string | string[]>>({});
   const [leadErrors, setLeadErrors] = useState<Record<string, string | null>>({});
   const leadRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -932,6 +932,8 @@ const PublicFunnel = () => {
         funnel_id: funnel!.id,
         name: s(leadForm.name), phone: leadForm.phone ? normalizePhone(leadForm.phone) : null,
         email: s(leadForm.email), city: s(leadForm.city),
+        state: s(leadForm.state),
+        whatsapp: leadForm.whatsapp ? normalizePhone(leadForm.whatsapp) : null,
         custom_value: s(leadForm.custom_value),
         custom_field_values: customFieldValues,
         watch_progress_at_submit: watchSeconds,
@@ -1060,6 +1062,8 @@ const PublicFunnel = () => {
     if (formConfig?.show_phone && (formConfig.phone_required || leadForm.phone)) e.phone = (formConfig.phone_required || leadForm.phone) ? validatePhone(leadForm.phone) : null;
     if (formConfig?.show_email && (formConfig.email_required || leadForm.email)) e.email = (formConfig.email_required || leadForm.email) ? validateEmail(leadForm.email) : null;
     if (formConfig?.show_city && formConfig.city_required) e.city = validateRequired(leadForm.city, "City");
+    if ((formConfig as any)?.show_state && (formConfig as any)?.state_required) e.state = validateRequired(leadForm.state, "State");
+    if ((formConfig as any)?.show_whatsapp && (formConfig as any)?.whatsapp_required) e.whatsapp = validatePhone(leadForm.whatsapp);
     if (formConfig?.show_custom && formConfig.custom_required) e.custom_value = validateRequired(leadForm.custom_value, formConfig.custom_field_label || "This field");
     const customFields = Array.isArray((formConfig as any)?.custom_fields) ? (formConfig as any).custom_fields : [];
     for (const cf of customFields) {
@@ -1142,6 +1146,18 @@ const PublicFunnel = () => {
           <div>
             <Input ref={(el) => { leadRefs.current.city = el; }} {...cityInputProps} placeholder="City" value={leadForm.city} onChange={(e) => setLeadField("city", e.target.value)} onBlur={(e) => setLeadField("city", trimSmart(e.target.value))} aria-invalid={!!leadErrors.city} style={{ background: tc.inputBg, borderColor: errBorder("city"), color: tc.inputText }} className="h-12 rounded-xl" />
             {fieldErrEl("city")}
+          </div>
+        )}
+        {(formConfig as any)?.show_state && (
+          <div>
+            <Input ref={(el) => { leadRefs.current.state = el; }} {...cityInputProps} placeholder="State" value={leadForm.state} onChange={(e) => setLeadField("state", e.target.value)} onBlur={(e) => setLeadField("state", trimSmart(e.target.value))} aria-invalid={!!leadErrors.state} style={{ background: tc.inputBg, borderColor: errBorder("state"), color: tc.inputText }} className="h-12 rounded-xl" />
+            {fieldErrEl("state")}
+          </div>
+        )}
+        {(formConfig as any)?.show_whatsapp && (
+          <div>
+            <Input ref={(el) => { leadRefs.current.whatsapp = el; }} {...phoneInputProps} placeholder="WhatsApp Number" value={leadForm.whatsapp} onChange={(e) => setLeadField("whatsapp", e.target.value)} aria-invalid={!!leadErrors.whatsapp} style={{ background: tc.inputBg, borderColor: errBorder("whatsapp"), color: tc.inputText }} className="h-12 rounded-xl" />
+            {fieldErrEl("whatsapp")}
           </div>
         )}
         {formConfig?.show_custom && (
