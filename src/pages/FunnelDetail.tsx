@@ -43,6 +43,60 @@ const FunnelDetail = () => {
     enabled: !!id && !authLoading,
   });
 
+  // Video duration for watch %
+  const videoId = (funnel as any)?.video_id || null;
+  const { data: video } = useQuery({
+    queryKey: ["funnel-video-duration", videoId],
+    queryFn: async () => {
+      if (!videoId) return null;
+      const { data } = await supabase.from("video_assets").select("duration_seconds").eq("id", videoId).maybeSingle();
+      return data;
+    },
+    enabled: !!videoId,
+  });
+
+  // Per-session live status & last seen, refetched every 30s while tab open
+  const sessionIds = useMemo(
+    () => Array.from(new Set((leads as any[]).map((l) => l.session_id).filter(Boolean))),
+    [leads],
+  );
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (tab !== "leads") return;
+    const t = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(t);
+  }, [tab]);
+  const { data: viewEvents = [] } = useQuery({
+    queryKey: ["funnel-view-events", id, sessionIds.length],
+    queryFn: async () => {
+      if (sessionIds.length === 0) return [];
+      const { data } = await (supabase as any)
+        .from("funnel_view_events")
+        .select("session_id,started_at,last_heartbeat_at")
+        .eq("funnel_id", id!)
+        .in("session_id", sessionIds);
+      return data || [];
+    },
+    enabled: tab === "leads" && sessionIds.length > 0,
+    refetchInterval: tab === "leads" ? 30_000 : false,
+  });
+
+  const watchBySession = useMemo(() => {
+    const map: Record<string, { lastHeartbeat: number; firstStart: number }> = {};
+    for (const ev of viewEvents as any[]) {
+      if (!ev.session_id) continue;
+      const hb = ev.last_heartbeat_at ? new Date(ev.last_heartbeat_at).getTime() : 0;
+      const st = ev.started_at ? new Date(ev.started_at).getTime() : 0;
+      const cur = map[ev.session_id];
+      if (!cur) map[ev.session_id] = { lastHeartbeat: hb, firstStart: st };
+      else {
+        if (hb > cur.lastHeartbeat) cur.lastHeartbeat = hb;
+        if (st && (!cur.firstStart || st < cur.firstStart)) cur.firstStart = st;
+      }
+    }
+    return map;
+  }, [viewEvents]);
+
   const { data: payments = [] } = useQuery({
     queryKey: ["funnel-payments", id],
     queryFn: async () => {
@@ -51,6 +105,8 @@ const FunnelDetail = () => {
     },
     enabled: !!id && !authLoading,
   });
+
+  const [expandedLead, setExpandedLead] = useState<string | null>(null);
 
   const updateLeadStatus = useMutation({
     mutationFn: async ({ leadId, status }: { leadId: string; status: string }) => {
