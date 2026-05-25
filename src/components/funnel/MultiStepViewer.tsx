@@ -396,6 +396,26 @@ export const MultiStepViewer = ({
     if (formConfig?.show_phone && (formConfig.phone_required || leadForm.phone)) e.phone = validatePhone(leadForm.phone);
     if (formConfig?.show_email && (formConfig.email_required || leadForm.email)) e.email = validateEmail(leadForm.email);
     if (formConfig?.show_city && formConfig.city_required) e.city = validateRequired(leadForm.city, "City");
+    if ((formConfig as any)?.show_state && (formConfig as any)?.state_required) e.state = validateRequired(leadForm.state, "State");
+    if ((formConfig as any)?.show_whatsapp && (formConfig as any)?.whatsapp_required) e.whatsapp = validatePhone(leadForm.whatsapp);
+    if (formConfig?.show_custom && formConfig.custom_required) e.custom_value = validateRequired(leadForm.custom_value, formConfig.custom_field_label || "This field");
+    const customFields = Array.isArray((formConfig as any)?.custom_fields) ? (formConfig as any).custom_fields : [];
+    for (const cf of customFields) {
+      const fieldKey = `cf_${cf.id}`;
+      const value = customFieldValues[cf.id];
+      const isEmpty = value == null || (Array.isArray(value) ? value.length === 0 : String(value).trim() === "");
+      if (cf.required && isEmpty) {
+        e[fieldKey] = `${cf.label} is required`;
+      }
+      if (cf.type === "email" && value && !Array.isArray(value)) {
+        const err = validateEmail(String(value));
+        if (err) e[fieldKey] = err;
+      }
+      if (cf.type === "phone" && value && !Array.isArray(value)) {
+        const err = validatePhone(String(value));
+        if (err) e[fieldKey] = err;
+      }
+    }
     return e;
   };
 
@@ -410,7 +430,8 @@ export const MultiStepViewer = ({
     const fe = validateLead();
     setLeadErrors(fe);
     if (Object.values(fe).some(Boolean)) {
-      scrollToFirstError(fe, leadRefs.current, ["name", "phone", "email", "city"]);
+      const customFields = Array.isArray((formConfig as any)?.custom_fields) ? (formConfig as any).custom_fields : [];
+      scrollToFirstError(fe, leadRefs.current, ["name", "phone", "email", "city", "state", "whatsapp", "custom_value", ...customFields.map((cf: any) => `cf_${cf.id}`)]);
       return;
     }
     setLeadSubmitting(true);
@@ -422,7 +443,10 @@ export const MultiStepViewer = ({
         phone: leadForm.phone ? normalizePhone(leadForm.phone) : null,
         email: s(leadForm.email?.trim()),
         city: s(trimSmart(leadForm.city)),
+        state: s(trimSmart(leadForm.state)),
+        whatsapp: leadForm.whatsapp ? normalizePhone(leadForm.whatsapp) : null,
         custom_value: s(leadForm.custom_value),
+        custom_field_values: customFieldValues,
         device_type: /Mobi/.test(navigator.userAgent) ? "mobile" : "desktop",
         user_agent: navigator.userAgent,
         ...captureAttribution("funnel", funnel.id, (funnel as any).slug),
