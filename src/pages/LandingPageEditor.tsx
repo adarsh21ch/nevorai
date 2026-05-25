@@ -250,10 +250,11 @@ const LandingPageEditor = () => {
         if (error) throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success(isEdit ? "Landing page updated" : "Landing page created");
-      queryClient.invalidateQueries({ queryKey: ["landing-pages"] });
-      if (!isEdit) navigate("/landing-pages");
+      await queryClient.invalidateQueries({ queryKey: ["landing-pages"] });
+      await queryClient.refetchQueries({ queryKey: ["landing-pages"] });
+      if (!isEdit) navigate("/tools?tab=landing-pages");
     },
     onError: (e: any) => toast.error(e.message || "Failed to save"),
   });
