@@ -932,6 +932,8 @@ const PublicFunnel = () => {
         funnel_id: funnel!.id,
         name: s(leadForm.name), phone: leadForm.phone ? normalizePhone(leadForm.phone) : null,
         email: s(leadForm.email), city: s(leadForm.city),
+        state: s(leadForm.state),
+        whatsapp: leadForm.whatsapp ? normalizePhone(leadForm.whatsapp) : null,
         custom_value: s(leadForm.custom_value),
         custom_field_values: customFieldValues,
         watch_progress_at_submit: watchSeconds,
