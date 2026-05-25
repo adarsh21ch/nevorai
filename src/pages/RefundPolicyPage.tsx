@@ -99,7 +99,7 @@ const RefundPolicyPage = () => {
               <p>
                 Email: <a href="mailto:teamnevorai@gmail.com" className="text-primary hover:underline">teamnevorai@gmail.com</a><br />
                 WhatsApp: <a href="https://wa.me/919329040508" target="_blank" rel="noreferrer" className="text-primary hover:underline">+91 93290 40508</a><br />
-                Address: Chitgiri Colony, Chhatripati, Madhya Pradesh, India<br />
+                Address: Chitgiri Colony, Chhattisgarh, Madhya Pradesh, India<br />
                 Response time: within 24 hours on business days.
               </p>
             </section>
