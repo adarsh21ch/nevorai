@@ -437,6 +437,7 @@ export const MultiStepViewer = ({
     setLeadSubmitting(true);
     const s = (v: string | null | undefined) => (v ? sanitizeText(v) : null);
     try {
+      const { getTrackingSessionId } = await import("@/lib/tracking");
       await (supabase.from("funnel_leads") as any).insert({
         funnel_id: funnel.id,
         name: s(trimSmart(leadForm.name)),
@@ -447,6 +448,7 @@ export const MultiStepViewer = ({
         whatsapp: leadForm.whatsapp ? normalizePhone(leadForm.whatsapp) : null,
         custom_value: s(leadForm.custom_value),
         custom_field_values: customFieldValues,
+        session_id: getTrackingSessionId(),
         device_type: /Mobi/.test(navigator.userAgent) ? "mobile" : "desktop",
         user_agent: navigator.userAgent,
         ...captureAttribution("funnel", funnel.id, (funnel as any).slug),
