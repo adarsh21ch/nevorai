@@ -128,6 +128,32 @@ Deno.serve(async (req) => {
       total_registrations: (page.total_registrations || 0) + 1,
     }).eq('id', landing_page_id)
 
+    // Auto-enroll into matching WhatsApp automations
+    if (page.owner_id && phone) {
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+        const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+        const enrollRes = await fetch(`${supabaseUrl}/functions/v1/whatsapp-auto-enroll`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': serviceRoleKey,
+          },
+          body: JSON.stringify({
+            user_id: page.owner_id,
+            trigger_type: 'landing_page_submit',
+            lead_phone: phone,
+            trigger_data: { landing_page_id, registration_id: reg.id },
+          }),
+        })
+        if (!enrollRes.ok) {
+          console.error('Auto-enroll failed:', await enrollRes.text())
+        }
+      } catch (e: any) {
+        console.error('Auto-enroll error:', e?.message)
+      }
+    }
+
     // Fire confirmation email — call synchronously so we know the real result.
     let emailDelivery: {
       attempted: boolean;

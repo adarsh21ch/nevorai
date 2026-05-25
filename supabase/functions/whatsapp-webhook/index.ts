@@ -1613,6 +1613,30 @@ Deno.serve(async (req) => {
       checkVerification(supabase, from),
     ]);
 
+    // Mirror inbound message into CRM message log (only when sender is a known nFlow user)
+    if (userCtxBase?.userId) {
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        await fetch(`${supabaseUrl}/functions/v1/whatsapp-inbound-log`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: serviceRoleKey,
+          },
+          body: JSON.stringify({
+            user_id: userCtxBase.userId,
+            phone_number: from,
+            message_body: userText,
+            whatsapp_message_id: inboundMetaId,
+            timestamp: Math.floor(Date.now() / 1000),
+          }),
+        });
+      } catch (e: any) {
+        console.error("Inbound log error:", e?.message);
+      }
+    }
+
     const userCtx: UserContext = { ...userCtxBase, isVerified };
 
     // Phase 3: if unknown phone, track as lead
