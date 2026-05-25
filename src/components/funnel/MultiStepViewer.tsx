@@ -138,7 +138,17 @@ export const MultiStepViewer = ({
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [progressMap, setProgressMap] = useState<Record<string, StepProgress>>({});
   const [leadSubmitted, setLeadSubmitted] = useState(false);
-  const [leadForm, setLeadForm] = useState({ name: "", phone: "", email: "", city: "", custom_value: "", website: "" });
+  const [leadForm, setLeadForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    city: "",
+    state: "",
+    whatsapp: "",
+    custom_value: "",
+    website: "",
+  });
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string | string[] | null>>({});
   const [leadErrors, setLeadErrors] = useState<Record<string, string | null>>({});
   const [leadSubmitting, setLeadSubmitting] = useState(false);
   const leadRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -386,6 +396,26 @@ export const MultiStepViewer = ({
     if (formConfig?.show_phone && (formConfig.phone_required || leadForm.phone)) e.phone = validatePhone(leadForm.phone);
     if (formConfig?.show_email && (formConfig.email_required || leadForm.email)) e.email = validateEmail(leadForm.email);
     if (formConfig?.show_city && formConfig.city_required) e.city = validateRequired(leadForm.city, "City");
+    if ((formConfig as any)?.show_state && (formConfig as any)?.state_required) e.state = validateRequired(leadForm.state, "State");
+    if ((formConfig as any)?.show_whatsapp && (formConfig as any)?.whatsapp_required) e.whatsapp = validatePhone(leadForm.whatsapp);
+    if (formConfig?.show_custom && formConfig.custom_required) e.custom_value = validateRequired(leadForm.custom_value, formConfig.custom_field_label || "This field");
+    const customFields = Array.isArray((formConfig as any)?.custom_fields) ? (formConfig as any).custom_fields : [];
+    for (const cf of customFields) {
+      const fieldKey = `cf_${cf.id}`;
+      const value = customFieldValues[cf.id];
+      const isEmpty = value == null || (Array.isArray(value) ? value.length === 0 : String(value).trim() === "");
+      if (cf.required && isEmpty) {
+        e[fieldKey] = `${cf.label} is required`;
+      }
+      if (cf.type === "email" && value && !Array.isArray(value)) {
+        const err = validateEmail(String(value));
+        if (err) e[fieldKey] = err;
+      }
+      if (cf.type === "phone" && value && !Array.isArray(value)) {
+        const err = validatePhone(String(value));
+        if (err) e[fieldKey] = err;
+      }
+    }
     return e;
   };
 
@@ -400,7 +430,8 @@ export const MultiStepViewer = ({
     const fe = validateLead();
     setLeadErrors(fe);
     if (Object.values(fe).some(Boolean)) {
-      scrollToFirstError(fe, leadRefs.current, ["name", "phone", "email", "city"]);
+      const customFields = Array.isArray((formConfig as any)?.custom_fields) ? (formConfig as any).custom_fields : [];
+      scrollToFirstError(fe, leadRefs.current, ["name", "phone", "email", "city", "state", "whatsapp", "custom_value", ...customFields.map((cf: any) => `cf_${cf.id}`)]);
       return;
     }
     setLeadSubmitting(true);
@@ -412,7 +443,10 @@ export const MultiStepViewer = ({
         phone: leadForm.phone ? normalizePhone(leadForm.phone) : null,
         email: s(leadForm.email?.trim()),
         city: s(trimSmart(leadForm.city)),
+        state: s(trimSmart(leadForm.state)),
+        whatsapp: leadForm.whatsapp ? normalizePhone(leadForm.whatsapp) : null,
         custom_value: s(leadForm.custom_value),
+        custom_field_values: customFieldValues,
         device_type: /Mobi/.test(navigator.userAgent) ? "mobile" : "desktop",
         user_agent: navigator.userAgent,
         ...captureAttribution("funnel", funnel.id, (funnel as any).slug),
@@ -749,6 +783,69 @@ export const MultiStepViewer = ({
                       {leadErrors.city && <p className="text-xs mt-1" style={{ color: "#ef4444" }}>{leadErrors.city}</p>}
                     </div>
                   )}
+                  {(formConfig as any)?.show_state && (
+                    <div>
+                      <Input ref={(el) => { leadRefs.current.state = el; }} {...cityInputProps} autoComplete="address-level1" placeholder="State" value={leadForm.state} onChange={(e) => setLeadField("state", e.target.value)} onBlur={(e) => setLeadField("state", trimSmart(e.target.value))} aria-invalid={!!leadErrors.state} style={{ background: sc.inputBg, borderColor: leadErrors.state ? "#ef4444" : sc.cardBorder, color: sc.text }} className="h-12 rounded-xl" />
+                      {leadErrors.state && <p className="text-xs mt-1" style={{ color: "#ef4444" }}>{leadErrors.state}</p>}
+                    </div>
+                  )}
+                  {(formConfig as any)?.show_whatsapp && (
+                    <div>
+                      <Input ref={(el) => { leadRefs.current.whatsapp = el; }} {...phoneInputProps} placeholder="WhatsApp Number" value={leadForm.whatsapp} onChange={(e) => setLeadField("whatsapp", normalizePhone(e.target.value))} aria-invalid={!!leadErrors.whatsapp} style={{ background: sc.inputBg, borderColor: leadErrors.whatsapp ? "#ef4444" : sc.cardBorder, color: sc.text }} className="h-12 rounded-xl" />
+                      {leadErrors.whatsapp && <p className="text-xs mt-1" style={{ color: "#ef4444" }}>{leadErrors.whatsapp}</p>}
+                    </div>
+                  )}
+                  {formConfig?.show_custom && (
+                    <div>
+                      <Input ref={(el) => { leadRefs.current.custom_value = el; }} placeholder={formConfig.custom_field_label || "Additional Info"} value={leadForm.custom_value} onChange={(e) => setLeadField("custom_value", e.target.value)} aria-invalid={!!leadErrors.custom_value} style={{ background: sc.inputBg, borderColor: leadErrors.custom_value ? "#ef4444" : sc.cardBorder, color: sc.text }} className="h-12 rounded-xl" />
+                      {leadErrors.custom_value && <p className="text-xs mt-1" style={{ color: "#ef4444" }}>{leadErrors.custom_value}</p>}
+                    </div>
+                  )}
+                  {(Array.isArray((formConfig as any)?.custom_fields) ? (formConfig as any).custom_fields : []).map((cf: any) => {
+                    const k = `cf_${cf.id}`;
+                    const val = customFieldValues[cf.id];
+                    const setVal = (v: string | string[]) => {
+                      setCustomFieldValues((p) => ({ ...p, [cf.id]: v }));
+                      if (leadErrors[k]) setLeadErrors((p) => ({ ...p, [k]: null }));
+                    };
+                    const baseStyle = { background: sc.inputBg, borderColor: leadErrors[k] ? "#ef4444" : sc.cardBorder, color: sc.text };
+                    let input: React.ReactNode;
+                    if (cf.type === "long_text") {
+                      input = <textarea maxLength={500} placeholder={cf.placeholder || ""} value={(val as string) || ""} onChange={(e) => setVal(e.target.value)} style={baseStyle} className="w-full min-h-[80px] rounded-xl border px-3 py-2 text-sm" />;
+                    } else if (cf.type === "dropdown") {
+                      input = (
+                        <select value={(val as string) || ""} onChange={(e) => setVal(e.target.value)} style={baseStyle} className="w-full h-12 rounded-xl border px-3 text-sm">
+                          <option value="">{cf.placeholder || "Select…"}</option>
+                          {(cf.options || []).map((opt: string) => <option key={opt} value={opt}>{opt}</option>)}
+                        </select>
+                      );
+                    } else if (cf.type === "multi_choice") {
+                      const arr = Array.isArray(val) ? val : [];
+                      input = (
+                        <div className="space-y-1.5">
+                          {(cf.options || []).map((opt: string) => {
+                            const checked = arr.includes(opt);
+                            return (
+                              <label key={opt} className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: sc.text }}>
+                                <input type="checkbox" checked={checked} onChange={() => setVal(checked ? arr.filter((x) => x !== opt) : [...arr, opt])} />
+                                {opt}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      );
+                    } else {
+                      const inputType = cf.type === "number" ? "number" : cf.type === "email" ? "email" : cf.type === "phone" ? "tel" : cf.type === "date" ? "date" : "text";
+                      input = <Input ref={(el) => { leadRefs.current[k] = el; }} type={inputType} placeholder={cf.placeholder || ""} value={(val as string) || ""} onChange={(e) => setVal(e.target.value)} style={baseStyle} className="h-12 rounded-xl" />;
+                    }
+                    return (
+                      <div key={cf.id}>
+                        <label className="text-xs font-medium mb-1 block" style={{ color: sc.textMuted }}>{cf.label}{cf.required && " *"}</label>
+                        {input}
+                        {leadErrors[k] && <p className="text-xs mt-1" style={{ color: "#ef4444" }}>{leadErrors[k]}</p>}
+                      </div>
+                    );
+                  })}
                   <Button type="submit" disabled={leadSubmitting} className="w-full h-12 text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl">
                     {leadSubmitting ? <><Loader2 size={16} className="animate-spin mr-2 inline" /> Submitting…</> : <>Continue →</>}
                   </Button>
@@ -866,6 +963,69 @@ export const MultiStepViewer = ({
                                 {leadErrors.city && <p className="text-xs mt-1" style={{ color: "#ef4444" }}>{leadErrors.city}</p>}
                               </div>
                             )}
+                            {(formConfig as any)?.show_state && (
+                              <div>
+                                <Input ref={(el) => { leadRefs.current.state = el; }} {...cityInputProps} autoComplete="address-level1" placeholder="State" value={leadForm.state} onChange={(e) => setLeadField("state", e.target.value)} onBlur={(e) => setLeadField("state", trimSmart(e.target.value))} aria-invalid={!!leadErrors.state} style={{ background: sc.inputBg, borderColor: leadErrors.state ? "#ef4444" : sc.cardBorder, color: sc.text }} className="h-12 rounded-xl" />
+                                {leadErrors.state && <p className="text-xs mt-1" style={{ color: "#ef4444" }}>{leadErrors.state}</p>}
+                              </div>
+                            )}
+                            {(formConfig as any)?.show_whatsapp && (
+                              <div>
+                                <Input ref={(el) => { leadRefs.current.whatsapp = el; }} {...phoneInputProps} placeholder="WhatsApp Number" value={leadForm.whatsapp} onChange={(e) => setLeadField("whatsapp", normalizePhone(e.target.value))} aria-invalid={!!leadErrors.whatsapp} style={{ background: sc.inputBg, borderColor: leadErrors.whatsapp ? "#ef4444" : sc.cardBorder, color: sc.text }} className="h-12 rounded-xl" />
+                                {leadErrors.whatsapp && <p className="text-xs mt-1" style={{ color: "#ef4444" }}>{leadErrors.whatsapp}</p>}
+                              </div>
+                            )}
+                            {formConfig?.show_custom && (
+                              <div>
+                                <Input ref={(el) => { leadRefs.current.custom_value = el; }} placeholder={formConfig.custom_field_label || "Additional Info"} value={leadForm.custom_value} onChange={(e) => setLeadField("custom_value", e.target.value)} aria-invalid={!!leadErrors.custom_value} style={{ background: sc.inputBg, borderColor: leadErrors.custom_value ? "#ef4444" : sc.cardBorder, color: sc.text }} className="h-12 rounded-xl" />
+                                {leadErrors.custom_value && <p className="text-xs mt-1" style={{ color: "#ef4444" }}>{leadErrors.custom_value}</p>}
+                              </div>
+                            )}
+                            {(Array.isArray((formConfig as any)?.custom_fields) ? (formConfig as any).custom_fields : []).map((cf: any) => {
+                              const k = `cf_${cf.id}`;
+                              const val = customFieldValues[cf.id];
+                              const setVal = (v: string | string[]) => {
+                                setCustomFieldValues((p) => ({ ...p, [cf.id]: v }));
+                                if (leadErrors[k]) setLeadErrors((p) => ({ ...p, [k]: null }));
+                              };
+                              const baseStyle = { background: sc.inputBg, borderColor: leadErrors[k] ? "#ef4444" : sc.cardBorder, color: sc.text };
+                              let input: React.ReactNode;
+                              if (cf.type === "long_text") {
+                                input = <textarea maxLength={500} placeholder={cf.placeholder || ""} value={(val as string) || ""} onChange={(e) => setVal(e.target.value)} style={baseStyle} className="w-full min-h-[80px] rounded-xl border px-3 py-2 text-sm" />;
+                              } else if (cf.type === "dropdown") {
+                                input = (
+                                  <select value={(val as string) || ""} onChange={(e) => setVal(e.target.value)} style={baseStyle} className="w-full h-12 rounded-xl border px-3 text-sm">
+                                    <option value="">{cf.placeholder || "Select…"}</option>
+                                    {(cf.options || []).map((opt: string) => <option key={opt} value={opt}>{opt}</option>)}
+                                  </select>
+                                );
+                              } else if (cf.type === "multi_choice") {
+                                const arr = Array.isArray(val) ? val : [];
+                                input = (
+                                  <div className="space-y-1.5">
+                                    {(cf.options || []).map((opt: string) => {
+                                      const checked = arr.includes(opt);
+                                      return (
+                                        <label key={opt} className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: sc.text }}>
+                                          <input type="checkbox" checked={checked} onChange={() => setVal(checked ? arr.filter((x) => x !== opt) : [...arr, opt])} />
+                                          {opt}
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                );
+                              } else {
+                                const inputType = cf.type === "number" ? "number" : cf.type === "email" ? "email" : cf.type === "phone" ? "tel" : cf.type === "date" ? "date" : "text";
+                                input = <Input ref={(el) => { leadRefs.current[k] = el; }} type={inputType} placeholder={cf.placeholder || ""} value={(val as string) || ""} onChange={(e) => setVal(e.target.value)} style={baseStyle} className="h-12 rounded-xl" />;
+                              }
+                              return (
+                                <div key={cf.id}>
+                                  <label className="text-xs font-medium mb-1 block" style={{ color: sc.textMuted }}>{cf.label}{cf.required && " *"}</label>
+                                  {input}
+                                  {leadErrors[k] && <p className="text-xs mt-1" style={{ color: "#ef4444" }}>{leadErrors[k]}</p>}
+                                </div>
+                              );
+                            })}
                             <Button type="submit" disabled={leadSubmitting} className="w-full h-14 text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl">
                               {leadSubmitting ? <><Loader2 size={16} className="animate-spin mr-2 inline" /> Submitting…</> : <>Submit →</>}
                             </Button>
