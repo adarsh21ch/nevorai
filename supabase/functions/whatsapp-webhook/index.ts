@@ -1,4 +1,4 @@
-// Meta WhatsApp Cloud API webhook for Nevorai. (deploy v8 — Phase 5: respects per-phone bot pause for admin takeover)
+// Meta WhatsApp Cloud API webhook for Nevorai. (deploy v9 — Phase 4: rich media + interactive buttons)
 //   GET  → token verification handshake
 //   POST → inbound message → user lookup → verification check → personalized reply or Gemini AI → send → log
 //
@@ -1161,6 +1161,168 @@ async function sendWhatsAppText(
   }
 }
 
+// ─── Phase 4: media + interactive buttons ────────────────────────
+interface MediaRecord {
+  key: string;
+  type: "video" | "image" | "document" | "audio";
+  url: string;
+  caption: string | null;
+  filename: string | null;
+}
+
+async function fetchMedia(supabase: SupabaseClient, key: string): Promise<MediaRecord | null> {
+  const { data } = await supabase
+    .from("whatsapp_media")
+    .select("key, type, url, caption, filename")
+    .eq("key", key)
+    .eq("is_active", true)
+    .maybeSingle();
+  return (data as MediaRecord | null) || null;
+}
+
+async function sendWhatsAppMedia(
+  phoneNumberId: string,
+  accessToken: string,
+  to: string,
+  media: MediaRecord,
+): Promise<{ ok: boolean; metaMessageId: string | null; error: string | null }> {
+  try {
+    const payload: Record<string, unknown> = {
+      messaging_product: "whatsapp",
+      to,
+      type: media.type,
+    };
+
+    if (media.type === "video") {
+      payload.video = { link: media.url, caption: media.caption || undefined };
+    } else if (media.type === "image") {
+      payload.image = { link: media.url, caption: media.caption || undefined };
+    } else if (media.type === "document") {
+      payload.document = {
+        link: media.url,
+        filename: media.filename || "document.pdf",
+        caption: media.caption || undefined,
+      };
+    } else if (media.type === "audio") {
+      payload.audio = { link: media.url };
+    }
+
+    const res = await fetch(
+      `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      },
+    );
+    const result = await res.json();
+    if (!res.ok) {
+      return { ok: false, metaMessageId: null, error: JSON.stringify(result?.error || result).slice(0, 500) };
+    }
+    return { ok: true, metaMessageId: result?.messages?.[0]?.id ?? null, error: null };
+  } catch (e) {
+    return { ok: false, metaMessageId: null, error: (e as Error).message };
+  }
+}
+
+interface ButtonReply {
+  id: string;     // e.g. "book_demo"
+  title: string;  // max 20 chars displayed
+}
+
+async function sendWhatsAppButtons(
+  phoneNumberId: string,
+  accessToken: string,
+  to: string,
+  bodyText: string,
+  buttons: ButtonReply[],
+): Promise<{ ok: boolean; metaMessageId: string | null; error: string | null }> {
+  try {
+    const res = await fetch(
+      `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          to,
+          type: "interactive",
+          interactive: {
+            type: "button",
+            body: { text: bodyText.slice(0, 1024) },
+            action: {
+              buttons: buttons.slice(0, 3).map((b) => ({
+                type: "reply",
+                reply: { id: b.id, title: b.title.slice(0, 20) },
+              })),
+            },
+          },
+        }),
+      },
+    );
+    const result = await res.json();
+    if (!res.ok) {
+      return { ok: false, metaMessageId: null, error: JSON.stringify(result?.error || result).slice(0, 500) };
+    }
+    return { ok: true, metaMessageId: result?.messages?.[0]?.id ?? null, error: null };
+  } catch (e) {
+    return { ok: false, metaMessageId: null, error: (e as Error).message };
+  }
+}
+
+// Detect intents that should send rich media instead of text
+type MediaIntent = "demo_video" | "brochure";
+
+function detectMediaIntent(text: string): MediaIntent | null {
+  const t = normalizeText(text);
+  if (/(send (me )?(a |the )?demo|show (me )?(a |the )?demo|demo video|video demo|watch demo|see demo)/i.test(t)) {
+    return "demo_video";
+  }
+  if (/(brochure|pdf|product details|details document|send (me )?(the )?(catalog|catalogue))/i.test(t)) {
+    return "brochure";
+  }
+  return null;
+}
+
+// Detect intents that benefit from interactive buttons
+function shouldUseButtons(text: string, isKnown: boolean): { use: boolean; body: string; buttons: ButtonReply[] } | null {
+  const t = normalizeText(text);
+
+  // Greeting from unknown user → offer buttons
+  if (!isKnown && /\b(hi|hello|hii|hey|namaste|hola|good morning|good evening|good afternoon)\b/i.test(t) && t.length < 25) {
+    return {
+      use: true,
+      body: `Hi! Welcome to ${BRAND_NAME}. What would you like to do?`,
+      buttons: [
+        { id: "see_pricing", title: "See pricing" },
+        { id: "watch_demo", title: "Watch demo" },
+        { id: "book_demo", title: "Book a demo" },
+      ],
+    };
+  }
+
+  return null;
+}
+
+// Map interactive button replies to user-readable text so existing intent system handles them
+function buttonReplyToText(buttonId: string): string {
+  const map: Record<string, string> = {
+    see_pricing: "pricing",
+    watch_demo: "send me a demo video",
+    book_demo: "book demo",
+    talk_human: "talk to human",
+    upgrade: "upgrade me",
+    renew: "renew my plan",
+  };
+  return map[buttonId] || buttonId;
+}
+
 // ─── Main handler ────────────────────────────────────────────────
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -1202,11 +1364,32 @@ Deno.serve(async (req) => {
 
   try {
     const message = payload?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
-    if (!message || message.type !== "text") return respond();
+    if (!message) return respond();
 
     const from: string = message.from;
-    const userText: string = message.text?.body || "";
     const inboundMetaId: string | null = message.id || null;
+
+    // Phase 4: handle button clicks by mapping their id to a text query
+    let userText: string;
+    if (message.type === "text") {
+      userText = message.text?.body || "";
+    } else if (message.type === "interactive" && message.interactive?.type === "button_reply") {
+      const btnId: string = message.interactive.button_reply.id;
+      userText = buttonReplyToText(btnId);
+      console.log(`Button click: ${btnId} → mapped to "${userText}"`);
+    } else {
+      // Unsupported message type (sticker, location, etc.) — just log inbound and skip
+      await supabase.from("whatsapp_conversations").insert({
+        phone_number: from,
+        direction: "inbound",
+        message_body: `[${message.type}]`,
+        message_type: message.type,
+        meta_message_id: inboundMetaId,
+        status: "received",
+        raw_payload: payload,
+      });
+      return respond();
+    }
 
     console.log("Message from:", from, "Text:", userText);
 
@@ -1324,17 +1507,63 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Phase 4: detect media intent — if matched, send media (and skip text reply if successful)
+    let mediaSendResult: { ok: boolean; metaMessageId: string | null; error: string | null } | null = null;
+    let mediaSentKey: string | null = null;
+    const mediaIntent = detectMediaIntent(userText);
+    if (mediaIntent && settings.phone_number_id && settings.access_token) {
+      const media = await fetchMedia(supabase, mediaIntent);
+      if (media) {
+        mediaSendResult = await sendWhatsAppMedia(
+          settings.phone_number_id,
+          settings.access_token,
+          from,
+          media,
+        );
+        mediaSentKey = mediaIntent;
+        // Replace text reply with a short follow-up message
+        if (mediaSendResult.ok) {
+          replyText = mediaIntent === "demo_video"
+            ? `Sent the demo video above 👆 Have a look and let me know what you think!`
+            : `Sent the document above 👆 Let me know if you have questions!`;
+        }
+      }
+    }
+
+    // Phase 4: detect button-suitable intent (offer interactive buttons instead of plain text)
+    const buttonPlan = !mediaIntent ? shouldUseButtons(userText, userCtx.isKnown) : null;
+    let buttonSendResult: { ok: boolean; metaMessageId: string | null; error: string | null } | null = null;
+    if (buttonPlan && settings.phone_number_id && settings.access_token) {
+      buttonSendResult = await sendWhatsAppButtons(
+        settings.phone_number_id,
+        settings.access_token,
+        from,
+        buttonPlan.body,
+        buttonPlan.buttons,
+      );
+      if (buttonSendResult.ok) {
+        replyText = buttonPlan.body;
+      }
+    }
+
     // Phase 3: append natural lead-capture prompt if relevant
     if (leadUpdate && leadUpdate.addToReply) {
       replyText = `${replyText}\n\n${leadUpdate.addToReply}`;
     }
 
-    const sendResult = await sendWhatsAppText(
-      settings.phone_number_id,
-      settings.access_token,
-      from,
-      replyText,
-    );
+    // If media or buttons already delivered the primary content, don't double-send a text reply
+    const skipTextSend =
+      (mediaSendResult?.ok === true && (!leadUpdate || !leadUpdate.addToReply)) ||
+      (buttonSendResult?.ok === true);
+
+    const sendResult = skipTextSend
+      ? mediaSendResult || buttonSendResult || { ok: true, metaMessageId: null, error: null }
+      : await sendWhatsAppText(
+          settings.phone_number_id,
+          settings.access_token,
+          from,
+          replyText,
+        );
 
     // Phase 3: notify admin if lead became hot (fire-and-forget)
     if (leadUpdate && leadUpdate.becameHot && !leadUpdate.lead.admin_notified_at) {
@@ -1343,11 +1572,21 @@ Deno.serve(async (req) => {
       );
     }
 
+    const outboundType = mediaSendResult?.ok
+      ? (mediaSentKey === "brochure" ? "document" : "video")
+      : buttonSendResult?.ok
+      ? "interactive"
+      : "text";
+
     await supabase.from("whatsapp_conversations").insert({
       phone_number: from,
       direction: "outbound",
-      message_body: replyText,
-      message_type: "text",
+      message_body: mediaSendResult?.ok
+        ? `[media:${mediaSentKey}] ${replyText}`
+        : buttonSendResult?.ok
+        ? `[buttons] ${replyText}`
+        : replyText,
+      message_type: outboundType,
       meta_message_id: sendResult.metaMessageId,
       status: sendResult.ok ? "sent" : "failed",
       reply_method: replyMethod,
