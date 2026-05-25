@@ -1,4 +1,4 @@
-// Meta WhatsApp Cloud API webhook for Nevorai. (deploy v9 — Phase 4: rich media + interactive buttons)
+// Meta WhatsApp Cloud API webhook for Nevorai. (deploy v10 — Phase 4 polish: searches Nevorai Academy for help videos)
 //   GET  → token verification handshake
 //   POST → inbound message → user lookup → verification check → personalized reply or Gemini AI → send → log
 //
@@ -1277,7 +1277,7 @@ async function sendWhatsAppButtons(
 }
 
 // Detect intents that should send rich media instead of text
-type MediaIntent = "demo_video" | "brochure";
+type MediaIntent = string; // any key in whatsapp_media
 
 function detectMediaIntent(text: string): MediaIntent | null {
   const t = normalizeText(text);
@@ -1287,7 +1287,53 @@ function detectMediaIntent(text: string): MediaIntent | null {
   if (/(brochure|pdf|product details|details document|send (me )?(the )?(catalog|catalogue))/i.test(t)) {
     return "brochure";
   }
+  // Common "how to" intents — map to media keys (admin can configure which video each plays)
+  if (/(how (do i |to )?upload (a )?video|upload video|video upload)/i.test(t)) return "upload_help";
+  if (/(how (do i |to )?(create|make|build) (a )?funnel|funnel builder|funnel guide)/i.test(t)) return "create_funnel";
+  if (/(how (do i |to )?(skip|end)( the)? (end|endout|step)|skip endout|end out)/i.test(t)) return "skip_endout";
+  if (/(how (do i |to )?(set up|configure|build) lead capture|lead capture (help|setup|guide))/i.test(t)) return "lead_capture_help";
+  if (/(how (do i |to )?(create|build|make) (a )?landing page|landing page (help|guide))/i.test(t)) return "landing_page_help";
+  if (/(billing help|how (do i |to )?pay|payment help|how billing works)/i.test(t)) return "billing_help";
+  if (/(connect whatsapp|whatsapp setup|whatsapp automation setup|set up whatsapp)/i.test(t)) return "whatsapp_setup_help";
   return null;
+}
+
+// Search Nevorai Academy for tutorials matching the question.
+// Returns the best matching tutorial as a temporary media record (not stored in whatsapp_media).
+async function searchAcademyByTopic(
+  supabase: SupabaseClient,
+  userText: string,
+): Promise<MediaRecord | null> {
+  const t = normalizeText(userText);
+  // Extract significant tokens
+  const tokens = t
+    .split(/\s+/)
+    .filter((w) => w.length >= 4)
+    .filter((w) => !["please", "could", "would", "should", "where", "what", "how", "about", "this", "that", "with", "from", "have"].includes(w))
+    .slice(0, 5);
+  if (tokens.length === 0) return null;
+
+  const orFilters = tokens
+    .map((tok) => `title.ilike.%${tok}%,description.ilike.%${tok}%`)
+    .join(",");
+
+  const { data } = await supabase
+    .from("academy_tutorials")
+    .select("title, description, video_url, thumbnail_url, category")
+    .eq("is_published", true)
+    .or(orFilters)
+    .limit(1);
+
+  const tutorial = (data || [])[0] as { title: string; description: string; video_url: string } | undefined;
+  if (!tutorial) return null;
+
+  return {
+    key: "academy_search",
+    type: "video",
+    url: tutorial.video_url,
+    caption: `📚 Found this in our Academy: ${tutorial.title}\n\n${(tutorial.description || "").slice(0, 200)}`,
+    filename: null,
+  };
 }
 
 // Detect intents that benefit from interactive buttons
@@ -1521,11 +1567,43 @@ Deno.serve(async (req) => {
           media,
         );
         mediaSentKey = mediaIntent;
-        // Replace text reply with a short follow-up message
         if (mediaSendResult.ok) {
           replyText = mediaIntent === "demo_video"
             ? `Sent the demo video above 👆 Have a look and let me know what you think!`
-            : `Sent the document above 👆 Let me know if you have questions!`;
+            : mediaIntent === "brochure"
+            ? `Sent the document above 👆 Let me know if you have questions!`
+            : `Here's a tutorial that should help 👆 Let me know if anything is unclear.`;
+        }
+      } else {
+        // No mapped media for this intent — fall back to academy search
+        const academyMedia = await searchAcademyByTopic(supabase, userText);
+        if (academyMedia && settings.phone_number_id && settings.access_token) {
+          mediaSendResult = await sendWhatsAppMedia(
+            settings.phone_number_id,
+            settings.access_token,
+            from,
+            academyMedia,
+          );
+          mediaSentKey = "academy_search";
+          if (mediaSendResult.ok) {
+            replyText = `Found a relevant tutorial in our Academy 👆 Let me know if this answers your question.`;
+          }
+        }
+      }
+    } else if (replyMethod === "ai") {
+      // Even when intent didn't match a media key, if Gemini got triggered, try academy
+      const academyMedia = await searchAcademyByTopic(supabase, userText);
+      if (academyMedia && settings.phone_number_id && settings.access_token) {
+        mediaSendResult = await sendWhatsAppMedia(
+          settings.phone_number_id,
+          settings.access_token,
+          from,
+          academyMedia,
+        );
+        mediaSentKey = "academy_search";
+        if (mediaSendResult.ok) {
+          // Keep the Gemini reply but append a hint about the academy video
+          replyText = `${replyText}\n\nP.S. I also sent a related tutorial from our Academy above 👆`;
         }
       }
     }
