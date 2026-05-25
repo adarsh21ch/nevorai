@@ -178,6 +178,60 @@ interface Lead {
   admin_notified_at: string | null;
 }
 
+async function enrollInFunnelLeadAutomations(supabase: SupabaseClient, phone: string): Promise<void> {
+  try {
+    const { data: automations } = await supabase
+      .from("whatsapp_automations")
+      .select("id")
+      .eq("trigger_event", "funnel_lead_captured")
+      .eq("is_active", true);
+    if (!automations || automations.length === 0) return;
+
+    for (const aut of automations as Array<{ id: string }>) {
+      // First step delay
+      const { data: firstStep } = await supabase
+        .from("whatsapp_automation_steps")
+        .select("delay_hours")
+        .eq("automation_id", aut.id)
+        .order("step_order", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      const delayHours = firstStep?.delay_hours ?? 0;
+      const nextAt = new Date(Date.now() + delayHours * 3600 * 1000).toISOString();
+
+      // Insert; UNIQUE (phone_number, automation_id) prevents duplicates.
+      const { error: insErr } = await supabase
+        .from("whatsapp_sequence_enrollments")
+        .insert({
+          phone_number: phone,
+          automation_id: aut.id,
+          current_step: 0,
+          next_send_at: nextAt,
+          status: "active",
+        });
+      // 23505 = unique_violation → already enrolled, ignore
+      if (insErr && insErr.code !== "23505") {
+        console.error(`[enroll] failed for ${phone} / ${aut.id}:`, insErr.message);
+        continue;
+      }
+      if (!insErr) {
+        await supabase.rpc("noop").catch(() => {});
+        const { data: cur } = await supabase
+          .from("whatsapp_automations")
+          .select("total_enrolled")
+          .eq("id", aut.id)
+          .maybeSingle();
+        await supabase
+          .from("whatsapp_automations")
+          .update({ total_enrolled: (cur?.total_enrolled ?? 0) + 1 })
+          .eq("id", aut.id);
+      }
+    }
+  } catch (e) {
+    console.error("[enroll] unexpected error:", (e as Error).message);
+  }
+}
+
 async function ensureLead(supabase: SupabaseClient, phone: string): Promise<Lead | null> {
   const { data: existing } = await supabase
     .from("whatsapp_leads")
@@ -192,6 +246,12 @@ async function ensureLead(supabase: SupabaseClient, phone: string): Promise<Lead
     .insert({ phone_number: phone, status: "new", score: "cold", source: "whatsapp" })
     .select("*")
     .single();
+
+  // New lead → enroll in any active funnel_lead_captured automations
+  if (created) {
+    await enrollInFunnelLeadAutomations(supabase, phone);
+  }
+
   return (created || null) as Lead | null;
 }
 
