@@ -430,9 +430,9 @@ Deno.serve(async (req) => {
         console.log("Unhandled event:", eventType);
     }
 
-    return new Response(JSON.stringify({ status: "ok" }), { status: 200 });
+    return new Response(JSON.stringify({ status: "ok" }), { status: 200, headers: jsonCors });
   } catch (err: any) {
     console.error("Webhook error:", err);
-    return new Response(JSON.stringify({ error: err.message }), { status: 200 });
+    return new Response(JSON.stringify({ error: err.message }), { status: 200, headers: jsonCors });
   }
 });
