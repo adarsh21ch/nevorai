@@ -96,51 +96,80 @@ Deno.serve(async (req) => {
     // unresolved plan, lookup error) → allow the email. Better a free user
     // gets a confirmation than a paying user silently loses leads.
     const ownerId = (page as any).owner_id
-    console.log('[plan-gate] ownerId=', ownerId)
-
-    // Tier priority used to pick best subscription if multiple exist.
     const tierRank: Record<string, number> = { free: 0, basic: 1, pro: 2 }
     let planName = 'free'
+    let chosenTier: string | null = null
+    let profileFallback: string | null = null
+    let subRowsFound = 0
 
     if (ownerId) {
+      // (b) Try user_subscriptions for active/trialing rows w/ valid expires_at
+      const nowIso = new Date().toISOString()
       const { data: subs, error: subErr } = await supabase
         .from('user_subscriptions')
         .select('tier, status, expires_at')
         .eq('user_id', ownerId)
-        .in('status', ['active', 'trialing', 'payment_failed', 'pending'])
+        .in('status', ['active', 'trialing'])
+        .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
       if (subErr) {
         console.warn('[plan-gate] sub lookup error — failing OPEN:', subErr.message)
-      } else if (subs && subs.length) {
-        const now = Date.now()
-        const valid = subs.filter((s: any) => {
-          if (!['active', 'trialing'].includes(s.status)) return false
-          // null expires_at => lifetime / perpetual
-          if (s.expires_at && new Date(s.expires_at).getTime() < now) return false
-          return !!s.tier
-        })
-        // pick highest tier
+      }
+      subRowsFound = subs?.length ?? 0
+      if (subs && subs.length) {
+        const valid = subs.filter((s: any) => !!s.tier)
         valid.sort((a: any, b: any) => (tierRank[b.tier] ?? -1) - (tierRank[a.tier] ?? -1))
-        if (valid[0]?.tier) planName = valid[0].tier
+        if (valid[0]?.tier) {
+          chosenTier = valid[0].tier
+          planName = chosenTier!
+        }
+      }
+
+      // (c) Fallback to profiles.subscription_status if no sub row matched
+      if (!chosenTier) {
+        const { data: profile, error: profErr } = await supabase
+          .from('profiles')
+          .select('subscription_status')
+          .eq('id', ownerId)
+          .maybeSingle()
+        if (profErr) {
+          console.warn('[plan-gate] profile lookup error — failing OPEN:', profErr.message)
+        }
+        const raw = (profile as any)?.subscription_status?.toString().toLowerCase() ?? null
+        profileFallback = raw
+        if (raw) {
+          // map trial / trialing → pro-equivalent access; explicit tier names pass through
+          if (raw === 'trial' || raw === 'trialing') planName = 'pro'
+          else if (raw === 'pro' || raw === 'basic' || raw === 'free') planName = raw
+          else if (raw === 'active') planName = 'basic' // safe assumption
+        }
       }
     }
-    console.log('[plan-gate] resolved planName=', planName)
+
+    console.log('[plan-gate]', {
+      ownerId,
+      subRowsFound,
+      chosenTier,
+      profileFallback,
+      finalPlanName: planName,
+    })
 
     const { data: planCfg, error: planErr } = await supabase
       .from('plan_config')
-      .select('feature_landing_page_email')
+      .select('plan_name, feature_landing_page_email')
       .eq('plan_name', planName)
       .maybeSingle()
-    console.log('[plan-gate] planCfg=', planCfg, 'err=', planErr?.message)
+    console.log('[plan-gate] planCfg lookup', { queriedPlanName: planName, planCfg, err: planErr?.message })
 
     // Only block on an explicit `false`. Missing row / missing column / error → allow.
     if (planCfg && (planCfg as any).feature_landing_page_email === false) {
-      console.log('[plan-gate] BLOCKED for plan', planName)
+      console.log('[plan-gate] BLOCKED', { planName, planCfg })
       return new Response(
-        JSON.stringify({ sent: false, reason: 'plan_upgrade_required' }),
+        JSON.stringify({ sent: false, reason: 'plan_upgrade_required', resolved_plan_name: planName }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
-    console.log('[plan-gate] ALLOWED for plan', planName)
+    console.log('[plan-gate] ALLOWED', { planName, planCfg })
+
 
     // Use sender_display_name from landing page settings; fall back to platform name
     const senderDisplayName = ((page as any).sender_display_name || 'Nevorai').trim() || 'Nevorai'
