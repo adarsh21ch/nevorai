@@ -32,7 +32,11 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
 
   let body: { phone_number?: string };
-  try { body = await req.json(); } catch { return json({ error: "invalid_json" }, 400); }
+  try {
+    body = await req.json();
+  } catch {
+    return json({ error: "invalid_json" }, 400);
+  }
 
   const phone = (body.phone_number || "").replace(/\D/g, "");
   if (!phone || phone.length < 10) return json({ error: "invalid_phone" }, 400);
@@ -50,7 +54,11 @@ Deno.serve(async (req) => {
     .eq("phone_number", phone)
     .gt("created_at", sixtySecAgo)
     .maybeSingle();
-  if (recent) return json({ error: "rate_limit", message: "Please wait 60 seconds before requesting another OTP." }, 429);
+  if (recent)
+    return json(
+      { error: "rate_limit", message: "Please wait 60 seconds before requesting another OTP." },
+      429,
+    );
 
   // Load WhatsApp settings
   const { data: settings } = await supabase
@@ -67,16 +75,41 @@ Deno.serve(async (req) => {
   const codeHash = await sha256(code);
   const expiresAt = new Date(Date.now() + 5 * 60_000).toISOString();
 
-  await supabase.from("whatsapp_otp_codes").insert({
-    phone_number: phone,
-    code_hash: codeHash,
-    expires_at: expiresAt,
-    attempts: 0,
-    verified: false,
-  });
+  const { data: insertedOtp } = await supabase
+    .from("whatsapp_otp_codes")
+    .insert({
+      phone_number: phone,
+      code_hash: codeHash,
+      expires_at: expiresAt,
+      attempts: 0,
+      verified: false,
+      delivery_status: "pending",
+    })
+    .select("id")
+    .single();
 
-  // Send via WhatsApp free-form text
-  const message = `Your Nevorai verification code is: *${code}*\n\nThis code expires in 5 minutes. Do not share it with anyone.`;
+  // Send via WhatsApp Authentication template (nevorai_otp).
+  // Free-form text won't deliver outside the 24h service window — Meta returns 200 but drops it.
+  const requestBody = {
+    messaging_product: "whatsapp",
+    to: phone,
+    type: "template",
+    template: {
+      name: "nevorai_otp",
+      language: { code: "en" },
+      components: [
+        { type: "body", parameters: [{ type: "text", text: code }] },
+        {
+          type: "button",
+          sub_type: "url",
+          index: "0",
+          parameters: [{ type: "text", text: code }],
+        },
+      ],
+    },
+  };
+  console.log("[whatsapp-send-otp] Meta request body:", JSON.stringify(requestBody));
+
   try {
     const res = await fetch(
       `https://graph.facebook.com/v20.0/${settings.phone_number_id}/messages`,
@@ -86,20 +119,42 @@ Deno.serve(async (req) => {
           Authorization: `Bearer ${settings.access_token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          to: phone,
-          type: "text",
-          text: { body: message },
-        }),
+        body: JSON.stringify(requestBody),
       },
     );
     const result = await res.json();
+    console.log(
+      "[whatsapp-send-otp] Meta response status:",
+      res.status,
+      "body:",
+      JSON.stringify(result),
+    );
+
+    const metaMessageId = result?.messages?.[0]?.id ?? null;
+    if (insertedOtp?.id) {
+      await supabase
+        .from("whatsapp_otp_codes")
+        .update({
+          whatsapp_message_id: metaMessageId,
+          meta_response: result,
+          delivery_status: res.ok ? "sent" : "failed",
+        })
+        .eq("id", insertedOtp.id);
+    }
+
     if (!res.ok) {
       return json({ error: "send_failed", details: result }, 502);
     }
-    return json({ sent: true, expires_in_seconds: 300 });
+    return json({ sent: true, expires_in_seconds: 300, whatsapp_message_id: metaMessageId });
   } catch (e) {
-    return json({ error: "exception", message: (e as Error).message }, 500);
+    const message = (e as Error).message;
+    console.error("[whatsapp-send-otp] exception:", message);
+    if (insertedOtp?.id) {
+      await supabase
+        .from("whatsapp_otp_codes")
+        .update({ delivery_status: "failed", meta_response: { exception: message } })
+        .eq("id", insertedOtp.id);
+    }
+    return json({ error: "exception", message }, 500);
   }
 });
