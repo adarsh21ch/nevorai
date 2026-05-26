@@ -1951,6 +1951,39 @@ Deno.serve(async (req) => {
   const respond = () => new Response("EVENT_RECEIVED", { status: 200, headers: corsHeaders });
 
   try {
+    // Delivery-status events: sent → delivered → read, or failed.
+    // Meta sends these in payload.entry[].changes[].value.statuses[].
+    const statuses: any[] = payload?.entry?.[0]?.changes?.[0]?.value?.statuses ?? [];
+    if (statuses.length > 0) {
+      for (const s of statuses) {
+        const msgId: string | undefined = s?.id;
+        const statusName: string | undefined = s?.status;
+        if (!msgId || !statusName) continue;
+        const tsIso = s?.timestamp
+          ? new Date(Number(s.timestamp) * 1000).toISOString()
+          : new Date().toISOString();
+        console.log(`[webhook] status ${statusName} for ${msgId}`);
+
+        // OTP table: record delivery_status; set delivered_at on delivered.
+        const otpPatch: Record<string, unknown> = { delivery_status: statusName };
+        if (statusName === "delivered") otpPatch.delivered_at = tsIso;
+        await supabase.from("whatsapp_otp_codes").update(otpPatch).eq("whatsapp_message_id", msgId);
+
+        // CRM message log: delivery_status + delivered_at / read_at where applicable.
+        const logPatch: Record<string, unknown> = { delivery_status: statusName };
+        if (statusName === "delivered") logPatch.delivered_at = tsIso;
+        if (statusName === "read") logPatch.read_at = tsIso;
+        if (statusName === "failed") {
+          logPatch.failure_reason = s?.errors?.[0]?.title || s?.errors?.[0]?.message || "failed";
+        }
+        await supabase
+          .from("whatsapp_message_logs")
+          .update(logPatch)
+          .eq("whatsapp_message_id", msgId);
+      }
+      return respond();
+    }
+
     const message = payload?.entry?.[0]?.changes?.[0]?.value?.messages?.[0];
     if (!message) return respond();
 
